@@ -1,0 +1,2749 @@
+openapi: 3.0.0
+info:
+  title: ChaChing Social Social API
+  description: FatFIRESocial is a social network for people who are interested in financial
+    independence and early retirement. It is a place to share your journey, ask
+    questions, and connect with others who are on the same path. Whether you are
+    just starting out or have already achieved financial independence,
+    FatFIRESocial is a community where you can find support, inspiration, and
+    advice. Join us today and start building the life you want! ```
+  termsOfService: https://www.chachingsocial.io/terms-of-service
+  contact:
+    name: ChaChing Social API Support
+    url: https://chachingsocial.io
+    email: mabel.oza@chachingsocial.io
+  license:
+    name: Apache-2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0
+  version: 1.0.0
+servers:
+  - url: http://localhost:8080
+    description: Local Server
+  - url: https://chachingsocial-20694693160.us-central1.run.app
+    description: DEV Server
+  - url: https://chachingsocial-615685871214.us-central1.run.app
+    description: PROD Server
+tags:
+  - name: User
+    description: |-
+      Auth requests are used to
+      handle user authentication.
+  - name: Badge
+    description: Badge requests are used to handle badge activity.
+  - name: Financing
+    description: All personal finance management operations like monthly transactions,
+      metric goals, etc.
+  - name: Newsfeed
+    description: All newsfeed operations like creating posts, editing posts, etc.
+  - name: Resources
+    description: Operations for managing financial literacy resources
+  - name: Offers
+    description: Operations for managing our partner offers.
+  - name: Poll
+    description: Poll requests are used to handle poll activity.
+  - name: Notification
+    description: Notification requests are used to handle notification activity.
+  - name: Chat
+    description: |-
+      Chat requests are used to 
+      handle chat room activity.
+  - name: Event
+    description: |-
+      Event requests are used to 
+      handle event activity.
+  - name: Community
+    description: |-
+      Community requests are used to 
+      handle community activity.
+  - name: Score
+    description: |-
+      Score requests are used to 
+      handle score activity.
+paths:
+  "/transaction/transactions/{user-id}":
+    get:
+      summary: List all the transactions for a user
+      operationId: getTransactions
+      tags:
+        - Financing
+      parameters:
+        - $ref: "#/components/parameters/limit"
+        - $ref: "#/components/parameters/userId"
+        - $ref: "#/components/parameters/transactionId"
+        - $ref: "#/components/parameters/transactionType"
+        - $ref: "#/components/parameters/dateStart"
+        - $ref: "#/components/parameters/dateEnd"
+      responses:
+        "200":
+          description: Expected response to a valid request
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Transaction"
+        default:
+          $ref: "#/components/responses/UnexpectedError"
+  /blogs/published-blogs:
+    get:
+      summary: Get all published blogs that fit the query
+      operationId: getPublishedBlogs
+      tags:
+        - Blog
+      parameters:
+        - name: communityIds
+          in: query
+          description: List of community IDs
+          required: false
+          schema:
+            type: array
+            items:
+              type: string
+        - name: userIds
+          in: query
+          description: List of user IDs
+          required: false
+          schema:
+            type: array
+            items:
+              type: string
+        - name: slugNames
+          in: query
+          description: List of slug names
+          required: false
+          schema:
+            type: array
+            items:
+              type: string
+        - name: tags
+          in: query
+          description: List of tags
+          required: false
+          schema:
+            type: array
+            items:
+              type: string
+      responses:
+        "200":
+          description: Expected response to a valid request
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  title: Blog
+                  type: object
+                  required:
+                    - title
+                    - content
+                    - communityId
+                    - slug
+                    - authorId
+                  properties:
+                    title:
+                      type: string
+                      description: The title of the blog.
+                      example: Blockchain
+                    subtitle:
+                      type: string
+                      description: The subtitle of the blog.
+                      example: Understanding the Basics of Blockchain
+                    content:
+                      type: string
+                      description: The content of the blog.
+                      example: Blockchain is a system in which a record of transactions
+                        made in bitcoin or another cryptocurrency are maintained
+                        across several computers that are linked in a
+                        peer-to-peer network.
+                    communityId:
+                      type: string
+                      format: uuid
+                      description: The unique identifier for the community.
+                    slug:
+                      type: string
+                      description: The slug of the blog.
+                      example: blockchain
+                    authorId:
+                      type: string
+                      format: uuid
+                      description: The unique identifier for the author.
+                    coverPhoto:
+                      type: string
+                      description: The image of the blog.
+                      example: https://nas-national-prod.s3.amazonaws.com/h_a1_4285_1_wild-turkey_october_greenfield_k
+                    tags:
+                      type: array
+                      items:
+                        type: string
+                      description: The tags of the blog.
+                      example:
+                        - Blockchain
+                        - Cryptocurrency
+                    draft:
+                      type: boolean
+                      description: The draft status of the blog.
+                      example: false
+                    createdAt:
+                      type: string
+                      description: The date and time when the blog was published.
+                      example: 2021-10-01T00:00:00Z
+                    modifiedAt:
+                      type: string
+                      format: date-time
+                      description: The date and time when the blog was last updated.
+                      example: 2021-10-01T00:00:00Z
+                    postId:
+                      type: string
+                      format: uuid
+                      description: The unique identifier for the post.
+                    authorProfilePic:
+                      type: string
+                      description: The profile picture of the author.
+                      example: https://www.google.com/images/branding/googlelogo/1x/googlelogo_color_272x92dp.png
+                    ipfsHash:
+                      type: string
+                      description: The IPFS hash of the blog.
+                      example: QmTzQ1iW4g9z8Z2Z2Z2Z2Z2Z2Z2Z2Z2Z2Z2Z2Z2Z2Z
+        default:
+          $ref: "#/components/responses/UnexpectedError"
+  /blogs/upload-ipfs:
+    post:
+      summary: Upload Blog to IPFS
+      operationId: uploadToIPFS
+      tags:
+        - Blog
+      requestBody:
+        description: Adding blog to IPFS and returning a CID
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Blog"
+      responses:
+        "201":
+          description: Expected response to a valid request
+          content:
+            application/json:
+              schema:
+                type: string
+                example: Notification created successfully
+        default:
+          $ref: "#/components/responses/UnexpectedError"
+  /blogs/share-farcaster:
+    post:
+      summary: Share on Blog on Farcaster
+      operationId: shareBlogFarcaster
+      tags:
+        - Blog
+      requestBody:
+        description: Share blog on Farcaster
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Blog"
+      responses:
+        "201":
+          description: Expected response to a valid request
+          content:
+            application/json:
+              schema:
+                type: string
+                example: Notification created successfully
+        default:
+          $ref: "#/components/responses/UnexpectedError"
+  "/community/{community-id}":
+    get:
+      summary: Get a community by its ID
+      operationId: communityById
+      tags:
+        - Community
+      parameters:
+        - $ref: "#/components/parameters/community-id"
+      responses:
+        "200":
+          description: Expected response to a valid request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Community"
+        default:
+          $ref: "#/components/responses/UnexpectedError"
+  /community/communities-paged:
+    get:
+      summary: Get all communities that fit the query
+      operationId: communitiesPaged
+      tags:
+        - Community
+      parameters:
+        - name: communityIds
+          in: query
+          description: List of community IDs
+          required: false
+          schema:
+            type: array
+            items:
+              type: string
+        - name: userIds
+          in: query
+          description: List of user IDs
+          required: false
+          schema:
+            type: array
+            items:
+              type: string
+        - name: slugNames
+          in: query
+          description: List of slug names
+          required: false
+          schema:
+            type: array
+            items:
+              type: string
+        - name: tags
+          in: query
+          description: List of tags
+          required: false
+          schema:
+            type: array
+            items:
+              type: string
+      responses:
+        "200":
+          description: Expected response to a valid request
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Community"
+        default:
+          $ref: "#/components/responses/UnexpectedError"
+  "/community/community-by-slug/{slug-name}":
+    get:
+      summary: Get a community by its slug name
+      operationId: communityBySlugName
+      tags:
+        - Community
+      parameters:
+        - $ref: "#/components/parameters/slug-name"
+      responses:
+        "200":
+          description: Expected response to a valid request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Community"
+        default:
+          $ref: "#/components/responses/UnexpectedError"
+  "/community/check-slug-exists/{slug-name}":
+    get:
+      summary: Check if a slug name exists, we can't have duplicate slug names
+      operationId: checkSlugExists
+      tags:
+        - Community
+      parameters:
+        - $ref: "#/components/parameters/slug-name"
+      responses:
+        "200":
+          description: Expected response to a valid request
+          content:
+            application/json:
+              schema:
+                type: boolean
+        default:
+          $ref: "#/components/responses/UnexpectedError"
+  "/community/user-membership/{user-id}":
+    get:
+      summary: Get all members of a community
+      operationId: getUserCommunityMembership
+      tags:
+        - Community
+      parameters:
+        - $ref: "#/components/parameters/user-id"
+      responses:
+        "200":
+          description: Expected response to a valid request
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Community"
+        default:
+          $ref: "#/components/responses/UnexpectedError"
+  "/community/join-community/{community-id}/{user-id}":
+    put:
+      summary: Join a community
+      operationId: joinCommunity
+      tags:
+        - Community
+      parameters:
+        - $ref: "#/components/parameters/community-id"
+        - $ref: "#/components/parameters/user-id"
+      responses:
+        "200":
+          description: Expected response to a valid request
+          content:
+            application/json:
+              schema:
+                type: string
+                example: User successfully joined community
+        default:
+          $ref: "#/components/responses/UnexpectedError"
+  "/community/leave-community/{community-id}/{user-id}":
+    put:
+      summary: Leave a community
+      operationId: leaveCommunity
+      tags:
+        - Community
+      parameters:
+        - $ref: "#/components/parameters/community-id"
+        - $ref: "#/components/parameters/user-id"
+      responses:
+        "200":
+          description: Expected response to a valid request
+          content:
+            application/json:
+              schema:
+                type: string
+                example: User successfully left the community
+        default:
+          $ref: "#/components/responses/UnexpectedError"
+  "/community/community-ownership/{user-id}":
+    get:
+      summary: Communities owned by a user
+      operationId: communitiesOwnedByUserId
+      tags:
+        - Community
+      parameters:
+        - $ref: "#/components/parameters/user-id"
+      responses:
+        "200":
+          description: Expected response to a valid request
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Community"
+        default:
+          $ref: "#/components/responses/UnexpectedError"
+  "/community/community-members/{community-id}":
+    get:
+      summary: Get all members of a community
+      operationId: getCommunityMembers
+      tags:
+        - Community
+      parameters:
+        - $ref: "#/components/parameters/community-id"
+      responses:
+        "200":
+          description: Expected response to a valid request
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  title: User
+                  type: object
+                  required:
+                    - username
+                    - id
+                    - profilePic
+                  properties:
+                    id:
+                      type: string
+                      example: 123e4567-e89b-12d3-a456-426614174000
+                    username:
+                      type: string
+                      example: Johnny
+                    profilePic:
+                      type: string
+                      example: https://www.google.com/images/branding/googlelogo/1x/googlelogo_color_272x92dp.png
+        default:
+          $ref: "#/components/responses/UnexpectedError"
+  "/community/community-rules/{community-id}":
+    get:
+      summary: Get community rules
+      operationId: communityRules
+      tags:
+        - Community
+      parameters:
+        - $ref: "#/components/parameters/community-id"
+      responses:
+        "200":
+          description: Expected response to a valid request
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/CommunityRules"
+        default:
+          $ref: "#/components/responses/UnexpectedError"
+  /community/community-tags:
+    get:
+      summary: Get all the tags from a community
+      operationId: communityTags
+      tags:
+        - Community
+      parameters:
+        - $ref: "#/components/parameters/communityId"
+      responses:
+        "200":
+          description: Expected response to a valid request
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string
+                  example: tag1
+        default:
+          $ref: "#/components/responses/UnexpectedError"
+  "/community/status-update/{community-id}":
+    get:
+      summary: Update the status of a community
+      operationId: communityStatusUpdate
+      tags:
+        - Community
+      parameters:
+        - $ref: "#/components/parameters/community-id"
+        - name: status
+          in: query
+          required: true
+          schema:
+            type: string
+            enum:
+              - LIVE
+              - PAUSED
+              - PRE_LAUNCH
+              - DELETED
+      responses:
+        "200":
+          description: Expected response to a valid request
+          content:
+            application/json:
+              schema:
+                type: boolean
+        default:
+          $ref: "#/components/responses/UnexpectedError"
+  "/community/{user-id}":
+    get:
+      summary: Get a community by user id
+      operationId: communityByUserId
+      tags:
+        - Community
+      parameters:
+        - $ref: "#/components/parameters/user-id"
+      responses:
+        "200":
+          description: Expected response to a valid request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Community"
+        default:
+          $ref: "#/components/responses/UnexpectedError"
+  "/community/get-community-payment-info/{community-id}":
+    get:
+      summary: Get Community Payment Info
+      operationId: getCommunityPaymentInfo
+      tags:
+        - Community
+      parameters:
+        - $ref: "#/components/parameters/community-id"
+      responses:
+        "200":
+          description: Expected response to a valid request
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/CommunityPaymentInfo"
+        default:
+          $ref: "#/components/responses/UnexpectedError"
+  /community/add-community-payment-info:
+    post:
+      summary: Add the payment info for a community
+      operationId: addCommunityPaymentInfo
+      tags:
+        - Community
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              title: CommunityPaymentInfo
+              type: object
+              required:
+                - communityId
+              properties:
+                id:
+                  type: string
+                  format: uuid
+                  description: The unique identifier for the funding destination.
+                communityId:
+                  type: string
+                  format: uuid
+                  description: The unique identifier for the community.
+                cryptoWallets:
+                  type: array
+                  items:
+                    title: CryptoWallets
+                    type: object
+                    required:
+                      - walletAddress
+                      - cryptoCurrency
+                    properties:
+                      walletAddress:
+                        type: string
+                        description: The cryptocurrency wallet address.
+                        example: "0x1234567890abcdef1234567890abcdef12345678"
+                      walletAddress2:
+                        type: string
+                        description: The second cryptocurrency wallet address.
+                        example: "0xabcdef1234567890abcdef1234567890abcdef12"
+                      cryptoCurrency:
+                        type: string
+                        description: The type of cryptocurrency.
+                        enum:
+                          - BITCOIN
+                          - ETHEREUM
+                          - SOLANA
+                          - BASE
+                      note:
+                        type: string
+                        description: A note or comment about the wallet.
+                  description: The list of cryptocurrency wallets for the community.
+                bankAccounts:
+                  type: array
+                  items:
+                    title: BankAccount
+                    type: object
+                    required:
+                      - accountNumber
+                      - routingNumber
+                      - accountType
+                      - bankName
+                      - accountHolderName
+                      - currency
+                    properties:
+                      accountNumber:
+                        type: string
+                        description: The bank account number.
+                        example: "123456789"
+                      routingNumber:
+                        type: string
+                        description: The bank routing number.
+                        example: "021000021"
+                      accountType:
+                        type: string
+                        description: The type of bank account.
+                        enum:
+                          - CHECKING
+                          - SAVINGS
+                      bankName:
+                        type: string
+                        description: The name of the bank.
+                        example: Bank of America
+                      accountHolderName:
+                        type: string
+                        description: The name of the account holder.
+                        example: John Doe
+                      currency:
+                        type: string
+                        description: The currency of the bank account.
+                        example: USD
+                  description: The list of bank accounts for the community.
+      responses:
+        "201":
+          description: Expected response to a valid request
+          content:
+            application/json:
+              schema:
+                type: string
+                example: Notification created successfully
+        default:
+          $ref: "#/components/responses/UnexpectedError"
+  /notifications/notify:
+    post:
+      summary: Notify User of Activities
+      operationId: notify
+      tags:
+        - Notification
+      requestBody:
+        description: Add a new notification that user is tagged
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Notification"
+      responses:
+        "201":
+          description: Expected response to a valid request
+          content:
+            application/json:
+              schema:
+                type: string
+                example: Notification created successfully
+        default:
+          $ref: "#/components/responses/UnexpectedError"
+  /notifications/notify-email:
+    post:
+      summary: Notify Getting Tagged
+      operationId: notifyEmail
+      tags:
+        - Notification
+      requestBody:
+        description: Add a new notification that user is tagged
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Notification"
+      responses:
+        "201":
+          description: Expected response to a valid request
+          content:
+            application/json:
+              schema:
+                type: string
+                example: Notification created successfully
+        default:
+          $ref: "#/components/responses/UnexpectedError"
+  "/notifications/{user-id}":
+    get:
+      summary: List all the notifications for a user
+      operationId: getNotifications
+      tags:
+        - Notification
+      parameters:
+        - $ref: "#/components/parameters/limit"
+        - $ref: "#/components/parameters/userId"
+      responses:
+        "200":
+          description: Expected response to a valid request
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Notification"
+        default:
+          $ref: "#/components/responses/UnexpectedError"
+  "/notifications/{user-id}/unread-count":
+    get:
+      summary: Count number of unread notifications
+      operationId: getUnreadNotificationsCount
+      tags:
+        - Notification
+      parameters:
+        - $ref: "#/components/parameters/userId"
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: integer
+        default:
+          $ref: "#/components/responses/UnexpectedError"
+  "/notifications/{user-id}/reset-count":
+    post:
+      summary: Reset the unread notifications count
+      operationId: resetUnreadNotificationsCount
+      tags:
+        - Notification
+      parameters:
+        - $ref: "#/components/parameters/userId"
+      responses:
+        "201":
+          description: Expected response to a valid request
+          content:
+            application/json:
+              schema:
+                type: boolean
+                example: "true"
+        default:
+          $ref: "#/components/responses/UnexpectedError"
+  /newsfeed/posts:
+    get:
+      summary: List all the posts on the newsfeed
+      operationId: getPosts
+      tags:
+        - Newsfeed
+      parameters:
+        - $ref: "#/components/parameters/limit"
+        - $ref: "#/components/parameters/userId"
+        - $ref: "#/components/parameters/tags"
+        - $ref: "#/components/parameters/postId"
+      responses:
+        "200":
+          description: Expected response to a valid request
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Post"
+        default:
+          $ref: "#/components/responses/UnexpectedError"
+  /newsfeed/get-all-posts:
+    get:
+      summary: List all the posts on the newsfeed
+      operationId: getAllPosts
+      tags:
+        - Newsfeed
+      responses:
+        "200":
+          description: Expected response to a valid request
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Post"
+        default:
+          $ref: "#/components/responses/UnexpectedError"
+  "/newsfeed/get-post/{post-id}":
+    get:
+      summary: Get a post by its ID
+      operationId: postById
+      tags:
+        - Newsfeed
+      parameters:
+        - $ref: "#/components/parameters/post-id"
+      responses:
+        "200":
+          description: Expected response to a valid request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Post"
+        default:
+          $ref: "#/components/responses/UnexpectedError"
+  "/user/{user-id}":
+    get:
+      summary: Get user by id
+      operationId: getUserById
+      tags:
+        - User
+      parameters:
+        - $ref: "#/components/parameters/user-id"
+      responses:
+        "200":
+          description: Expected response to a valid request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        default:
+          $ref: "#/components/responses/UnexpectedError"
+  "/user/get-user-by-username/{username}":
+    get:
+      summary: Get user by Username
+      operationId: getUserByUsername
+      tags:
+        - User
+      parameters:
+        - $ref: "#/components/parameters/username"
+      responses:
+        "200":
+          description: Expected response to a valid request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        default:
+          $ref: "#/components/responses/UnexpectedError"
+  "/user/get-user-info/{user-id}":
+    get:
+      summary: Get user by id
+      operationId: getUserInfoById
+      tags:
+        - User
+      parameters:
+        - $ref: "#/components/parameters/user-id"
+      responses:
+        "200":
+          description: Expected response to a valid request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserInfo"
+        default:
+          $ref: "#/components/responses/UnexpectedError"
+  "/user/get-user-socials/{user-id}":
+    get:
+      summary: Get user socials
+      operationId: getUserSocials
+      tags:
+        - User
+      parameters:
+        - $ref: "#/components/parameters/user-id"
+      responses:
+        "200":
+          description: Expected response to a valid request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Social"
+        default:
+          $ref: "#/components/responses/UnexpectedError"
+  /user/get-all-user-info:
+    get:
+      summary: Get all user info
+      operationId: getAllUserInfo
+      tags:
+        - User
+      parameters:
+        - $ref: "#/components/parameters/limit"
+      responses:
+        "200":
+          description: Expected response to a valid request
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/UserInfo"
+        default:
+          $ref: "#/components/responses/UnexpectedError"
+  "/user/check-username-exists/{username}":
+    get:
+      summary: Check if a User Name Exists
+      operationId: checkIfUserNameExists
+      tags:
+        - User
+      parameters:
+        - $ref: "#/components/parameters/username"
+      responses:
+        "200":
+          description: Expected response to a valid request
+          content:
+            application/json:
+              schema:
+                type: boolean
+        default:
+          $ref: "#/components/responses/UnexpectedError"
+  /user/update-user:
+    put:
+      summary: Update a user
+      operationId: updateUser
+      tags:
+        - User
+      requestBody:
+        description: User object that needs to be updated
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/User"
+      responses:
+        "200":
+          description: User updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        "400":
+          description: Invalid input
+        "404":
+          description: User not found
+        "500":
+          description: Internal server error
+  "/user/check-if-email-exists/{email}":
+    get:
+      summary: Check if email exists
+      operationId: checkIfEmailExists
+      tags:
+        - User
+      parameters:
+        - $ref: "#/components/parameters/email"
+      responses:
+        "200":
+          description: Expected response to a valid request
+          content:
+            application/json:
+              schema:
+                type: boolean
+        default:
+          $ref: "#/components/responses/UnexpectedError"
+  "/user/check-if-finfluencer/{user-id}":
+    get:
+      summary: Check if user is a finfluencer
+      operationId: checkIfFinfluencer
+      tags:
+        - User
+      parameters:
+        - $ref: "#/components/parameters/user-id"
+      responses:
+        "200":
+          description: Expected response to a valid request
+          content:
+            application/json:
+              schema:
+                type: boolean
+        default:
+          $ref: "#/components/responses/UnexpectedError"
+  "/user/add-missing-user-info/{user-id}":
+    get:
+      summary: Get user by id
+      operationId: addMissingUserInfo
+      tags:
+        - User
+      parameters:
+        - $ref: "#/components/parameters/user-id"
+      responses:
+        "200":
+          description: Expected response to a valid request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        default:
+          $ref: "#/components/responses/UnexpectedError"
+  "/score/update-score/{user-id}/{score}":
+    put:
+      summary: Update a score
+      operationId: updateScore
+      tags:
+        - Score
+      parameters:
+        - $ref: "#/components/parameters/user-id"
+        - $ref: "#/components/parameters/score"
+      responses:
+        "200":
+          description: Score updated successfully
+          content:
+            application/json:
+              schema:
+                type: number
+        "400":
+          description: Invalid input
+        "404":
+          description: Score not found
+        "500":
+          description: Internal server error
+  "/score/update-score-action/{user-id}/{actions}":
+    put:
+      summary: Update a score with an Action
+      operationId: updateScoreAction
+      tags:
+        - Score
+      parameters:
+        - $ref: "#/components/parameters/user-id"
+        - $ref: "#/components/parameters/actions"
+      responses:
+        "200":
+          description: Score updated successfully
+          content:
+            application/json:
+              schema:
+                type: number
+        "400":
+          description: Invalid input
+        "404":
+          description: Score not found
+        "500":
+          description: Internal server error
+  "/score/get-score/{user-id}":
+    get:
+      summary: Get score
+      operationId: getScore
+      tags:
+        - Score
+      parameters:
+        - $ref: "#/components/parameters/user-id"
+      responses:
+        "200":
+          description: Score updated successfully
+          content:
+            application/json:
+              schema:
+                type: number
+        "400":
+          description: Invalid input
+        "404":
+          description: Score not found
+        "500":
+          description: Internal server error
+  "/score/get-score-ledger/{user-id}":
+    get:
+      summary: Get score ledger
+      operationId: getScoreLedger
+      tags:
+        - Score
+      parameters:
+        - $ref: "#/components/parameters/user-id"
+      responses:
+        "200":
+          description: Expected response to a valid request
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ScoreLedger"
+        "400":
+          description: Invalid input
+        "404":
+          description: Score not found
+        "500":
+          description: Internal server error
+        default:
+          $ref: "#/components/responses/UnexpectedError"
+  /score/give-points/:
+    put:
+      summary: Update a score
+      operationId: givePoints
+      tags:
+        - Score
+      requestBody:
+        description: Add a new notification that user is tagged
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PointsGift"
+      responses:
+        "201":
+          description: Expected response to a valid request
+          content:
+            application/json:
+              schema:
+                type: string
+                example: Notification created successfully
+        default:
+          $ref: "#/components/responses/UnexpectedError"
+components:
+  parameters:
+    slug-name:
+      name: slug-name
+      in: path
+      required: true
+      description: slug to filter by
+      schema:
+        type: string
+        example: defi
+    post-id:
+      name: post-id
+      in: path
+      required: true
+      description: post id to filter by
+      schema:
+        type: string
+        example: 123e4567-e89b-12d3-a456-426614174000
+    score:
+      name: score
+      in: path
+      required: true
+      schema:
+        type: integer
+        example: 10
+    transaction-id:
+      name: transaction-id
+      in: path
+      required: true
+      description: transaction id to filter by
+      schema:
+        type: string
+        format: uuid
+        example: 123e4567-e89b-12d3-a456-426614174000
+    vote:
+      name: vote
+      in: path
+      required: true
+      description: Voting status
+      schema:
+        type: string
+        enum:
+          - YES
+          - NO
+    poll-id:
+      name: poll-id
+      in: path
+      required: true
+      description: poll id to filter by
+      schema:
+        type: string
+        format: uuid
+        example: 123e4567-e89b-12d3-a456-426614174000
+    community-id:
+      name: community-id
+      in: path
+      required: true
+      description: community id to filter by
+      schema:
+        type: string
+        example: 123e4567-e89b-12d3-a456-426614174000
+    username:
+      name: username
+      in: path
+      required: true
+      description: username to filter by
+      schema:
+        type: string
+        example: mindegg
+    comment-id:
+      name: comment-id
+      in: path
+      required: true
+      description: comment id to filter by
+      schema:
+        type: string
+        format: uuid
+        example: 123e4567-e89b-12d3-a456-426614174000
+    actions:
+      name: actions
+      in: path
+      required: true
+      schema:
+        $ref: "#/components/schemas/Actions"
+    badge-id:
+      name: badge-id
+      in: path
+      required: true
+      description: badge to filter by
+      schema:
+        type: string
+        format: uuid
+        example: 123e4567-e89b-12d3-a456-426614174000
+    user-id:
+      name: user-id
+      in: path
+      required: true
+      description: userId to filter by
+      schema:
+        type: string
+        example: 123e4567-e89b-12d3-a456-426614174000
+    dateEnd:
+      name: dateEnd
+      in: query
+      required: false
+      schema:
+        type: string
+        format: date-time
+        example: 2017-07-21T17:32:28Z
+    partnerId:
+      name: partnerId
+      in: query
+      description: partner to filter by
+      required: false
+      schema:
+        type: string
+        format: uuid
+        example: 123e4567-e89b-12d3-a456-426614174000
+    dateStart:
+      name: dateStart
+      in: query
+      required: false
+      schema:
+        type: string
+        format: date-time
+        example: 2017-07-21T17:32:28Z
+    transactionType:
+      name: transactionType
+      in: query
+      required: false
+      description: Transaction Type
+      schema:
+        $ref: "#/components/schemas/TransactionType"
+    badgeId:
+      name: badgeId
+      in: query
+      description: badge to filter by
+      required: false
+      schema:
+        type: string
+        format: uuid
+        example: 123e4567-e89b-12d3-a456-426614174000
+    offerId:
+      name: resourceId
+      in: query
+      description: resource to filter by
+      required: false
+      schema:
+        type: string
+        format: uuid
+        example: 123e4567-e89b-12d3-a456-426614174000
+    bookmarked:
+      name: bookmarked
+      in: query
+      schema:
+        type: boolean
+        default: false
+        description: Filter by bookmarked
+    resourceStatus:
+      name: resourceStatus
+      in: query
+      required: false
+      schema:
+        $ref: "#/components/schemas/Status"
+    communityId:
+      name: communityId
+      in: query
+      description: comment id to query by
+      schema:
+        type: string
+        format: uuid
+        example: 123e4567-e89b-12d3-a456-426614174000
+    question:
+      name: question
+      in: query
+      description: question to filter by
+      required: false
+      schema:
+        type: string
+    pollId:
+      name: pollId
+      in: query
+      description: poll to filter by
+      required: false
+      schema:
+        type: string
+        format: uuid
+        example: 123e4567-e89b-12d3-a456-426614174000
+    offerType:
+      name: offerType
+      in: query
+      required: false
+      schema:
+        $ref: "#/components/schemas/Category"
+    title:
+      name: title
+      in: query
+      description: title to filter by
+      required: false
+      schema:
+        type: string
+    offerStatus:
+      name: offerStatus
+      in: query
+      required: false
+      schema:
+        $ref: "#/components/schemas/Status"
+    limit:
+      name: limit
+      in: query
+      description: How many items to return at one time (max 100)
+      required: false
+      schema:
+        type: integer
+        format: int32
+    userId:
+      name: userId
+      in: query
+      description: userId to filter by
+      required: false
+      schema:
+        type: string
+        example: 123e4567-e89b-12d3-a456-426614174000
+    emails:
+      name: emails
+      in: query
+      required: true
+      schema:
+        type: array
+        items:
+          type: string
+        example:
+          - user1@example.com
+          - user2@example.com
+      style: form
+      explode: true
+      description: A list of email addresses
+    postId:
+      name: postId
+      in: query
+      description: postId to filter by
+      required: false
+      schema:
+        type: string
+        format: uuid
+        example: 123e4567-e89b-12d3-a456-426614174000
+    phone:
+      name: phone
+      in: query
+      description: phone to filter by
+      required: false
+      schema:
+        type: string
+        example: "18234567890"
+    email:
+      name: email
+      in: query
+      description: email to filter by
+      required: false
+      schema:
+        type: string
+        example: patshala.smith@gmail.com
+    tags:
+      name: tags
+      in: query
+      description: Tags to filter products by
+      required: false
+      schema:
+        type: array
+        items:
+          type: string
+        example:
+          - electronics
+          - kitchen
+          - outdoors
+    transactionId:
+      name: transactionId
+      in: query
+      description: transaction id to filter by
+      required: false
+      schema:
+        type: string
+        format: uuid
+        example: 123e4567-e89b-12d3-a456-426614174000
+  schemas:
+    Offer:
+      title: Offer
+      type: object
+      required:
+        - title
+        - description
+        - offerLink
+        - offerStatus
+        - offerType
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: The unique identifier for the offer.
+        title:
+          type: string
+          description: The title of the offer.
+        description:
+          type: string
+          description: The description of the offer.
+        offerLink:
+          type: string
+          description: The link to the offer.
+        offerStatus:
+          $ref: "#/components/schemas/Status"
+          description: The status of the offer.
+        offerType:
+          $ref: "#/components/schemas/Category"
+          description: The type of the offer.
+    TransactionType:
+      title: TransactionType
+      type: string
+      description: Transaction type tells us if it's an incoming or outgoing transaction
+      enum:
+        - EXPENSE
+        - INCOME
+    Transaction:
+      title: Transaction
+      type: object
+      required:
+        - amount
+        - date
+        - description
+        - transactionCategory
+        - transactionType
+        - userId
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: d290f1ee-6c54-4b01-90e6-d701748f0851
+        amount:
+          type: number
+          example: 100
+        date:
+          type: string
+          format: date-time
+          example: 2017-07-21T17:32:28Z
+        description:
+          type: string
+          example: Payment for groceries
+        transactionCategory:
+          type: string
+          example: Groceries
+        transactionType:
+          $ref: "#/components/schemas/TransactionType"
+        userId:
+          type: string
+          format: uuid
+          example: d290f1ee-6c54-4b01-90e6-d701748f0851
+        reoccurring:
+          type: boolean
+          example: false
+    Notification:
+      title: Notification
+      type: object
+      required:
+        - notificationType
+        - entityType
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: The unique identifier for the offer.
+        userId:
+          type: string
+          format: uuid
+          description: The unique identifier for the user.
+        emails:
+          type: array
+          items:
+            type: string
+          example:
+            - something@gmail.com
+            - othersomething@gmail.com
+        communityId:
+          type: string
+          format: uuid
+          description: The unique identifier for the community.
+        notificationType:
+          type: string
+          enum:
+            - OINKED
+            - TAGGED
+            - INVITED
+            - ACCEPTED
+            - REJECTED
+            - COMMENTED
+            - LIKED
+            - COMMENT_LIKED
+            - FOLLOWED
+            - SUBSCRIBED
+            - EVENT_REMINDER
+            - EVENT_CANCELLED
+            - EVENT_RESCHEDULED
+            - EVENT_STARTED
+            - EVENT_INVITE
+            - COMMUNITY_UPDATE
+            - COMMUNITY_INVITE
+            - PRODUCT_SHIPPED
+            - PRODUCT_DELIVERED
+            - PRODUCT_RETURNED
+            - PRODUCT_PURCHASED
+            - PRODUCT_PURCHASED
+          example: COMMENTED
+          description: The type of the notification.
+        notificationImage:
+          type: string
+          description: The image of the notification.
+          example: https://nas-national-prod.s3.amazonaws.com/h_a1_4285_1_wild-turkey_october_greenfield_k
+        notificationTitle:
+          type: string
+          description: The name of the notification.
+          example: Blockchain
+        notificationLink:
+          type: string
+          description: The link of the notification.
+          example: http://www.blockchainconference.com
+        notificationMessage:
+          type: string
+          description: The message of the notification.
+          example: You have a new comment on your post.
+        entityType:
+          type: string
+          enum:
+            - POST
+            - COMMENT
+            - EVENT
+            - PRODUCT
+            - COMMUNITY
+          description: The type of entity related to the notification.
+        createdAt:
+          type: string
+          description: The timestamp when the notification was created.
+        expiryDate:
+          type: string
+          description: The timestamp when the notification expires.
+        emailSent:
+          type: boolean
+          description: Indicates whether the email has been sent.
+          example: true
+        read:
+          type: boolean
+          description: Indicates whether the notification has been read.
+          example: false
+    Resource:
+      title: Resource
+      type: object
+      required:
+        - title
+        - description
+        - resourceLink
+        - resourceStatus
+        - resourceType
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: The unique identifier for the resource.
+        title:
+          type: string
+          description: The title of the resource.
+        description:
+          type: string
+          description: The description of the resource.
+        resourceLink:
+          type: string
+          description: The link to the resource.
+        resourceStatus:
+          $ref: "#/components/schemas/Status"
+          description: The status of the resource.
+        resourceType:
+          $ref: "#/components/schemas/Category"
+          description: The type of the resource.
+    Subscription:
+      title: Subscription
+      type: object
+      required:
+        - userId
+        - subscriptionPrice
+      properties:
+        userId:
+          type: string
+          description: The unique identifier for the user.
+        subscriptionPrice:
+          type: double
+          example: 10
+        lastPaymentDate:
+          $ref: "#/components/schemas/Date"
+        nextPaymentDate:
+          $ref: "#/components/schemas/Date"
+        subscribers:
+          type: array
+          items:
+            $ref: "#/components/schemas/Subscriber"
+        address:
+          $ref: "#/components/schemas/Address"
+        status:
+          $ref: "#/components/schemas/Status"
+        createdAt:
+          $ref: "#/components/schemas/Date"
+        modifiedAt:
+          $ref: "#/components/schemas/Date"
+    UserInfo:
+      title: User
+      type: object
+      required:
+        - username
+        - id
+        - profilePic
+      properties:
+        id:
+          type: string
+          example: 123e4567-e89b-12d3-a456-426614174000
+        username:
+          type: string
+          example: Johnny
+        profilePic:
+          type: string
+          example: https://www.google.com/images/branding/googlelogo/1x/googlelogo_color_272x92dp.png
+    Social:
+      title: Social
+      type: object
+      properties:
+        userId:
+          type: string
+          description: The unique identifier for the user.
+        facebook:
+          type: string
+          description: The Facebook profile URL of the user.
+        twitter:
+          type: string
+          description: The Twitter profile URL of the user.
+        instagram:
+          type: string
+          description: The Instagram profile URL of the user.
+        linkedin:
+          type: string
+          description: The LinkedIn profile URL of the user.
+        tiktok:
+          type: string
+          description: The TikTok profile URL of the user.
+        youtube:
+          type: string
+          description: The YouTube channel URL of the user.
+        twitch:
+          type: string
+          description: The Twitch profile URL of the user.
+        snapchat:
+          type: string
+          description: The Snapchat profile URL of the user.
+        discord:
+          type: string
+          description: The Discord profile URL of the user.
+        medium:
+          type: string
+          description: The Medium profile URL of the user.
+        website:
+          type: string
+          description: The primary website URL of the user.
+        website2:
+          type: string
+          description: The secondary website URL of the user.
+        website3:
+          type: string
+          description: The tertiary website URL of the user.
+    UserContact:
+      title: User
+      type: object
+      required:
+        - username
+        - email
+      properties:
+        id:
+          type: string
+          example: 123e4567-e89b-12d3-a456-426614174000
+        email:
+          $ref: "#/components/schemas/Email"
+        phone:
+          $ref: "#/components/schemas/Phone"
+        username:
+          type: string
+          example: Johnny
+    User:
+      title: User
+      type: object
+      required:
+        - username
+      properties:
+        id:
+          type: string
+          example: 123e4567-e89b-12d3-a456-426614174000
+        username:
+          type: string
+          example: Johnny
+        email:
+          type: string
+          format: email
+        profilePic:
+          type: string
+          example: https://www.google.com/images/branding/googlelogo/1x/googlelogo_color_272x92dp.png
+        backgroundPic:
+          type: string
+          example: https://www.google.com/images/branding/googlelogo/1x/googlelogo_color_272x92dp.png
+        bio:
+          type: string
+          example: I am a software engineer
+        interests:
+          type: array
+          items:
+            type: string
+          example:
+            - Blockchain
+            - Cryptocurrency
+        finfluencer:
+          type: boolean
+          example: false
+        moneyPersonality:
+          type: string
+          example: SAVER
+        industry:
+          type: string
+          example: Education
+        city:
+          type: string
+          example: San Francisco
+        socials:
+          $ref: "#/components/schemas/Social"
+        timezone:
+          $ref: "#/components/schemas/Timezone"
+        address:
+          $ref: "#/components/schemas/Address"
+        status:
+          $ref: "#/components/schemas/Status"
+        createdAt:
+          $ref: "#/components/schemas/Date"
+        modifiedAt:
+          $ref: "#/components/schemas/Date"
+        subscribePrice:
+          type: number
+          example: 0.99
+    Subscriber:
+      title: Subscriber
+      type: object
+      required:
+        - userId
+      properties:
+        userId:
+          type: string
+          example: 123e4567-e89b-12d3-a456-426614174000
+        subscriptionPrice:
+          type: double
+          example: 10
+        dateSubscribed:
+          $ref: "#/components/schemas/Date"
+        lastPaymentDate:
+          $ref: "#/components/schemas/Date"
+        nextPaymentDate:
+          $ref: "#/components/schemas/Date"
+        cancelledAt:
+          $ref: "#/components/schemas/Date"
+    Blog:
+      title: Blog
+      type: object
+      required:
+        - title
+        - content
+        - communityId
+        - slug
+        - authorId
+      properties:
+        title:
+          type: string
+          description: The title of the blog.
+          example: Blockchain
+        subtitle:
+          type: string
+          description: The subtitle of the blog.
+          example: Understanding the Basics of Blockchain
+        content:
+          type: string
+          description: The content of the blog.
+          example: Blockchain is a system in which a record of transactions made in
+            bitcoin or another cryptocurrency are maintained across several
+            computers that are linked in a peer-to-peer network.
+        communityId:
+          type: string
+          format: uuid
+          description: The unique identifier for the community.
+        slug:
+          type: string
+          description: The slug of the blog.
+          example: blockchain
+        authorId:
+          type: string
+          format: uuid
+          description: The unique identifier for the author.
+        coverPhoto:
+          type: string
+          description: The image of the blog.
+          example: https://nas-national-prod.s3.amazonaws.com/h_a1_4285_1_wild-turkey_october_greenfield_k
+        tags:
+          type: array
+          items:
+            type: string
+          description: The tags of the blog.
+          example:
+            - Blockchain
+            - Cryptocurrency
+        draft:
+          type: boolean
+          description: The draft status of the blog.
+          example: false
+        createdAt:
+          type: string
+          description: The date and time when the blog was published.
+          example: 2021-10-01T00:00:00Z
+        modifiedAt:
+          type: string
+          format: date-time
+          description: The date and time when the blog was last updated.
+          example: 2021-10-01T00:00:00Z
+        postId:
+          type: string
+          format: uuid
+          description: The unique identifier for the post.
+        authorProfilePic:
+          type: string
+          description: The profile picture of the author.
+          example: https://www.google.com/images/branding/googlelogo/1x/googlelogo_color_272x92dp.png
+        ipfsHash:
+          type: string
+          description: The IPFS hash of the blog.
+          example: QmTzQ1iW4g9z8Z2Z2Z2Z2Z2Z2Z2Z2Z2Z2Z2Z2Z2Z2Z
+    Error:
+      title: Error
+      type: object
+      required:
+        - code
+        - message
+      properties:
+        code:
+          type: integer
+          format: int32
+        message:
+          type: string
+    Date:
+      type: object
+      title: Date
+      description: >
+        An object describing the date with the date and time. 
+
+        For simplicity the time is always in UTC, so no timezone is associated to the time. 
+
+        Time is only converted to the user's timezone when displayed in the frontend.
+      properties:
+        postedTime:
+          type: string
+          format: date-time
+          example: 2017-07-21T17:32:28Z
+    Amount:
+      type: object
+      title: Amount
+      description: An object describing the amount, could be used for prices and balances.
+      properties:
+        amount:
+          type: number
+          format: currency
+        currency:
+          type: string
+          enum:
+            - USD
+            - EUR
+    Category:
+      title: Category
+      type: string
+      enum:
+        - CREDIT_CARD
+        - SAVINGS_ACCOUNT
+        - HOME_LOAN
+        - PERSONAL_LOAN
+        - CAR_LOAN
+        - EDUCATION_LOAN
+        - INSURANCE
+        - CRYPTO
+        - STOCKS
+        - MUTUAL_FUNDS
+        - IRA_ACCOUNT
+        - 401K_ACCOUNT
+        - RETIREMENT_ACCOUNT
+        - MISC
+    Address:
+      type: object
+      title: Address
+      description: An object describing an address
+      properties:
+        address:
+          type: string
+          example: 123 Blockchain Blvd
+        address_2:
+          type: string
+          example: "1232"
+        city:
+          type: string
+          example: Chicago
+        state:
+          type: string
+          enum:
+            - AL
+            - AK
+            - AZ
+            - AR
+            - CA
+            - CO
+            - CT
+            - DE
+            - FL
+            - GA
+            - HI
+            - ID
+            - IL
+            - IN
+            - IA
+            - KS
+            - KY
+            - LA
+            - ME
+            - MD
+            - MA
+            - MI
+            - MN
+            - MS
+            - MO
+            - MT
+            - NE
+            - NV
+            - NH
+            - NJ
+            - NM
+            - NY
+            - NC
+            - ND
+            - OH
+            - OK
+            - OR
+            - PA
+            - RI
+            - SC
+            - SD
+            - TN
+            - TX
+            - UT
+            - VT
+            - VA
+            - WA
+            - WV
+            - WI
+            - WY
+          example: CA
+        zip_code:
+          type: string
+          example: "94312"
+        country:
+          type: string
+          example: U.S.A.
+    PreferredLanguage:
+      title: PreferredLanguage
+      type: string
+      enum:
+        - EN
+        - ES
+        - FR
+        - DE
+        - HI
+        - TE
+        - ZH
+        - PL
+        - AR
+    Timezone:
+      title: Timezone
+      type: string
+      enum:
+        - PST
+        - EST
+        - CST
+        - GMT
+        - MST
+    Status:
+      title: Status
+      type: string
+      enum:
+        - ACTIVE
+        - PAUSED
+        - EXPIRED
+        - PENDING
+    Phone:
+      type: object
+      title: Phone
+      description: An object describing the phone number
+      required:
+        - phone
+        - countryCode
+      properties:
+        countryCode:
+          type: string
+          example: "1"
+        phoneNumber:
+          type: string
+          pattern: ^\+?[1-9]\d{1,14}$
+          example: "2345678900"
+    Email:
+      title: Email
+      type: string
+      description: An object describing the email address
+      format: email
+      example: example@example.com
+    Pagination:
+      type: object
+      description: The pagination object contains information about the pagination of the
+        response
+      properties:
+        count:
+          description: The number of items in the response
+          type: integer
+          format: int32
+          example: 1
+        offset:
+          description: The offset of the response
+          type: integer
+          format: int32
+          example: 0
+        total_count:
+          description: The total number of items in the response
+          type: integer
+          format: int32
+          example: 1
+    ScoreLedger:
+      title: ScoreLedger
+      type: object
+      required:
+        - Points
+        - Action
+      properties:
+        Points:
+          type: integer
+          format: int32
+          example: 10
+        PointType:
+          type: string
+          enum:
+            - PIG
+            - WARTHOG
+        Action:
+          type: string
+          example: THREE_COMMENTS
+        Timestamp:
+          type: string
+          format: date-time
+          example: 2017-07-21T17:32:28Z
+    ScoreReason:
+      title: ScoreReason
+      type: object
+      required:
+        - action
+        - score
+      properties:
+        action:
+          $ref: "#/components/schemas/Actions"
+        score:
+          type: integer
+          example: 10
+    Actions:
+      title: Actions
+      type: string
+      enum:
+        - SENT_INVITE
+        - REFERRAL
+        - FIVE_LIKES
+        - THREE_COMMENTS
+        - COMPLETED_GOAL
+        - JOINED_COMMUNITY
+        - FIRST_POST
+        - FIRST_COMMENT
+        - CREATED_COMMUNITY
+        - LIKE
+        - COMMENT
+        - POST
+        - JOINED
+        - INVITE
+        - DAILY_VISIT
+        - OINKD
+    PointsGift:
+      title: PointsGift
+      type: object
+      required:
+        - receivingUserId
+        - giverUserId
+        - score
+      properties:
+        receivingUserId:
+          type: string
+          example: 123e4567-e89b-12d3-a456-426614174000
+        giverUserId:
+          type: string
+          example: 123e4567-e89b-12d3-a456-426614174000
+        score:
+          type: integer
+          example: 10
+        pointType:
+          type: string
+          enum:
+            - PIG
+            - WARTHOG
+        date:
+          $ref: "#/components/schemas/Date"
+        note:
+          type: string
+          example: Thank you for your help!
+    CommunitySurvey:
+      title: CommunitySurvey
+      type: object
+      required:
+        - question
+        - options
+        - id
+      properties:
+        id:
+          type: string
+          description: The unique identifier for the survey.
+        question:
+          type: string
+          description: The unique identifier for the user.
+        options:
+          type: array
+          items:
+            type: string
+    CommunityRules:
+      title: CommunityRules
+      type: object
+      required:
+        - id
+        - rules
+        - adminUserId
+      properties:
+        adminUserId:
+          type: string
+          format: uuid
+          description: The unique identifier for the user.
+        id:
+          type: string
+          format: uuid
+          description: The unique identifier for the community.
+        rules:
+          type: string
+          description: The rules of the community.
+          example: 1. Be respectful of others and their opinions. 2. Do not post any
+            personal information. 3. Do not post any inappropriate content.
+        requiresApproval:
+          type: boolean
+          description: Whether the community requires approval to join.
+        requiresPaidSubscription:
+          type: boolean
+          description: Whether the community requires payment to join.
+        requiresLogin:
+          type: boolean
+          description: Whether the community requires login to view.
+        onboardingQuestions:
+          type: array
+          items:
+            $ref: "#/components/schemas/CommunityOnboardingQuestion"
+          description: The questions of the community.
+        bannedUsers:
+          type: array
+          items:
+            type: string
+          description: The list of banned users.
+          example:
+            - user1
+            - user2
+    CommunityPaidContribution:
+      title: CommunityPaidContribution
+      type: object
+      required:
+        - userId
+        - communityId
+        - amount
+        - date
+        - status
+        - transactionId
+        - paymentMethod
+      properties:
+        userId:
+          type: string
+          format: uuid
+          description: The unique identifier for the user.
+        communityId:
+          type: string
+          format: uuid
+          description: The unique identifier for the community.
+        amount:
+          type: number
+          format: double
+          description: The amount paid by the user.
+        date:
+          type: string
+          format: date-time
+          description: The date of the payment.
+        status:
+          type: string
+          enum:
+            - PENDING
+            - COMPLETED
+            - FAILED
+            - REFUNDED
+          description: The status of the payment.
+        transactionId:
+          type: string
+          description: The unique identifier for the transaction.
+        paymentMethod:
+          type: string
+          enum:
+            - CREDIT_CARD
+            - DEBIT_CARD
+            - PAYPAL
+            - VENMO
+            - CRYPTOCURRENCY
+            - OINKS
+          description: The method used for payment.
+        cryptoCurrency:
+          type: string
+          description: The cryptocurrency used for payment.
+          enum:
+            - BITCOIN
+            - ETHEREUM
+            - SOLANA
+            - BASE
+    BankAccount:
+      title: BankAccount
+      type: object
+      required:
+        - accountNumber
+        - routingNumber
+        - accountType
+        - bankName
+        - accountHolderName
+        - currency
+      properties:
+        accountNumber:
+          type: string
+          description: The bank account number.
+          example: "123456789"
+        routingNumber:
+          type: string
+          description: The bank routing number.
+          example: "021000021"
+        accountType:
+          type: string
+          description: The type of bank account.
+          enum:
+            - CHECKING
+            - SAVINGS
+        bankName:
+          type: string
+          description: The name of the bank.
+          example: Bank of America
+        accountHolderName:
+          type: string
+          description: The name of the account holder.
+          example: John Doe
+        currency:
+          type: string
+          description: The currency of the bank account.
+          example: USD
+    CommunityOnboardingQuestion:
+      title: CommunityOnboardingQuestion
+      type: object
+      required:
+        - question
+        - answer
+      properties:
+        adminUserId:
+          type: string
+          format: uuid
+          description: The unique identifier for the user.
+        createdAt:
+          type: string
+          format: date-time
+          description: The date and time when the community was created.
+        id:
+          type: string
+          format: uuid
+          description: The unique identifier for the question.
+        question:
+          type: string
+          description: The question text.
+        answer:
+          type: string
+          description: The answer text.
+        rightAnswer:
+          type: string
+          description: The correct answer.
+        requiresReview:
+          type: boolean
+          description: Whether the question requires approval.
+    CommunityMembership:
+      title: CommunityMembership
+      type: object
+      required:
+        - communityId
+        - member
+        - paidMember
+        - admin
+        - membershipStatus
+        - userId
+      properties:
+        communityId:
+          type: string
+          description: The unique identifier for the user.
+        member:
+          type: string
+          description: The unique identifier for the user.
+        paidMember:
+          type: boolean
+          description: The unique identifier for the user.
+        admin:
+          type: boolean
+          description: The unique identifier for the user.
+        membershipStatus:
+          type: string
+          enum:
+            - PENDING
+            - APPROVED
+            - REJECTED
+            - REMOVED
+          description: The unique identifier for the user.
+        userId:
+          type: string
+          description: The unique identifier for the user.
+    Community:
+      title: Community
+      type: object
+      required:
+        - adminUserId
+        - id
+        - image
+        - slug
+        - title
+        - rules
+      properties:
+        adminUserId:
+          type: string
+          format: uuid
+          description: The unique identifier for the user.
+        id:
+          type: string
+          format: uuid
+          description: The unique identifier for the community.
+        image:
+          type: string
+          description: The image of the community.
+          example: https://nas-national-prod.s3.amazonaws.com/h_a1_4285_1_wild-turkey_october_greenfield_k
+        slug:
+          type: string
+          description: The slug of the community.
+          example: blockchain
+        title:
+          type: string
+          description: The title of the community.
+          example: Blockchain
+        description:
+          type: string
+          description: The description of the community.
+          example: Blockchain is a system in which a record of transactions made in
+            bitcoin or another cryptocurrency are maintained across several
+            computers that are linked in a peer-to-peer network.
+        featured:
+          type: boolean
+          description: Whether the community is featured.
+        interests:
+          type: array
+          items:
+            type: string
+          description: The interests of the community.
+          example:
+            - Blockchain
+            - Cryptocurrency
+        members:
+          type: array
+          items:
+            type: string
+          description: The members of the community.
+          example:
+            - user1
+            - user2
+        requiresLogin:
+          type: boolean
+          description: Whether the community is open to the public.
+        inviteList:
+          type: array
+          items:
+            type: string
+          description: The invite list of the community.
+          example:
+            - user1
+            - user2
+        inviteCode:
+          type: string
+          description: The invite code of the community.
+          example: invite123
+        membersRequiringApproval:
+          type: array
+          items:
+            type: string
+          description: The members requiring approval of the community.
+          example:
+            - user1
+            - user2
+        requiresManualApproval:
+          type: boolean
+          description: Whether the community requires manual approval.
+        requiresPaidSubscription:
+          type: boolean
+          description: Whether the community requires a paid subscription.
+        onboardingQuestions:
+          type: array
+          items:
+            type: string
+          description: The onboarding questions of the community.
+          example:
+            - What is your favorite cryptocurrency?
+            - What is your favorite blockchain project?
+        communitySurvey:
+          type: array
+          items:
+            $ref: "#/components/schemas/CommunitySurvey"
+        rules:
+          type: string
+          description: The rules of the community.
+          example: 1. Be respectful of others and their opinions. 2. Do not post any
+            personal information. 3. Do not post any inappropriate content.
+        launchDateTime:
+          type: string
+          format: date-time
+          description: The date and time when the community was launched.
+          example: 2022-01-01T00:00:00Z
+        status:
+          type: string
+          enum:
+            - LIVE
+            - PAUSED
+            - PRE_LAUNCH
+            - DELETED
+          example: ACTIVE
+          description: The status of the community.
+        createdAt:
+          type: string
+          format: date-time
+          description: The date and time when the community was created.
+          example: 2022-01-01T00:00:00Z
+        modifiedAt:
+          type: string
+          format: date-time
+          description: The date and time when the community was last modified.
+          example: 2022-01-01T00:00:00Z
+        ipfsHash:
+          type: string
+          description: The IPFS hash of the community.
+          example: QmTzQ1c6v4g7sZ8z8z8z8z8z8z8z8z8z8z8z8z8z8
+        firstVisit:
+          type: boolean
+          description: Whether the user has never visited the community before.
+        communityPaidContributions:
+          type: array
+          items:
+            $ref: "#/components/schemas/CommunityPaidContribution"
+          description: The donations made to the community.
+        communityFundingDestination:
+          type: string
+          description: The destination of the community funding.
+    CommunityPaymentInfo:
+      title: CommunityPaymentInfo
+      type: object
+      required:
+        - communityId
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: The unique identifier for the funding destination.
+        communityId:
+          type: string
+          format: uuid
+          description: The unique identifier for the community.
+        cryptoWallets:
+          type: array
+          items:
+            $ref: "#/components/schemas/CryptoWallet"
+          description: The list of cryptocurrency wallets for the community.
+        bankAccounts:
+          type: array
+          items:
+            $ref: "#/components/schemas/BankAccount"
+          description: The list of bank accounts for the community.
+    CryptoWallet:
+      title: CryptoWallets
+      type: object
+      required:
+        - walletAddress
+        - cryptoCurrency
+      properties:
+        walletAddress:
+          type: string
+          description: The cryptocurrency wallet address.
+          example: "0x1234567890abcdef1234567890abcdef12345678"
+        walletAddress2:
+          type: string
+          description: The second cryptocurrency wallet address.
+          example: "0xabcdef1234567890abcdef1234567890abcdef12"
+        cryptoCurrency:
+          type: string
+          description: The type of cryptocurrency.
+          enum:
+            - BITCOIN
+            - ETHEREUM
+            - SOLANA
+            - BASE
+        note:
+          type: string
+          description: A note or comment about the wallet.
+    Option:
+      title: Option
+      type: object
+      required:
+        - option
+      properties:
+        option:
+          type: string
+          example: Theme for Spring Fling
+        votes:
+          type: number
+          example: 0
+    Poll:
+      title: Poll
+      type: object
+      required:
+        - title
+        - question
+        - startDate
+        - endDate
+        - options
+      properties:
+        title:
+          type: string
+          example: Theme for Spring Fling
+        description:
+          type: string
+          example: Spring fling is coming up and we need a theme this year.
+        imageUrl:
+          type: string
+          example: https://example.com/image.jpg
+        question:
+          type: string
+          example: What should the theme for Spring Fling be?
+        organizations:
+          type: array
+          items:
+            type: string
+            format: uuid
+            example: 123e4567-e89b-12d3-a456-426614174000
+        rooms:
+          type: array
+          items:
+            type: string
+            format: uuid
+            example: 123e4567-e89b-12d3-a456-426614174000
+        startDate:
+          type: string
+          format: date-time
+          example: 2017-07-21T17:32:28Z
+        endDate:
+          type: string
+          format: date-time
+          example: 2017-07-21T17:32:28Z
+        options:
+          type: array
+          items:
+            $ref: "#/components/schemas/Option"
+        status:
+          $ref: "#/components/schemas/Status"
+    Badge:
+      title: Badge
+      type: object
+      required:
+        - title
+      properties:
+        title:
+          type: string
+          example: Social Butterfly
+        description:
+          type: string
+          example: Always brining people together.
+        imageUrl:
+          type: string
+          example: https://example.com/image.jpg
+    Comment:
+      title: Comment
+      type: object
+      required:
+        - author_id
+        - content
+        - post_id
+        - created_at
+        - updated_at
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: 123e4567-e89b-12d3-a456-426614174000
+        post_id:
+          type: string
+          format: uuid
+          example: 123e4567-e89b-12d3-a456-426614174000
+        author_id:
+          type: string
+          format: uuid
+          example: 123e4567-e89b-12d3-a456-426614174000
+        content:
+          type: string
+        picture_url:
+          type: string
+        link_url:
+          type: string
+        tags:
+          type: array
+          items:
+            type: string
+            format: uuid
+            example: 123e4567-e89b-12d3-a456-426614174000
+        users_liked:
+          type: array
+          items:
+            type: string
+            format: uuid
+            example: 123e4567-e89b-12d3-a456-426614174000
+        users_commented:
+          type: array
+          items:
+            type: string
+            format: uuid
+            example: 123e4567-e89b-12d3-a456-426614174000
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+        deleted_at:
+          type: string
+          format: date-time
+    Post:
+      title: Post
+      type: object
+      required:
+        - community_id
+        - author_id
+        - content
+        - created_at
+        - updated_at
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: 123e4567-e89b-12d3-a456-426614174000
+        author_id:
+          type: string
+        content:
+          type: string
+        picture_url:
+          type: string
+        link_url:
+          type: string
+        tags:
+          type: array
+          items:
+            type: string
+            format: uuid
+            example: 123e4567-e89b-12d3-a456-426614174000
+        users_liked:
+          type: array
+          items:
+            type: string
+            format: uuid
+            example: 123e4567-e89b-12d3-a456-426614174000
+        users_commented:
+          type: array
+          items:
+            type: string
+            format: uuid
+            example: 123e4567-e89b-12d3-a456-426614174000
+        users_shared:
+          type: array
+          items:
+            type: string
+            format: uuid
+            example: 123e4567-e89b-12d3-a456-426614174000
+        comments:
+          type: array
+          items: {}
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+  responses:
+    UnexpectedError:
+      description: unexpected error
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+    NullResponse:
+      description: Null response
