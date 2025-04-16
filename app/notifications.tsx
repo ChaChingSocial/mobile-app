@@ -3,7 +3,7 @@ import { StyleSheet, Text } from "react-native";
 import ParallaxScrollView from "@/components/ParallaxScrollView";
 import { IconSymbol } from "@/components/ui/IconSymbol";
 
-export default function NotificationsScreen() {
+export default function NotificationScreen() {
   return (
     <ParallaxScrollView
       headerBackgroundColor={{ light: "#D0D0D0", dark: "#353636" }}

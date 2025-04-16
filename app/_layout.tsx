@@ -1,7 +1,7 @@
 import "@/global.css";
 import { GluestackUIProvider } from "@/components/ui/gluestack-ui-provider";
 import { useFonts } from "expo-font";
-import { Stack } from "expo-router";
+import { Link, Stack } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { StatusBar } from "expo-status-bar";
 import { useEffect } from "react";
@@ -30,7 +30,7 @@ export default function RootLayout() {
   return (
     <GluestackUIProvider mode="light">
       <Stack
-        screenOptions={({ navigation }) => ({
+        screenOptions={({ navigation, route }) => ({
           headerStyle: {
             backgroundColor: "#fff",
           },
@@ -41,26 +41,29 @@ export default function RootLayout() {
             />
           ),
           headerRight: () => (
-            <TouchableOpacity
-              onPress={() => navigation.navigate("notifications")}
-              style={{ marginRight: 15 }}
-            >
-              <Ionicons
-                name="notifications-outline"
-                size={24}
-                color={"white"}
-              />
-            </TouchableOpacity>
+            <Link href="/blog">
+              {/* <TouchableOpacity
+                // onPress={() => navigation.navigate("notifications")}
+                onPress={() => navigation.goBack()}
+                // style={{ marginRight: 15 }}
+              > */}
+                <Ionicons
+                  name="notifications-outline"
+                  size={24}
+                  color={"black"}
+                />
+              {/* </TouchableOpacity> */}
+            </Link>
           ),
           headerTitleAlign: "center",
         })}
       >
         <Stack.Screen name="(tabs)" options={{ headerShown: true }} />
-        <Stack.Screen name="+not-found" />
         <Stack.Screen
           name="notifications"
-          options={{ title: "Notifications" }}
+          options={{ title: "Notifications", headerBackTitle: "Back" }}
         />
+        <Stack.Screen name="+not-found" />
       </Stack>
       <StatusBar />
     </GluestackUIProvider>
