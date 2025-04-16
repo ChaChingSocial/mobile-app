@@ -1,8 +1,5 @@
-import {
-  DarkTheme,
-  DefaultTheme,
-  ThemeProvider,
-} from "@react-navigation/native";
+import "@/global.css";
+import { GluestackUIProvider } from "@/components/ui/gluestack-ui-provider";
 import { useFonts } from "expo-font";
 import { Stack } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
@@ -10,13 +7,11 @@ import { StatusBar } from "expo-status-bar";
 import { useEffect } from "react";
 import "react-native-reanimated";
 import { FontAwesome, Ionicons } from "@expo/vector-icons";
-import { useColorScheme } from "@/hooks/useColorScheme";
 import { Image, TouchableOpacity, View } from "react-native";
 
 SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
-  const colorScheme = useColorScheme();
   const [loaded] = useFonts({
     SpaceMono: require("../assets/fonts/SpaceMono-Regular.ttf"),
     ...FontAwesome.font,
@@ -33,16 +28,16 @@ export default function RootLayout() {
   }
 
   return (
-    <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
+    <GluestackUIProvider mode="light">
       <Stack
         screenOptions={({ navigation }) => ({
           headerStyle: {
-            backgroundColor: colorScheme === "dark" ? "#000" : "#fff",
+            backgroundColor: "#fff",
           },
           headerTitle: () => (
             <Image
               source={require("@/assets/images/logo.png")}
-              style={{  height: 40, resizeMode: "contain", marginLeft: -140 }}
+              style={{ height: 40, resizeMode: "contain", marginLeft: -140 }}
             />
           ),
           headerRight: () => (
@@ -53,7 +48,7 @@ export default function RootLayout() {
               <Ionicons
                 name="notifications-outline"
                 size={24}
-                color={colorScheme === "dark" ? "white" : "black"}
+                color={"white"}
               />
             </TouchableOpacity>
           ),
@@ -67,7 +62,7 @@ export default function RootLayout() {
           options={{ title: "Notifications" }}
         />
       </Stack>
-      <StatusBar style={colorScheme === "dark" ? "light" : "dark"} />
-    </ThemeProvider>
+      <StatusBar />
+    </GluestackUIProvider>
   );
 }
