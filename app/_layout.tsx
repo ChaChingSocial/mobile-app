@@ -1,17 +1,20 @@
-import "@/global.css";
 import { GluestackUIProvider } from "@/components/ui/gluestack-ui-provider";
+import "@/global.css";
+import { DrawerContext } from "@/lib/Context";
+import { FontAwesome } from "@expo/vector-icons";
 import { useFonts } from "expo-font";
-import { Link, Stack } from "expo-router";
+import { Stack } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { StatusBar } from "expo-status-bar";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
 import "react-native-reanimated";
-import { FontAwesome, Ionicons } from "@expo/vector-icons";
-import { Image, TouchableOpacity, View } from "react-native";
 
 SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
+  const [open, setOpen] = useState(false);
+
   const [loaded] = useFonts({
     SpaceMono: require("../assets/fonts/SpaceMono-Regular.ttf"),
     ...FontAwesome.font,
@@ -29,43 +32,28 @@ export default function RootLayout() {
 
   return (
     <GluestackUIProvider mode="light">
-      <Stack
-        screenOptions={({ navigation, route }) => ({
-          headerStyle: {
-            backgroundColor: "#fff",
-          },
-          headerTitle: () => (
-            <Image
-              source={require("@/assets/images/logo.png")}
-              style={{ height: 40, resizeMode: "contain", marginLeft: -140 }}
+      <DrawerContext.Provider value={{ open, setOpen }}>
+        <GestureHandlerRootView style={{ flex: 1 }}>
+          <Stack
+            screenOptions={() => ({
+              headerShown: false,
+            })}
+          >
+            <Stack.Screen name="(tabs)" />
+            <Stack.Screen
+              name="notifications"
+              options={{
+                title: "Notifications",
+                headerBackTitle: "Back",
+                headerShown: true,
+              }}
             />
-          ),
-          headerRight: () => (
-            <Link href="/blog">
-              {/* <TouchableOpacity
-                // onPress={() => navigation.navigate("notifications")}
-                onPress={() => navigation.goBack()}
-                // style={{ marginRight: 15 }}
-              > */}
-                <Ionicons
-                  name="notifications-outline"
-                  size={24}
-                  color={"black"}
-                />
-              {/* </TouchableOpacity> */}
-            </Link>
-          ),
-          headerTitleAlign: "center",
-        })}
-      >
-        <Stack.Screen name="(tabs)" options={{ headerShown: true }} />
-        <Stack.Screen
-          name="notifications"
-          options={{ title: "Notifications", headerBackTitle: "Back" }}
-        />
-        <Stack.Screen name="+not-found" />
-      </Stack>
-      <StatusBar />
+            <Stack.Screen name="(profile)" />
+            <Stack.Screen name="+not-found" />
+          </Stack>
+          <StatusBar />
+        </GestureHandlerRootView>
+      </DrawerContext.Provider>
     </GluestackUIProvider>
   );
 }

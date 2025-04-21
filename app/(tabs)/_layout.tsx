@@ -1,28 +1,81 @@
-import { Tabs } from 'expo-router';
-import React from 'react';
-import { Platform } from 'react-native';
+import { Tabs } from "expo-router";
+import { useContext } from "react";
+import { Image, Platform, TouchableOpacity } from "react-native";
 
-import { HapticTab } from '@/components/HapticTab';
-import TabBarBackground from '@/components/ui/TabBarBackground';
-import { Colors } from '@/constants/Colors';
-import { FontAwesome } from '@expo/vector-icons';
+import { HapticTab } from "@/components/HapticTab";
+import {
+  Avatar,
+  AvatarFallbackText,
+  AvatarImage,
+} from "@/components/ui/avatar";
+import TabBarBackground from "@/components/ui/TabBarBackground";
+import { Colors } from "@/constants/Colors";
+import { DrawerContext } from "@/lib/Context";
+import { FontAwesome, Ionicons } from "@expo/vector-icons";
 
 export default function TabLayout() {
+  const { open, setOpen } = useContext(DrawerContext);
 
   return (
     <Tabs
-      screenOptions={{
-        tabBarActiveTintColor: Colors[ "light"].tint,
-        headerShown: false,
-        tabBarButton: HapticTab,
-        tabBarBackground: TabBarBackground,
-        tabBarStyle: Platform.select({
-          ios: {
-            // Use a transparent background on iOS to show the blur effect
-            position: "absolute",
+      screenOptions={({ navigation }) => {
+        // const isNotHomeRoute = route.name !== "(Home)";
+
+        return {
+          // headerShown: isNotHomeRoute,
+          headerShadowVisible: false,
+          headerStyle: {
+            backgroundColor: "#fff",
           },
-          default: {},
-        }),
+          headerTitle: () => (
+            <TouchableOpacity onPressOut={() => navigation.navigate("index")}>
+              <Image
+                source={require("@/assets/images/logo.png")}
+                style={{ height: 40, resizeMode: "contain", width: 140 }}
+              />
+            </TouchableOpacity>
+          ),
+          headerRight: () => (
+            <TouchableOpacity
+              onPressOut={() => navigation.navigate("notifications")}
+              className="mr-5"
+            >
+              <Ionicons
+                name="notifications-outline"
+                size={24}
+                color={"black"}
+              />
+            </TouchableOpacity>
+          ),
+
+          headerLeft: () => (
+            <TouchableOpacity
+              onPressOut={() => setOpen(!open)}
+              className="ml-5"
+            >
+              <Avatar size="md">
+                <AvatarFallbackText>Jane Doe</AvatarFallbackText>
+                <AvatarImage
+                  source={{
+                    uri: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=687&q=80",
+                  }}
+                />
+              </Avatar>
+            </TouchableOpacity>
+          ),
+          headerTitleAlign: "center",
+
+          tabBarActiveTintColor: Colors["light"].tint,
+          tabBarButton: HapticTab,
+          tabBarBackground: TabBarBackground,
+          tabBarStyle: Platform.select({
+            ios: {
+              // Use a transparent background on iOS to show the blur effect
+              position: "absolute",
+            },
+            default: {},
+          }),
+        };
       }}
     >
       <Tabs.Screen
