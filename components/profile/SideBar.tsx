@@ -1,4 +1,3 @@
-import { Button, ButtonText } from "@/components/ui/button";
 import {
   Drawer,
   DrawerBackdrop,
@@ -9,14 +8,15 @@ import {
 } from "@/components/ui/drawer";
 import { Heading } from "@/components/ui/heading";
 import { FontAwesome, FontAwesome5 } from "@expo/vector-icons";
-import { TouchableOpacity } from "react-native";
+import { Pressable, TouchableOpacity } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Avatar, AvatarFallbackText, AvatarImage } from "../ui/avatar";
-import React from "react";
+
+import { Link, useRouter } from "expo-router";
 import { Box } from "../ui/box";
+import { Divider } from "../ui/divider";
 import { HStack } from "../ui/hstack";
 import { Text } from "../ui/text";
-import { Divider } from "../ui/divider";
 import { VStack } from "../ui/vstack";
 
 export default function SideBar({
@@ -26,6 +26,7 @@ export default function SideBar({
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }) {
+  const router = useRouter();
   return (
     <SafeAreaView>
       <Drawer
@@ -72,14 +73,35 @@ export default function SideBar({
             <Box className="flex flex-1 justify-between h-full">
               <Divider className="my-0.5" />
               <VStack space="lg" className="mt-14 ml-2">
-                <Box className="flex flex-row gap-3 items-center">
-                  <FontAwesome5 name="user" size={20} color="black" />
-                  <Text size="xl" bold>Profile</Text>
-                </Box>
-                <Box className="flex flex-row gap-3 items-center">
-                  <FontAwesome5 name="cog" size={20} color="black" />
-                  <Text size="xl" bold>Settings</Text>
-                </Box>{" "}
+                <Pressable
+                  className="flex flex-row gap-3 items-center"
+                  onPress={() => {
+                    router.push("/(profile)");
+                    onOpenChange(false);
+                  }}
+                >
+                  <Text>
+                    <FontAwesome5 name="user" size={20} color="black" />
+                  </Text>
+                  <Text size="xl" bold>
+                    Profile
+                  </Text>
+                </Pressable>
+                <Pressable
+                  className="flex flex-row gap-3 items-center"
+                  onPress={() => {
+                    router.push("/(profile)/settings");
+                    onOpenChange(false);
+                  }}
+                >
+                  <Text>
+                    {" "}
+                    <FontAwesome5 name="cog" size={20} color="black" />
+                  </Text>
+                  <Text size="xl" bold>
+                    Settings
+                  </Text>
+                </Pressable>{" "}
               </VStack>
             </Box>
           </DrawerBody>

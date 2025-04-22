@@ -9,7 +9,7 @@ import {
   AvatarImage,
 } from "@/components/ui/avatar";
 import TabBarBackground from "@/components/ui/TabBarBackground";
-import { Colors } from "@/constants/Colors";
+import { Colors } from "@/lib/constants/Colors";
 import { DrawerContext } from "@/lib/Context";
 import { FontAwesome, Ionicons } from "@expo/vector-icons";
 
@@ -19,10 +19,7 @@ export default function TabLayout() {
   return (
     <Tabs
       screenOptions={({ navigation }) => {
-        // const isNotHomeRoute = route.name !== "(Home)";
-
         return {
-          // headerShown: isNotHomeRoute,
           headerShadowVisible: false,
           headerStyle: {
             backgroundColor: "#fff",

@@ -1,16 +1,12 @@
 import { useBottomTabOverflow } from "@/components/ui/TabBarBackground";
-import type { PropsWithChildren, ReactElement } from "react";
-import { StyleSheet, View } from "react-native";
+import type { PropsWithChildren } from "react";
 import Animated, { useAnimatedRef } from "react-native-reanimated";
 
-const HEADER_HEIGHT = 250;
-
 type Props = PropsWithChildren<{
-  headerImage?: ReactElement;
-  headerBackgroundColor: { dark: string; light: string };
+  classNames?: string;
 }>;
 
-export default function ParallaxScrollView({ children, headerImage }: Props) {
+export default function ParallaxScrollView({ children, classNames }: Props) {
   const scrollRef = useAnimatedRef<Animated.ScrollView>();
   const bottom = useBottomTabOverflow();
 
@@ -19,34 +15,9 @@ export default function ParallaxScrollView({ children, headerImage }: Props) {
       ref={scrollRef}
       scrollEventThrottle={16}
       scrollIndicatorInsets={{ bottom }}
-      contentContainerStyle={{ paddingBottom: bottom, height: "100%" }}
+      contentContainerStyle={{ paddingBottom: bottom }}
     >
-      {/* <Animated.View
-        style={[
-          styles.header,
-          { backgroundColor: headerBackgroundColor[colorScheme] },
-          headerAnimatedStyle,
-        ]}
-      > */}
-      {headerImage}
-      {/* </Animated.View> */}
-      <View style={styles.content}>{children}</View>
+      <Animated.View className={classNames}>{children}</Animated.View>
     </Animated.ScrollView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  header: {
-    height: HEADER_HEIGHT,
-    overflow: "hidden",
-  },
-  content: {
-    flex: 1,
-    padding: 32,
-    gap: 16,
-    overflow: "hidden",
-  },
-});
