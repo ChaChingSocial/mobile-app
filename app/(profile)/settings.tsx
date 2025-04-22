@@ -1,11 +1,10 @@
-import { Text } from "@/components/ui/text";
-import { View } from "react-native";
+import ParallaxScrollView from "@/components/ParallaxScrollView";
+import { SettingsComponent } from "@/components/settings/SettingsScreen";
 
 export default function SettingsScreen() {
   return (
-    <View>
-      {" "}
-      <Text>Settings</Text>
-    </View>
+    <ParallaxScrollView>
+      <SettingsComponent/>
+    </ParallaxScrollView>
   );
 }
