@@ -18,6 +18,7 @@ import { Divider } from "../ui/divider";
 import { HStack } from "../ui/hstack";
 import { Text } from "../ui/text";
 import { VStack } from "../ui/vstack";
+import { useSession } from "@/lib/providers/AuthContext";
 
 export default function SideBar({
   open,
@@ -27,6 +28,8 @@ export default function SideBar({
   onOpenChange: (open: boolean) => void;
 }) {
   const router = useRouter();
+  const { signOut } = useSession();
+
   return (
     <SafeAreaView>
       <Drawer
@@ -76,13 +79,11 @@ export default function SideBar({
                 <Pressable
                   className="flex flex-row gap-3 items-center"
                   onPress={() => {
-                    router.push("/(profile)");
+                    router.push("/(protected)/(profile)");
                     onOpenChange(false);
                   }}
                 >
-                  <Text>
-                    <FontAwesome5 name="user" size={20} color="black" />
-                  </Text>
+                  <FontAwesome5 name="user" size={20} color="black" />
                   <Text size="xl" bold>
                     Profile
                   </Text>
@@ -90,24 +91,23 @@ export default function SideBar({
                 <Pressable
                   className="flex flex-row gap-3 items-center"
                   onPress={() => {
-                    router.push("/(profile)/settings");
+                    router.push("/(protected)/(profile)/settings");
                     onOpenChange(false);
                   }}
                 >
-                  <Text>
-                    {" "}
-                    <FontAwesome5 name="cog" size={20} color="black" />
-                  </Text>
+                  <FontAwesome5 name="cog" size={20} color="black" />
+
                   <Text size="xl" bold>
                     Settings
                   </Text>
-                </Pressable>{" "}
+                </Pressable>
               </VStack>
             </Box>
           </DrawerBody>
           <DrawerFooter className="border-t border-background-200 pt-6">
             <TouchableOpacity
               onPress={() => {
+                signOut();
                 onOpenChange(false);
               }}
               className="w-fit border-2 border-background-200 rounded-md bg-background-200 p-2"

@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/avatar";
 import TabBarBackground from "@/components/ui/TabBarBackground";
 import { Colors } from "@/lib/constants/Colors";
-import { DrawerContext } from "@/lib/Context";
+import { DrawerContext } from "@/lib/providers/DrawerContext";
 import { FontAwesome, Ionicons } from "@expo/vector-icons";
 
 export default function TabLayout() {
@@ -20,7 +20,7 @@ export default function TabLayout() {
     <Tabs
       screenOptions={({ navigation }) => {
         return {
-          headerShadowVisible: false,
+          headerShadowVisible: true,
           headerStyle: {
             backgroundColor: "#fff",
           },
@@ -63,7 +63,7 @@ export default function TabLayout() {
           headerTitleAlign: "center",
 
           tabBarActiveTintColor: Colors["light"].tint,
-          tabBarButton: HapticTab,
+          // tabBarButton: HapticTab,
           tabBarBackground: TabBarBackground,
           tabBarStyle: Platform.select({
             ios: {
@@ -101,7 +101,7 @@ export default function TabLayout() {
             <FontAwesome size={22} name="wrench" color={color} />
           ),
         }}
-      />{" "}
+      />
       <Tabs.Screen
         name="about"
         options={{

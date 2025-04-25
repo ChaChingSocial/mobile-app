@@ -1,18 +1,16 @@
 import SideBar from "@/components/profile/SideBar";
 import {
-    Avatar,
-    AvatarFallbackText,
-    AvatarImage,
+  Avatar,
+  AvatarFallbackText,
+  AvatarImage,
 } from "@/components/ui/avatar";
 import "@/global.css";
-import { DrawerContext } from "@/lib/Context";
+import { DrawerContext } from "@/lib/providers/DrawerContext";
 import { Ionicons } from "@expo/vector-icons";
 import { Stack } from "expo-router";
 import { useContext } from "react";
 import { Image } from "react-native";
-import {
-    TouchableOpacity
-} from "react-native-gesture-handler";
+import { TouchableOpacity } from "react-native-gesture-handler";
 import "react-native-reanimated";
 
 export default function ProfileLayout() {
@@ -22,12 +20,12 @@ export default function ProfileLayout() {
     <Stack
       screenOptions={({ navigation }) => ({
         headerShown: false,
-        headerShadowVisible: false,
+        headerShadowVisible: true,
         headerStyle: {
           backgroundColor: "#fff",
         },
         headerTitle: () => (
-          <TouchableOpacity onPressOut={() => navigation.navigate("(tabs)")}>
+          <TouchableOpacity onPressOut={() => navigation.navigate("(home)")}>
             <Image
               source={require("@/assets/images/logo.png")}
               style={{ height: 40, resizeMode: "contain", width: 140 }}

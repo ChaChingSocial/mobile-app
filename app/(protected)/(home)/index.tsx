@@ -5,7 +5,7 @@ import {
   AvatarFallbackText,
   AvatarImage,
 } from "@/components/ui/avatar";
-import { DrawerContext } from "@/lib/Context";
+import { DrawerContext } from "@/lib/providers/DrawerContext";
 import { useContext } from "react";
 import { TouchableOpacity } from "react-native";
 import { ScrollView } from "react-native-gesture-handler";
