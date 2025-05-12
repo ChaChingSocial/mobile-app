@@ -6,13 +6,14 @@ import {
   useEffect,
 } from "react";
 import { router, SplashScreen } from "expo-router";
+import { SessionValue } from "@/types";
 
 SplashScreen.preventAutoHideAsync();
 
 const AuthContext = createContext<{
   signIn: () => void;
   signOut: () => void;
-  session?: string | null;
+  session?: SessionValue | null;
   isLoading: boolean;
 }>({
   signIn: () => null,
@@ -42,6 +43,10 @@ export function SessionProvider({ children }: PropsWithChildren) {
     if (isLoading) {
       SplashScreen.hideAsync();
     }
+    if (session) {
+      router.replace("/(protected)/(home)");
+    }
+    
   }, [isLoading]);
 
   return (
@@ -49,7 +54,6 @@ export function SessionProvider({ children }: PropsWithChildren) {
       value={{
         signIn: () => {
           // Perform sign-in logic here
-          setSession("xxx");
           router.replace("/(protected)/(home)");
         },
         signOut: () => {

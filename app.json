@@ -10,7 +10,12 @@
     "newArchEnabled": true,
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.sonylomo.chachingmobileapp"
+      "bundleIdentifier": "com.sonylomo.chachingmobileapp",
+      "infoPlist": {
+        "NSAppTransportSecurity": {
+          "NSAllowsArbitraryLoads": true
+        }
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -35,10 +40,21 @@
           "backgroundColor": "#000"
         }
       ],
-      "expo-secure-store"
+      "expo-secure-store",
+      "expo-font",
+      "expo-web-browser"
     ],
     "experiments": {
       "typedRoutes": true
-    }
+    },
+    "extra": {
+      "router": {
+        "origin": false
+      },
+      "eas": {
+        "projectId": "1092fdb1-cf0d-4901-96de-dc096aefad17"
+      }
+    },
+    "owner": "chaching-social"
   }
 }

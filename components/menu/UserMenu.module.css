@@ -1,0 +1,16 @@
+.avatar {
+    border: rem(2px) solid var(--mantine-color-body);
+    background-color: white;
+    object-fit: contain;
+    width: rem(40px);
+    height: rem(40px);
+    border-color: var(--mantine-color-body);
+    border-radius: 50%; /* Makes the avatar round */
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1), 0 6px 20px rgba(0, 0, 0, 0.1); /* Adds shadow */
+    transition: box-shadow 0.3s ease-in-out; /* Smooth shadow transition */
+}
+
+/* Optional: Add a hover effect for a bit more interactivity */
+.avatar:hover {
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15), 0 12px 24px rgba(0, 0, 0, 0.15); /* Larger shadow on hover */
+}

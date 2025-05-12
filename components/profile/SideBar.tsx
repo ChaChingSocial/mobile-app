@@ -28,7 +28,7 @@ export default function SideBar({
   onOpenChange: (open: boolean) => void;
 }) {
   const router = useRouter();
-  const { signOut } = useSession();
+  const { signOut, session } = useSession();
 
   return (
     <SafeAreaView>
@@ -46,18 +46,20 @@ export default function SideBar({
             <VStack space="md">
               <TouchableOpacity onPressOut={() => {}}>
                 <Avatar size="md">
-                  <AvatarFallbackText>Jane Doe</AvatarFallbackText>
+                  <AvatarFallbackText>
+                    {session?.displayName}
+                  </AvatarFallbackText>
                   <AvatarImage
                     source={{
-                      uri: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=687&q=80",
+                      uri: session?.profilePic || "",
                     }}
                   />
                 </Avatar>
               </TouchableOpacity>
               <Box>
-                <Heading size="xl">Jane Doe</Heading>
+                <Heading size="xl">{session?.displayName}</Heading>
                 <Text size="md" className="font-extralight">
-                  @janedoe
+                  @{session?.displayName}
                 </Text>
               </Box>
               <HStack space="md" reversed={false}>
