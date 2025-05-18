@@ -47,12 +47,6 @@ export interface PointsGift {
     score: number;
     /**
      * 
-     * @type {string}
-     * @memberof PointsGift
-     */
-    pointType?: PointsGiftPointTypeEnum;
-    /**
-     * 
      * @type {ModelDate}
      * @memberof PointsGift
      */
@@ -64,17 +58,6 @@ export interface PointsGift {
      */
     note?: string;
 }
-
-
-/**
- * @export
- */
-export const PointsGiftPointTypeEnum = {
-    Pig: 'PIG',
-    Warthog: 'WARTHOG'
-} as const;
-export type PointsGiftPointTypeEnum = typeof PointsGiftPointTypeEnum[keyof typeof PointsGiftPointTypeEnum];
-
 
 /**
  * Check if a given object implements the PointsGift interface.
@@ -99,7 +82,6 @@ export function PointsGiftFromJSONTyped(json: any, ignoreDiscriminator: boolean)
         'receivingUserId': json['receivingUserId'],
         'giverUserId': json['giverUserId'],
         'score': json['score'],
-        'pointType': json['pointType'] == null ? undefined : json['pointType'],
         'date': json['date'] == null ? undefined : ModelDateFromJSON(json['date']),
         'note': json['note'] == null ? undefined : json['note'],
     };
@@ -119,7 +101,6 @@ export function PointsGiftToJSONTyped(value?: PointsGift | null, ignoreDiscrimin
         'receivingUserId': value['receivingUserId'],
         'giverUserId': value['giverUserId'],
         'score': value['score'],
-        'pointType': value['pointType'],
         'date': ModelDateToJSON(value['date']),
         'note': value['note'],
     };

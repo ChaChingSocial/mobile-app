@@ -30,12 +30,6 @@ export interface ScoreLedger {
      * @type {string}
      * @memberof ScoreLedger
      */
-    pointType?: ScoreLedgerPointTypeEnum;
-    /**
-     * 
-     * @type {string}
-     * @memberof ScoreLedger
-     */
     action: string;
     /**
      * 
@@ -44,17 +38,6 @@ export interface ScoreLedger {
      */
     timestamp?: Date;
 }
-
-
-/**
- * @export
- */
-export const ScoreLedgerPointTypeEnum = {
-    Pig: 'PIG',
-    Warthog: 'WARTHOG'
-} as const;
-export type ScoreLedgerPointTypeEnum = typeof ScoreLedgerPointTypeEnum[keyof typeof ScoreLedgerPointTypeEnum];
-
 
 /**
  * Check if a given object implements the ScoreLedger interface.
@@ -76,7 +59,6 @@ export function ScoreLedgerFromJSONTyped(json: any, ignoreDiscriminator: boolean
     return {
         
         'points': json['Points'],
-        'pointType': json['PointType'] == null ? undefined : json['PointType'],
         'action': json['Action'],
         'timestamp': json['Timestamp'] == null ? undefined : (new Date(json['Timestamp'])),
     };
@@ -94,7 +76,6 @@ export function ScoreLedgerToJSONTyped(value?: ScoreLedger | null, ignoreDiscrim
     return {
         
         'Points': value['points'],
-        'PointType': value['pointType'],
         'Action': value['action'],
         'Timestamp': value['timestamp'] == null ? undefined : ((value['timestamp']).toISOString()),
     };

@@ -52,6 +52,7 @@ export const PostInfo = ({
         console.log("Community ids:", communityId);
         try {
           const res = await communityApi.communityById({ communityId });
+          console.log("HIIIt Community data:", res);
           if (res) {
             setCommunityName(res.title);
             setCommunitySlug(res.slug);
@@ -68,45 +69,47 @@ export const PostInfo = ({
   console.log("Community name:", communityName);
 
   return (
-    <Box className="items-start relative">
+    <>
       {communityName && (
         <Pressable onPress={() => router.push(`/community/${communitySlug}`)}>
           <Badge
             size="md"
             variant="solid"
             action="info"
-            className="absolute -top-2 right-0 via-violet-600"
+            className="ml-auto -mt-2 rounded-md bg-violet-600"
           >
-            <BadgeText>{communityName}</BadgeText>
+            <BadgeText className="text-purple-50 font-semibold">{communityName}</BadgeText>
           </Badge>
         </Pressable>
       )}
-      <Box className="flex flex-row items-center justify-between w-full px-4">
-        <TouchableOpacity
-          onPress={() =>
-            router.push(`/profile/${posterName}?userId=${posterUserId}`)
-          }
-          className="flex items-left justify-start mt-4"
-        >
-          <Avatar
-            size="md"
-            className={`object-contain border-2 transform transition-transform duration-200 hover:scale-110 ${
-              isFinfluencer ? "border-amber-500" : "border-purple-800"
-            }`}
+      <Box className="items-start">
+        <Box className="flex flex-row items-center justify-between w-full px-4">
+          <TouchableOpacity
+            onPress={() =>
+              router.push(`/profile/${posterName}?userId=${posterUserId}`)
+            }
+            className="flex items-left justify-start mt-4"
           >
-            <AvatarFallbackText>{posterName}</AvatarFallbackText>
-            <AvatarImage
-              source={{
-                uri: posterPic || "",
-              }}
-            />
-          </Avatar>
-          <Text size="sm" className="text-center mt-2 font-semibold">
-            @{posterName}
-          </Text>
-        </TouchableOpacity>
-        <Text size="xs">{formatPostDate(post.createdAt)}</Text>
+            <Avatar
+              size="md"
+              className={`object-contain border-2 transform transition-transform duration-200 hover:scale-110 ${
+                isFinfluencer ? "border-amber-500" : "border-purple-800"
+              }`}
+            >
+              <AvatarFallbackText>{posterName}</AvatarFallbackText>
+              <AvatarImage
+                source={{
+                  uri: posterPic || "",
+                }}
+              />
+            </Avatar>
+            <Text size="sm" className="text-center mt-2 font-semibold">
+              @{posterName}
+            </Text>
+          </TouchableOpacity>
+          <Text size="xs">{formatPostDate(post.createdAt)}</Text>
+        </Box>
       </Box>
-    </Box>
+    </>
   );
 };

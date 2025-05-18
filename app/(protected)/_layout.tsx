@@ -29,6 +29,24 @@ export default function ProtectedLayout() {
           }}
         />
         <Stack.Screen name="(profile)" />
+        <Stack.Screen
+          name="new-post"
+          // options={{
+          //   headerShown: true,
+          //   headerBackVisible: true,
+          //   headerBackTitle: "Back",
+          //   headerShadowVisible: true,
+          //   headerTitle: "Create Post"
+          // }}
+        />
+        <Stack.Screen
+          name="search-community"
+          options={{
+            title: "Search For Community",
+            headerBackTitle: "Back",
+            headerShown: true,
+          }}
+        />
       </Stack>
       <StatusBar />
     </DrawerProvider>

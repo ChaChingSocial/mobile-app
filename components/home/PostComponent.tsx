@@ -205,8 +205,8 @@ export function PostComponent({ post }: { post: PostType }) {
           source={require("@/assets/images/pig-face.png")}
           className="w-10 h-10 absolute top-0 -left-7 z-20"
         />
-        <Badge className="absolute bg-[#36454F] top-2 left-0 z-10 rounded-full px-6 py-1 w-fit">
-          <BadgeText className="text-white uppercase text-center font-bold">
+        <Badge className="absolute bg-[#36454F] top-3 left-0 z-10 rounded-full px-6 py-0.5 w-fit">
+          <BadgeText className="text-white uppercase text-center font-bold text-xs">
             {postTypeTitle(post.category)}
           </BadgeText>
         </Badge>

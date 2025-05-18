@@ -12,7 +12,6 @@ import {
   ScrollView,
   Text,
   TouchableOpacity,
-  View,
 } from "react-native";
 import PagerView from "react-native-pager-view";
 
@@ -87,11 +86,11 @@ export function PicturePost({ post }: { post: PostType }) {
 
       <VStack className="items-center relative">
         {post.pictures && post.pictures.length > 1 && (
-          <View className="absolute top-6 right-2 bg-black/60 rounded-full px-2 py-1 z-10">
+          <Box className="absolute top-6 right-2 bg-black/60 rounded-full px-2 py-1 z-10">
             <Text className="text-white text-xs">
               {currentImageIndex + 1}/{post.pictures.length}
             </Text>
-          </View>
+          </Box>
         )}
         <PagerView
           ref={pagerRef}
@@ -125,16 +124,16 @@ export function PicturePost({ post }: { post: PostType }) {
         </PagerView>
 
         {post.pictures && post.pictures.length > 1 && (
-          <View className="flex-row justify-center">
+          <Box className="flex-row justify-center">
             {post.pictures.map((_, index) => (
-              <View
+              <Box
                 key={index}
                 className={`w-2 h-2 rounded-full mx-1 ${
                   index === currentImageIndex ? "bg-primary-500" : "bg-gray-300"
                 }`}
               />
             ))}
-          </View>
+          </Box>
         )}
       </VStack>
 
@@ -144,13 +143,13 @@ export function PicturePost({ post }: { post: PostType }) {
         animationType="fade"
         onRequestClose={() => setOpened(false)}
       >
-        <View className="relative flex-1 bg-black/90 justify-center items-center">
+        <Box className="relative flex-1 bg-black/90 justify-center items-center">
           {post.pictures && post.pictures.length > 1 && (
-            <View className="absolute top-1/3 right-2 bg-black/60 rounded-full px-2 py-1 z-10">
+            <Box className="absolute top-1/3 right-2 bg-black/60 rounded-full px-2 py-1 z-10">
               <Text className="text-white text-xs">
                 {currentImageIndex + 1}/{post.pictures.length}
               </Text>
-            </View>
+            </Box>
           )}
           <PagerView
             ref={modalPagerRef}
@@ -161,7 +160,7 @@ export function PicturePost({ post }: { post: PostType }) {
             {(post.pictures || []).map((picture, index) => {
               const uri = typeof picture === "string" ? picture : picture.url;
               return (
-                <View key={index} className="flex-1">
+                <Box key={index} className="flex-1">
                   <Image
                     source={{ uri }}
                     style={{
@@ -170,14 +169,14 @@ export function PicturePost({ post }: { post: PostType }) {
                       resizeMode: "contain",
                     }}
                   />
-                </View>
+                </Box>
               );
             })}
           </PagerView>
           {post.pictures && post.pictures.length > 1 && (
-            <View className="absolute bottom-1/3 flex-row justify-center">
+            <Box className="absolute bottom-1/3 flex-row justify-center">
               {post.pictures.map((_, index) => (
-                <View
+                <Box
                   key={index}
                   className={`w-2 h-2 rounded-full mx-1 ${
                     index === currentImageIndex
@@ -186,7 +185,7 @@ export function PicturePost({ post }: { post: PostType }) {
                   }`}
                 />
               ))}
-            </View>
+            </Box>
           )}
 
           {showPrevButton && (
@@ -213,7 +212,7 @@ export function PicturePost({ post }: { post: PostType }) {
           >
             <Text className="text-white text-xl font-bold">✕</Text>
           </TouchableOpacity>
-        </View>
+        </Box>
       </Modal>
     </Box>
   );

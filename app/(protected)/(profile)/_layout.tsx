@@ -5,16 +5,17 @@ import {
   AvatarImage,
 } from "@/components/ui/avatar";
 import "@/global.css";
+import { useSession } from "@/lib/providers/AuthContext";
 import { DrawerContext } from "@/lib/providers/DrawerContext";
 import { Ionicons } from "@expo/vector-icons";
 import { Stack } from "expo-router";
 import { useContext } from "react";
-import { Image } from "react-native";
-import { TouchableOpacity } from "react-native-gesture-handler";
+import { Image, TouchableOpacity } from "react-native";
 import "react-native-reanimated";
 
 export default function ProfileLayout() {
   const { open, setOpen } = useContext(DrawerContext);
+  const { session } = useSession();
 
   return (
     <Stack
@@ -48,10 +49,10 @@ export default function ProfileLayout() {
               className="ml-5"
             >
               <Avatar size="md">
-                <AvatarFallbackText>Jane Doe</AvatarFallbackText>
+                <AvatarFallbackText>{session?.displayName}</AvatarFallbackText>
                 <AvatarImage
                   source={{
-                    uri: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=687&q=80",
+                    uri: session?.profilePic || "",
                   }}
                 />
               </Avatar>

@@ -9,8 +9,8 @@ import {
 } from "@/_sdk";
 
 const config = new Configuration({
-  // basePath: 'https://chachingsocial-615685871214.us-central1.run.app',
-  basePath: `${process.env.EXPO_PUBLIC_BACKEND}`,
+  basePath: 'https://chachingsocial-615685871214.us-central1.run.app',
+  // basePath: `${process.env.EXPO_PUBLIC_BACKEND}`,
 });
 
 export const userApi = new UserApi(config);

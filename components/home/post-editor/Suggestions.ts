@@ -1,11 +1,10 @@
 import { ReactRenderer } from '@tiptap/react';
 import tippy from 'tippy.js';
-
 import { MentionList } from './MentionList';
 import { fetchAllUserDisplayNames } from '@/lib/api/user';
 import { sendNotification } from '@/lib/api/notifications';
 
-export default (postId) => ({
+export default (postId: string) => ({
     items: async ({ query }) => {
         const users = await fetchAllUserDisplayNames();
         return users

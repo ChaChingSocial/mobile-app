@@ -665,7 +665,7 @@ paths:
             application/json:
               schema:
                 type: string
-                example: Notification created successfully
+                example: Community Payment info created successfully
         default:
           $ref: "#/components/responses/UnexpectedError"
   /notifications/notify:
@@ -2071,11 +2071,6 @@ components:
           type: integer
           format: int32
           example: 10
-        PointType:
-          type: string
-          enum:
-            - PIG
-            - WARTHOG
         Action:
           type: string
           example: THREE_COMMENTS
@@ -2132,11 +2127,6 @@ components:
         score:
           type: integer
           example: 10
-        pointType:
-          type: string
-          enum:
-            - PIG
-            - WARTHOG
         date:
           $ref: "#/components/schemas/Date"
         note:
