@@ -96,15 +96,6 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="growth-tools"
-        options={{
-          title: "Growth Tools",
-          tabBarIcon: ({ color }) => (
-            <FontAwesome size={22} name="wrench" color={color} />
-          ),
-        }}
-      />
-      <Tabs.Screen
         name="about"
         options={{
           title: "About",

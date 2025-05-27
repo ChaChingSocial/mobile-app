@@ -5,7 +5,7 @@ import {
   type PropsWithChildren,
   useEffect,
 } from "react";
-import { router, SplashScreen } from "expo-router";
+import { useRouter, SplashScreen } from "expo-router";
 import { SessionValue } from "@/types";
 
 SplashScreen.preventAutoHideAsync();
@@ -35,6 +35,8 @@ export function useSession() {
 }
 
 export function SessionProvider({ children }: PropsWithChildren) {
+  const router = useRouter();
+
   const [[isLoading, session], setSession] = useStorageState("session");
   console.log("session", session);
   console.log("isLoading", isLoading);
@@ -46,7 +48,6 @@ export function SessionProvider({ children }: PropsWithChildren) {
     if (session) {
       router.replace("/(protected)/(home)");
     }
-    
   }, [isLoading]);
 
   return (

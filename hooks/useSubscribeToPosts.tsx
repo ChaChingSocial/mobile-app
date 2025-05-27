@@ -85,8 +85,6 @@ export default function useFeaturedPosts() {
     }
   };
 
-  console.log("Pinned ser posts:", posts);
-
 
   return {
     posts,

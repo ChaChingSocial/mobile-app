@@ -49,10 +49,8 @@ export const PostInfo = ({
   useEffect(() => {
     const fetchCommunityData = async () => {
       if (communityId) {
-        console.log("Community ids:", communityId);
         try {
           const res = await communityApi.communityById({ communityId });
-          console.log("HIIIt Community data:", res);
           if (res) {
             setCommunityName(res.title);
             setCommunitySlug(res.slug);

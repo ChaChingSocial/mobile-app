@@ -18,17 +18,17 @@ import {
   DocumentData,
 } from "firebase/firestore";
 import { Like, Comment, Post } from "@/types/post";
-import { app } from "@/config/firebase";
+import { app, auth } from "@/config/firebase";
 import { sendNotification } from "./notifications";
 import { usePostStore } from "../store/post";
-import { useSession } from "../providers/AuthContext";
 
 const db = getFirestore(app);
-const { session: user } = useSession();
+const user = auth.currentUser;
 
 // Post on the newsfeed
 export async function createPost(newsfeedPost: Post) {
   console.log("Creating post:", newsfeedPost);
+  console.log("User session:", user);
   if (!user) {
     throw new Error("User not authenticated");
   }
@@ -695,8 +695,6 @@ export async function getFeaturedPosts(lastDoc = null) {
     }
     // Sort posts by createdAt in descending order
     posts.sort((a, b) => b.createdAt - a.createdAt);
-    console.log("Featured posts:", posts);
-    console.log("Last document:", newLastDoc);
     return { posts, lastDoc: newLastDoc };
   } catch (error) {
     console.error("Error fetching featured posts:", error);

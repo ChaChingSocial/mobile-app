@@ -1,5 +1,6 @@
 import { useSession } from "@/lib/providers/AuthContext";
 import { DrawerProvider } from "@/lib/providers/DrawerContext";
+import { S } from "@expo/html-elements";
 import { Redirect, Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 
@@ -28,23 +29,15 @@ export default function ProtectedLayout() {
             headerShown: true,
           }}
         />
-        <Stack.Screen name="(profile)" />
-        <Stack.Screen
-          name="new-post"
-          // options={{
-          //   headerShown: true,
-          //   headerBackVisible: true,
-          //   headerBackTitle: "Back",
-          //   headerShadowVisible: true,
-          //   headerTitle: "Create Post"
-          // }}
-        />
+        <Stack.Screen name="(create-post)" />
         <Stack.Screen
           name="search-community"
           options={{
-            title: "Search For Community",
+            title: "Post to",
             headerBackTitle: "Back",
             headerShown: true,
+            headerLargeTitle: true,
+            headerShadowVisible: false,
           }}
         />
       </Stack>

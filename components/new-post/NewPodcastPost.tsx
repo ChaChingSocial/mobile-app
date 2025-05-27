@@ -1,10 +1,9 @@
 import { Box } from "@/components/ui/box";
 import { Text } from "@/components/ui/text";
-import { createPost } from "@/lib/api/newsfeed";
 import { useSession } from "@/lib/providers/AuthContext";
 import { usePostStore } from "@/lib/store/post";
-import { Post as PostType } from "@/types/post";
-import { AntDesign, FontAwesome5, Ionicons } from "@expo/vector-icons";
+import { Picture, Post as PostType, SpotifyEmbed } from "@/types/post";
+import { AntDesign, Ionicons } from "@expo/vector-icons";
 import { useRouter, useNavigation } from "expo-router";
 import { useEffect, useRef, useState } from "react";
 import {
@@ -20,23 +19,19 @@ import {
   RichToolbar,
   actions,
 } from "react-native-pell-rich-editor";
-import TagInput from "../TagInput";
-import { CloseIcon } from "../ui/icon";
-import { Avatar, AvatarFallbackText, AvatarImage } from "../ui/avatar";
+import { Input, InputField } from "../ui/input";
+import {
+  Avatar,
+  AvatarFallbackText,
+  AvatarBadge,
+  AvatarImage,
+} from "../ui/avatar";
 import { Heading } from "../ui/heading";
 import { HStack } from "../ui/hstack";
-import { Button, ButtonText } from "../ui/button";
-import {
-  Drawer,
-  DrawerBackdrop,
-  DrawerContent,
-  DrawerHeader,
-  DrawerBody,
-  DrawerFooter,
-} from "../ui/drawer";
-import PostTags from "../home/post-editor/PostTag";
+import { VStack } from "../ui/vstack";
+import { createPost } from "@/lib/api/newsfeed";
 
-export default function NewPost() {
+export default function NewPodcastPost() {
   const { session: user } = useSession();
 
   const createdPostCommunityData = usePostStore(
@@ -50,15 +45,18 @@ export default function NewPost() {
 
   const [newPostTitle, setNewPostTitle] = useState("");
   const [newPostContent, setNewPostContent] = useState("");
+  const [spotifyLink, setSpotifyLink] = useState("");
+  const [oEmbedData, setOEmbedData] = useState<SpotifyEmbed | null>(null);
   const [imageUrl, setImageUrl] = useState("");
   const [keyboardHeight, setKeyboardHeight] = useState(0);
-  const [tags, setTags] = useState<string[]>([]);
-  const [tagDrawerVisible, setTagDrawerVisible] = useState(false);
 
   // Get the navigation state
   const state = navigation.getState();
   console.log("Navigation state:", state);
-  console.log("Tgot tag", tags);
+
+  // The previous route is the second last entry in the routes array
+  const previousRoute = state?.routes[0];
+  console.log("Previous route:", previousRoute?.name);
 
   useEffect(() => {
     const showSubscription = Keyboard.addListener("keyboardDidShow", (e) => {
@@ -74,6 +72,27 @@ export default function NewPost() {
     };
   }, []);
 
+  useEffect(() => {
+    if (spotifyLink) {
+      fetch(
+        `https://open.spotify.com/oembed?url=${encodeURIComponent(spotifyLink)}`
+      )
+        .then((response) => {
+          if (!response.ok) {
+            throw new Error("Failed to fetch oEmbed data");
+          }
+          console.log("OEmbed response:", response);
+          return response.json();
+        })
+        .then((data) => {
+          setOEmbedData(data);
+        })
+        .catch((error) => {
+          console.error("Error fetching oEmbed data:", error);
+        });
+    }
+  }, [spotifyLink]);
+
   const handlePost = async () => {
     try {
       const contentHtml = await richText.current?.getContentHtml();
@@ -81,26 +100,36 @@ export default function NewPost() {
       console.log("Post title:", newPostTitle);
       console.log("Post community ID:", createdPostCommunityData?.id);
 
-      if (user?.uid && contentHtml) {
+      const pictures: Picture[] = [
+        {
+          id: "picture-0",
+          url: oEmbedData?.thumbnail_url || "",
+          description:
+            oEmbedData?.title || contentHtml || "Picture on ChaChing Social",
+          createdAt: new Date(),
+          modifiedAt: new Date(),
+        },
+      ];
+
+      if (user?.uid) {
         const post: PostType = {
           posterUserId: user?.uid,
           posterName: user?.displayName || "Anonymous",
           posterPic: user?.profilePic || "",
-          post: contentHtml,
-          title: newPostTitle,
+          post: contentHtml || "",
+          title: newPostTitle || "Podcast Post - ChaChing Social",
           createdAt: new Date(),
           modifiedAt: new Date(),
-          // moderators: hosts,
+          podcast: spotifyLink,
           likes: [],
           comments: [],
-          tags,
-          pictures: [],
+          tags: ["Spotify"],
+          pictures,
           documents: [],
           linkPreview: null,
-          category: "post",
+          category: "podcast",
           newsfeedId: createdPostCommunityData?.id,
         };
-
         console.log("Post object created:", post);
         setCreatedPost(post);
         createPost(post)
@@ -110,9 +139,10 @@ export default function NewPost() {
             navigation.goBack();
           })
           .catch((error) => {
-            console.error("Error creating text post:", error);
+            console.error("Error creating podcast post:", error);
           });
       }
+
     } catch (e) {
       console.log(e);
     }
@@ -141,68 +171,65 @@ export default function NewPost() {
           </TouchableOpacity>
         </Box>
 
-        <TouchableOpacity
-          className="bg-gray-300 rounded-full px-4 flex-row items-center gap-1"
-          onPress={() => router.push("/(protected)/search-community")}
-        >
-          {createdPostCommunityData ? (
-            <HStack space="md" className="py-1 flex items-center w-fit">
-              <Avatar className="bg-indigo-600" size="sm">
-                <AvatarFallbackText className="text-white">
-                  {createdPostCommunityData.title}
-                </AvatarFallbackText>
-                <AvatarImage
-                  source={{
-                    uri: createdPostCommunityData.image,
-                  }}
-                />
-              </Avatar>
 
-              <Heading size="sm" className="text-wrap">
-                {createdPostCommunityData.title}
-              </Heading>
-            </HStack>
-          ) : (
-            <Text className="text-gray-900 my-2.5 font-bold w-fit">
-              Select a community
-            </Text>
-          )}
-          <Ionicons name="chevron-expand-outline" size={24} color="black" />
-        </TouchableOpacity>
+          <TouchableOpacity
+            className="bg-gray-300 rounded-full px-4 flex-row items-center gap-1 "
+            onPress={() => router.push("/(protected)/search-community")}
+          >
+            {createdPostCommunityData ? (
+              <HStack space="md" className="py-1 flex items-center w-fit">
+                <Avatar className="bg-indigo-600" size="sm">
+                  <AvatarFallbackText className="text-white">
+                    {createdPostCommunityData.title}
+                  </AvatarFallbackText>
+                  <AvatarImage
+                    source={{
+                      uri: createdPostCommunityData.image,
+                    }}
+                  />
+                </Avatar>
 
-        <TextInput
-          value={newPostTitle}
-          onChangeText={(value) => setNewPostTitle(value)}
-          multiline={true}
-          numberOfLines={2}
-          className="font-bold max-h-[300px] text-2xl"
-          placeholder="Title"
-        />
-        <TouchableOpacity
-          className="bg-gray-300 rounded-full px-4 flex-row items-center gap-1"
-          onPress={() => setTagDrawerVisible(!tagDrawerVisible)}
-        >
-          {tags.length > 0 ? (
-            <HStack space="md" className="py-1 flex items-center w-fit">
-              <PostTags tags={tags} />
-              <FontAwesome5 name="edit" size={16} color="black" />
-            </HStack>
-          ) : (
-            <Text className="text-gray-900 my-2.5 font-bold w-fit">
-              Add a tag (optional)
-            </Text>
+                <Heading size="sm">{createdPostCommunityData.title}</Heading>
+              </HStack>
+            ) : (
+              <Text className="text-gray-900 my-2.5 font-bold w-fit">
+                Select a community
+              </Text>
+            )}
+            <Ionicons name="chevron-expand-outline" size={24} color="black" />
+          </TouchableOpacity>
+
+
+        <Box className="w-full">
+          <TextInput
+            value={newPostTitle}
+            onChangeText={(value) => setNewPostTitle(value)}
+            multiline={true}
+            numberOfLines={2}
+            className="font-bold max-h-[300px] text-2xl"
+            placeholder="Title"
+          />
+
+          {previousRoute?.name === "new-podcast-post" && (
+            <Input variant="outline" size="md" isInvalid={false}>
+              <InputField
+                placeholder="Enter Spotify Link"
+                value={spotifyLink}
+                onChangeText={(value) => setSpotifyLink(value)}
+              />
+            </Input>
           )}
-        </TouchableOpacity>
+        </Box>
 
         <ScrollView>
           <Box
-            className="w-full flex-1 rounded-3xl h-full space-between border-t border-gray-300 bg-white"
+            className="w-full flex-1 rounded-3xl h-full space-between"
             style={{ marginBottom: keyboardHeight }}
           >
             <RichEditor
               ref={richText}
               onChange={(text) => setNewPostContent(text)}
-              placeholder="What's on your mind?"
+              placeholder="body text"
               initialContentHTML={newPostContent}
               editorStyle={{
                 backgroundColor: "transparent",
@@ -243,6 +270,7 @@ export default function NewPost() {
             <Text style={[{ color: tintColor }]}>H2</Text>
           ),
         }}
+        // className="bg-white border-t border-gray-300 -ml-2 -mr-2"
         style={{
           backgroundColor: "#fff",
           borderColor: "#ddd",
@@ -251,39 +279,6 @@ export default function NewPost() {
           marginRight: -10,
         }}
       />
-      <Drawer
-        isOpen={tagDrawerVisible}
-        onClose={() => {
-          setTagDrawerVisible(false);
-        }}
-        size="sm"
-        anchor="bottom"
-      >
-        <DrawerBackdrop />
-        <DrawerContent>
-          <DrawerBody>
-            <Text size="xl" className="text-typography-800">
-              Tag your post (optional)
-            </Text>
-            <TagInput
-              value={tags}
-              onChange={setTags}
-              placeholder='Press "Enter" to add a tag'
-              className="border border-gray-300 rounded-lg mt-2"
-            />
-          </DrawerBody>
-          <DrawerFooter>
-            <Button
-              onPress={() => {
-                setTagDrawerVisible(false);
-              }}
-              className="flex-1 bg-primary-50"
-            >
-              <ButtonText>Done</ButtonText>
-            </Button>
-          </DrawerFooter>
-        </DrawerContent>
-      </Drawer>
     </KeyboardAvoidingView>
   );
 }

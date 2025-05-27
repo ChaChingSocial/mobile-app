@@ -16,6 +16,7 @@ import { userApi } from "@/config/backend";
 export default function LoginScreen() {
   const [_, setSession] = useStorageState("session");
   const { session, signIn } = useSession();
+
   console.log("SeSSSIon INOF PREV", session);
 
   const [email, setEmail] = useState("");
@@ -36,6 +37,7 @@ export default function LoginScreen() {
       // setEmail("");
       // setPassword("");
       signIn();
+
     } catch (error) {
       console.log("error", error);
       setError(

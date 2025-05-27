@@ -23,7 +23,7 @@ const customStyles = {
     color: "#fff",
     padding: 4,
     borderRadius: "16px",
-    fontWeight: 700,
+    // fontWeight: 700,
   },
 };
 
