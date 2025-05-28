@@ -232,8 +232,8 @@ export default function NewPost() {
           actions.insertBulletsList,
           actions.insertOrderedList,
           actions.insertLink,
-          actions.insertImage,
-          actions.insertVideo,
+          // actions.insertImage,
+          // actions.insertVideo,
         ]}
         iconMap={{
           [actions.heading1]: ({ tintColor }: { tintColor?: string }) => (

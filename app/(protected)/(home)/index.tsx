@@ -13,7 +13,7 @@ import {
 } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { useContext, useEffect, useRef, useState } from "react";
-import { Easing, TouchableOpacity, View } from "react-native";
+import { Alert, Easing, TouchableOpacity, View } from "react-native";
 import { ScrollView } from "react-native-gesture-handler";
 import {
   Modal,
@@ -25,11 +25,53 @@ import {
 } from "@/components/ui/modal";
 import { VStack } from "@/components/ui/vstack";
 import { Animated } from "react-native";
+import * as ImagePicker from "expo-image-picker";
+import { usePostStore } from "@/lib/store/post";
+import { Picture } from "@/types/post";
 
 export default function HomeScreen() {
   const { open, setOpen } = useContext(DrawerContext);
   const router = useRouter();
   const [showOptions, setShowOptions] = useState(false);
+
+  const setCreatedPostImage = usePostStore(
+    (state) => state.setCreatedPostImage
+  );
+
+  const pickImage = async () => {
+    // Request media library permissions
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== "granted") {
+      Alert.alert(
+        "Permission required",
+        "Sorry, we need camera roll permissions to make this work!"
+      );
+      return;
+    }
+
+    // Launch image picker with multiple selection enabled
+    let result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: false, // Disable editing when selecting multiple
+      allowsMultipleSelection: true, // Enable multiple selection
+      aspect: [4, 3],
+      quality: 1,
+      selectionLimit: 10, // Optional: Set a limit (0 means no limit)
+    });
+
+    if (!result.canceled) {
+      // Get array of all selected image URIs
+      const selectedImages: Picture[] = result.assets.map((asset, idx) => ({
+        id: asset.assetId ?? `${idx}-${asset.fileName}`,
+        url: asset.uri,
+        description: asset.fileName ?? "",
+        createdAt: new Date(),
+        modifiedAt: new Date(),
+      }));
+
+      setCreatedPostImage(selectedImages);
+    }
+  };
 
   const postOptions = [
     {
@@ -40,30 +82,33 @@ export default function HomeScreen() {
     {
       title: "Images",
       icon: <Entypo name="image" size={20} color="white" />,
-      route: "/(protected)/new-image-post",
+      route: "/(protected)/(create-post)/new-image-post",
     },
     {
       title: "Podcast",
       icon: <FontAwesome5 name="spotify" size={18} color="white" />,
-      route: "/(protected)/new-podcast-post",
+      route: "/(protected)/(create-post)/new-podcast-post",
     },
     {
       title: "Event",
       icon: <Ionicons name="ticket-outline" size={20} color="white" />,
-      route: "/(protected)/new-event-post",
+      route: "/(protected)/(create-post)/new-event-post",
     },
-
   ];
 
-  const handleOptionPress = (route: any) => {
+  const handleOptionPress = async (route: any) => {
     setShowOptions(false);
+
+    if (route === "/(protected)/(create-post)/new-image-post") {
+      await pickImage();
+    }
     router.push(route);
   };
 
   const rotationAnim = useRef(new Animated.Value(0)).current;
   const scaleAnim = useRef(new Animated.Value(1)).current;
   const opacityAnim = useRef(new Animated.Value(0)).current;
-  
+
   useEffect(() => {
     if (showOptions) {
       // Animate when modal opens
@@ -155,9 +200,7 @@ export default function HomeScreen() {
         className=""
       >
         <ModalBackdrop style={{ backgroundColor: "black" }} />
-        <ModalContent
-          className="w-fit absolute bg-transparent -right-4 bottom-10 border-0"
-        >
+        <ModalContent className="w-fit absolute bg-transparent -right-4 bottom-10 border-0">
           <ModalBody className="p-0">
             <VStack className="space-y-2 mr-2">
               {postOptions.map((option, index) => (

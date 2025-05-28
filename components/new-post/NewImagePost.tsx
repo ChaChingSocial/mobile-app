@@ -3,11 +3,12 @@ import { Text } from "@/components/ui/text";
 import { createPost } from "@/lib/api/newsfeed";
 import { useSession } from "@/lib/providers/AuthContext";
 import { usePostStore } from "@/lib/store/post";
-import { Picture, Post as PostType, SpotifyEmbed } from "@/types/post";
+import { Post as PostType } from "@/types/post";
 import { AntDesign, FontAwesome5, Ionicons } from "@expo/vector-icons";
-import { useNavigation, useRouter } from "expo-router";
+import { useRouter, useNavigation } from "expo-router";
 import { useEffect, useRef, useState } from "react";
 import {
+  Image,
   Keyboard,
   KeyboardAvoidingView,
   Platform,
@@ -20,28 +21,30 @@ import {
   RichToolbar,
   actions,
 } from "react-native-pell-rich-editor";
-import PostTags from "../home/post-editor/PostTag";
 import TagInput from "../TagInput";
+import { CloseIcon } from "../ui/icon";
 import { Avatar, AvatarFallbackText, AvatarImage } from "../ui/avatar";
+import { Heading } from "../ui/heading";
+import { HStack } from "../ui/hstack";
 import { Button, ButtonText } from "../ui/button";
 import {
   Drawer,
   DrawerBackdrop,
-  DrawerBody,
   DrawerContent,
+  DrawerHeader,
+  DrawerBody,
   DrawerFooter,
 } from "../ui/drawer";
-import { Heading } from "../ui/heading";
-import { HStack } from "../ui/hstack";
-import { Input, InputField } from "../ui/input";
+import PostTags from "../home/post-editor/PostTag";
 
-export default function NewPodcastPost() {
+export default function NewImagePost() {
   const { session: user } = useSession();
 
   const createdPostCommunityData = usePostStore(
     (state) => state.createdPostCommunityData
   );
   const setCreatedPost = usePostStore((state) => state.setCreatedPost);
+  const createdPostImage = usePostStore((state) => state.createdPostImage);
 
   const navigation = useNavigation();
   const router = useRouter();
@@ -49,9 +52,6 @@ export default function NewPodcastPost() {
 
   const [newPostTitle, setNewPostTitle] = useState("");
   const [newPostContent, setNewPostContent] = useState("");
-  const [spotifyLink, setSpotifyLink] = useState("");
-  const [oEmbedData, setOEmbedData] = useState<SpotifyEmbed | null>(null);
-  const [imageUrl, setImageUrl] = useState("");
   const [keyboardHeight, setKeyboardHeight] = useState(0);
   const [tags, setTags] = useState<string[]>([]);
   const [tagDrawerVisible, setTagDrawerVisible] = useState(false);
@@ -59,10 +59,7 @@ export default function NewPodcastPost() {
   // Get the navigation state
   const state = navigation.getState();
   console.log("Navigation state:", state);
-
-  // The previous route is the second last entry in the routes array
-  const previousRoute = state?.routes[0];
-  console.log("Previous route:", previousRoute?.name);
+  console.log("Tgot tag", tags);
 
   useEffect(() => {
     const showSubscription = Keyboard.addListener("keyboardDidShow", (e) => {
@@ -78,27 +75,6 @@ export default function NewPodcastPost() {
     };
   }, []);
 
-  useEffect(() => {
-    if (spotifyLink) {
-      fetch(
-        `https://open.spotify.com/oembed?url=${encodeURIComponent(spotifyLink)}`
-      )
-        .then((response) => {
-          if (!response.ok) {
-            throw new Error("Failed to fetch oEmbed data");
-          }
-          console.log("OEmbed response:", response);
-          return response.json();
-        })
-        .then((data) => {
-          setOEmbedData(data);
-        })
-        .catch((error) => {
-          console.error("Error fetching oEmbed data:", error);
-        });
-    }
-  }, [spotifyLink]);
-
   const handlePost = async () => {
     try {
       const contentHtml = await richText.current?.getContentHtml();
@@ -106,36 +82,26 @@ export default function NewPodcastPost() {
       console.log("Post title:", newPostTitle);
       console.log("Post community ID:", createdPostCommunityData?.id);
 
-      const pictures: Picture[] = [
-        {
-          id: "picture-0",
-          url: oEmbedData?.thumbnail_url || "",
-          description:
-            oEmbedData?.title || contentHtml || "Picture on ChaChing Social",
-          createdAt: new Date(),
-          modifiedAt: new Date(),
-        },
-      ];
-
-      if (user?.uid) {
+      if (user?.uid && contentHtml) {
         const post: PostType = {
           posterUserId: user?.uid,
           posterName: user?.displayName || "Anonymous",
           posterPic: user?.profilePic || "",
-          post: contentHtml || "",
-          title: newPostTitle || "Podcast Post - ChaChing Social",
+          post: contentHtml,
+          title: newPostTitle,
           createdAt: new Date(),
           modifiedAt: new Date(),
-          podcast: spotifyLink,
+          // moderators: hosts,
           likes: [],
           comments: [],
           tags,
-          pictures,
+          pictures: createdPostImage || [],
           documents: [],
           linkPreview: null,
-          category: "podcast",
+          category: "image",
           newsfeedId: createdPostCommunityData?.id,
         };
+
         console.log("Post object created:", post);
         setCreatedPost(post);
         createPost(post)
@@ -145,7 +111,7 @@ export default function NewPodcastPost() {
             navigation.goBack();
           })
           .catch((error) => {
-            console.error("Error creating podcast post:", error);
+            console.error("Error creating text post:", error);
           });
       }
     } catch (e) {
@@ -177,7 +143,7 @@ export default function NewPodcastPost() {
         </Box>
 
         <TouchableOpacity
-          className="bg-gray-300 rounded-full px-4 flex-row items-center gap-1 "
+          className="bg-gray-300 rounded-full px-4 flex-row items-center gap-1"
           onPress={() => router.push("/(protected)/search-community")}
         >
           {createdPostCommunityData ? (
@@ -193,7 +159,9 @@ export default function NewPodcastPost() {
                 />
               </Avatar>
 
-              <Heading size="sm">{createdPostCommunityData.title}</Heading>
+              <Heading size="sm" className="text-wrap">
+                {createdPostCommunityData.title}
+              </Heading>
             </HStack>
           ) : (
             <Text className="text-gray-900 my-2.5 font-bold w-fit">
@@ -203,57 +171,52 @@ export default function NewPodcastPost() {
           <Ionicons name="chevron-expand-outline" size={24} color="black" />
         </TouchableOpacity>
 
-        <Box className="w-full">
-          <TextInput
-            value={newPostTitle}
-            onChangeText={(value) => setNewPostTitle(value)}
-            multiline={true}
-            numberOfLines={2}
-            className="font-bold max-h-[300px] text-2xl"
-            placeholder="Title"
-          />
+        <TextInput
+          value={newPostTitle}
+          onChangeText={(value) => setNewPostTitle(value)}
+          multiline={true}
+          numberOfLines={2}
+          className="font-bold max-h-[300px] text-2xl"
+          placeholder="Title"
+        />
 
-          <TouchableOpacity
-            className="bg-gray-300 rounded-full px-4 flex-row items-center gap-1"
-            onPress={() => setTagDrawerVisible(!tagDrawerVisible)}
-          >
-            {tags.length > 0 ? (
-              <HStack space="md" className="py-1 flex items-center w-fit">
-                <PostTags tags={tags} />
-                <FontAwesome5 name="edit" size={16} color="black" />
-              </HStack>
-            ) : (
-              <Text className="text-gray-900 my-2.5 font-bold w-fit">
-                Add a tag (optional)
-              </Text>
-            )}
-          </TouchableOpacity>
-
-          {previousRoute?.name === "new-podcast-post" && (
-            <Input
-              variant="outline"
-              size="md"
-              isInvalid={false}
-              className="mt-3 rounded-3xl"
-            >
-              <InputField
-                placeholder="Enter Spotify Link"
-                value={spotifyLink}
-                onChangeText={(value) => setSpotifyLink(value)}
+        {createdPostImage && createdPostImage?.length > 0 && (
+          <Box className="flex-row flex-wrap gap-2 mt-5">
+            {createdPostImage.map(({ id, url }) => (
+              <Image
+                key={id}
+                source={{ uri: url }}
+                className="w-[100px] h-[100px] rounded-lg"
               />
-            </Input>
+            ))}
+          </Box>
+        )}
+
+        <TouchableOpacity
+          className="bg-gray-300 rounded-full px-4 flex-row items-center gap-1"
+          onPress={() => setTagDrawerVisible(!tagDrawerVisible)}
+        >
+          {tags.length > 0 ? (
+            <HStack space="md" className="py-1 flex items-center w-fit">
+              <PostTags tags={tags} />
+              <FontAwesome5 name="edit" size={16} color="black" />
+            </HStack>
+          ) : (
+            <Text className="text-gray-900 my-2.5 font-bold w-fit">
+              Add a tag (optional)
+            </Text>
           )}
-        </Box>
+        </TouchableOpacity>
 
         <ScrollView>
           <Box
-            className="w-full flex-1 rounded-3xl h-full space-between"
+            className="w-full flex-1 rounded-3xl h-full space-between border-t border-gray-300 bg-white"
             style={{ marginBottom: keyboardHeight }}
           >
             <RichEditor
               ref={richText}
               onChange={(text) => setNewPostContent(text)}
-              placeholder="body text"
+              placeholder="What's on your mind?"
               initialContentHTML={newPostContent}
               editorStyle={{
                 backgroundColor: "transparent",
@@ -294,7 +257,6 @@ export default function NewPodcastPost() {
             <Text style={[{ color: tintColor }]}>H2</Text>
           ),
         }}
-        // className="bg-white border-t border-gray-300 -ml-2 -mr-2"
         style={{
           backgroundColor: "#fff",
           borderColor: "#ddd",
@@ -303,7 +265,6 @@ export default function NewPodcastPost() {
           marginRight: -10,
         }}
       />
-
       <Drawer
         isOpen={tagDrawerVisible}
         onClose={() => {

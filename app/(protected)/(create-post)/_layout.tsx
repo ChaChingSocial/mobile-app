@@ -8,6 +8,10 @@ export default function ProtectedLayout() {
       })}
     >
       <Stack.Screen name="index" />
+      <Stack.Screen name="new-image-post" />
+      <Stack.Screen name="new-link-post" />
+      <Stack.Screen name="new-podcast-post" />
+      <Stack.Screen name="new-event-post" />
     </Stack>
   );
 }

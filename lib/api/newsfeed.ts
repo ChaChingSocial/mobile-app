@@ -575,10 +575,10 @@ export async function sharePostOnNewsfeed(postId: string, userId: string) {
 
     const newPost = {
       userId,
-      message: `Shared a post: ${postData.message}`,
+      message: `Shared a post: ${postData?.message}`,
       timestamp: new Date(),
-      pictures: postData.pictures,
-      documents: postData.documents,
+      pictures: postData?.pictures,
+      documents: postData?.documents,
       likes: [],
       comments: [],
     };
