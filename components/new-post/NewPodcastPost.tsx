@@ -51,7 +51,6 @@ export default function NewPodcastPost() {
   const [newPostContent, setNewPostContent] = useState("");
   const [spotifyLink, setSpotifyLink] = useState("");
   const [oEmbedData, setOEmbedData] = useState<SpotifyEmbed | null>(null);
-  const [imageUrl, setImageUrl] = useState("");
   const [keyboardHeight, setKeyboardHeight] = useState(0);
   const [tags, setTags] = useState<string[]>([]);
   const [tagDrawerVisible, setTagDrawerVisible] = useState(false);

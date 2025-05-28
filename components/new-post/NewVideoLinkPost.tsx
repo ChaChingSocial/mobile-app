@@ -3,7 +3,7 @@ import { Text } from "@/components/ui/text";
 import { createPost } from "@/lib/api/newsfeed";
 import { useSession } from "@/lib/providers/AuthContext";
 import { usePostStore } from "@/lib/store/post";
-import { Post as PostType } from "@/types/post";
+import { LinkPreview, Post as PostType } from "@/types/post";
 import { AntDesign, FontAwesome5, Ionicons } from "@expo/vector-icons";
 import { useNavigation, useRouter } from "expo-router";
 import { useEffect, useRef, useState } from "react";
@@ -34,6 +34,7 @@ import {
 } from "../ui/drawer";
 import { Heading } from "../ui/heading";
 import { HStack } from "../ui/hstack";
+import { Input, InputField } from "../ui/input";
 
 export default function NewImagePost() {
   const { session: user } = useSession();
@@ -42,7 +43,7 @@ export default function NewImagePost() {
     (state) => state.createdPostCommunityData
   );
   const setCreatedPost = usePostStore((state) => state.setCreatedPost);
-  const createdPostImage = usePostStore((state) => state.createdPostImage);
+  const createdPostVideo = usePostStore((state) => state.createdPostVideo);
 
   const navigation = useNavigation();
   const router = useRouter();
@@ -53,6 +54,7 @@ export default function NewImagePost() {
   const [keyboardHeight, setKeyboardHeight] = useState(0);
   const [tags, setTags] = useState<string[]>([]);
   const [tagDrawerVisible, setTagDrawerVisible] = useState(false);
+  const [videoLink, setVideoLink] = useState("");
 
   // Get the navigation state
   const state = navigation.getState();
@@ -77,6 +79,16 @@ export default function NewImagePost() {
     try {
       const contentHtml = await richText.current?.getContentHtml();
 
+      const LinkPreview: LinkPreview = {
+        url: videoLink,
+        title: newPostTitle,
+        description: newPostContent,
+        image: "",
+        tags,
+        publisher: user?.displayName || "Anonymous",
+        publisherPicUrl: user?.profilePic || "",
+      };
+
       if (user?.uid && contentHtml) {
         const post: PostType = {
           posterUserId: user?.uid,
@@ -89,9 +101,11 @@ export default function NewImagePost() {
           likes: [],
           comments: [],
           tags,
-          pictures: createdPostImage || [],
+          pictures: [],
           documents: [],
-          category: "image",
+          linkPreview:
+            createdPostVideo !== null ? createdPostVideo : LinkPreview,
+          category: "video",
           newsfeedId: createdPostCommunityData?.id,
         };
 
@@ -104,7 +118,7 @@ export default function NewImagePost() {
             navigation.goBack();
           })
           .catch((error) => {
-            console.error("Error creating text post:", error);
+            console.error("Error creating video post:", error);
           });
       }
     } catch (e) {
@@ -173,17 +187,28 @@ export default function NewImagePost() {
           placeholder="Title"
         />
 
-        {createdPostImage && createdPostImage?.length > 0 && (
+        {createdPostVideo && (
           <Box className="flex-row flex-wrap gap-2 mt-5">
-            {createdPostImage.map(({ id, url }) => (
-              <Image
-                key={id}
-                source={{ uri: url }}
-                className="w-[100px] h-[100px] rounded-lg"
-              />
-            ))}
+            <Image
+              key={createdPostVideo.url}
+              source={{ uri: createdPostVideo.url }}
+              className="w-[100px] h-[100px] rounded-lg"
+            />
           </Box>
         )}
+
+        <Input
+          variant="outline"
+          size="md"
+          isInvalid={false}
+          className="mt-3 rounded-3xl"
+        >
+          <InputField
+            placeholder="Enter Video Link (optional)"
+            value={videoLink}
+            onChangeText={(value) => setVideoLink(value)}
+          />
+        </Input>
 
         <TouchableOpacity
           className="bg-gray-300 rounded-full px-4 flex-row items-center gap-1"

@@ -2,81 +2,58 @@ import MainNewsfeed from "@/components/home/MainNewsFeed";
 import SideBar from "@/components/profile/SideBar";
 import { Box } from "@/components/ui/box";
 import { AddIcon } from "@/components/ui/icon";
+import {
+  Modal,
+  ModalBackdrop,
+  ModalBody,
+  ModalContent,
+} from "@/components/ui/modal";
 import { Text } from "@/components/ui/text";
+import { VStack } from "@/components/ui/vstack";
+import { useSession } from "@/lib/providers/AuthContext";
 import { DrawerContext } from "@/lib/providers/DrawerContext";
+import { usePostStore } from "@/lib/store/post";
 import {
   Entypo,
-  Feather,
   FontAwesome5,
   Ionicons,
   MaterialCommunityIcons,
 } from "@expo/vector-icons";
+import * as ImagePicker from "expo-image-picker";
+import * as MediaLibrary from "expo-media-library";
 import { useRouter } from "expo-router";
 import { useContext, useEffect, useRef, useState } from "react";
-import { Alert, Easing, TouchableOpacity, View } from "react-native";
+import { Alert, Animated, Easing, TouchableOpacity, View } from "react-native";
 import { ScrollView } from "react-native-gesture-handler";
-import {
-  Modal,
-  ModalBackdrop,
-  ModalContent,
-  ModalCloseButton,
-  ModalHeader,
-  ModalBody,
-} from "@/components/ui/modal";
-import { VStack } from "@/components/ui/vstack";
-import { Animated } from "react-native";
-import * as ImagePicker from "expo-image-picker";
-import { usePostStore } from "@/lib/store/post";
-import { Picture } from "@/types/post";
+
+type PostOption = {
+  title: string;
+  icon: JSX.Element;
+  route: string;
+};
 
 export default function HomeScreen() {
   const { open, setOpen } = useContext(DrawerContext);
+  const { session } = useSession();
   const router = useRouter();
+
   const [showOptions, setShowOptions] = useState(false);
 
   const setCreatedPostImage = usePostStore(
     (state) => state.setCreatedPostImage
   );
+  const setCreatedPostVideo = usePostStore(
+    (state) => state.setCreatedPostVideo
+  );
 
-  const pickImage = async () => {
-    // Request media library permissions
-    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (status !== "granted") {
-      Alert.alert(
-        "Permission required",
-        "Sorry, we need camera roll permissions to make this work!"
-      );
-      return;
-    }
+  const rotationAnim = useRef(new Animated.Value(0)).current;
+  const scaleAnim = useRef(new Animated.Value(1)).current;
+  const opacityAnim = useRef(new Animated.Value(0)).current;
 
-    // Launch image picker with multiple selection enabled
-    let result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsEditing: false, // Disable editing when selecting multiple
-      allowsMultipleSelection: true, // Enable multiple selection
-      aspect: [4, 3],
-      quality: 1,
-      selectionLimit: 10, // Optional: Set a limit (0 means no limit)
-    });
-
-    if (!result.canceled) {
-      // Get array of all selected image URIs
-      const selectedImages: Picture[] = result.assets.map((asset, idx) => ({
-        id: asset.assetId ?? `${idx}-${asset.fileName}`,
-        url: asset.uri,
-        description: asset.fileName ?? "",
-        createdAt: new Date(),
-        modifiedAt: new Date(),
-      }));
-
-      setCreatedPostImage(selectedImages);
-    }
-  };
-
-  const postOptions = [
+  const postOptions: PostOption[] = [
     {
-      title: "Link & Video",
-      icon: <FontAwesome5 name="link" size={18} color="white" />,
+      title: "Video Link",
+      icon: <FontAwesome5 name="video" size={18} color="white" />,
       route: "/(protected)/(create-post)/new-link-post",
     },
     {
@@ -96,63 +73,28 @@ export default function HomeScreen() {
     },
   ];
 
-  const handleOptionPress = async (route: any) => {
-    setShowOptions(false);
-
-    if (route === "/(protected)/(create-post)/new-image-post") {
-      await pickImage();
-    }
-    router.push(route);
-  };
-
-  const rotationAnim = useRef(new Animated.Value(0)).current;
-  const scaleAnim = useRef(new Animated.Value(1)).current;
-  const opacityAnim = useRef(new Animated.Value(0)).current;
-
   useEffect(() => {
-    if (showOptions) {
-      // Animate when modal opens
-      Animated.parallel([
-        Animated.timing(rotationAnim, {
-          toValue: 1,
-          duration: 200,
-          easing: Easing.linear,
-          useNativeDriver: true,
-        }),
-        Animated.timing(scaleAnim, {
-          toValue: 0,
-          duration: 200,
-          easing: Easing.linear,
-          useNativeDriver: true,
-        }),
-        Animated.timing(opacityAnim, {
-          toValue: 1,
-          duration: 200,
-          useNativeDriver: true,
-        }),
-      ]).start();
-    } else {
-      // Animate when modal closes
-      Animated.parallel([
-        Animated.timing(rotationAnim, {
-          toValue: 0,
-          duration: 200,
-          easing: Easing.linear,
-          useNativeDriver: true,
-        }),
-        Animated.timing(scaleAnim, {
-          toValue: 1,
-          duration: 200,
-          easing: Easing.linear,
-          useNativeDriver: true,
-        }),
-        Animated.timing(opacityAnim, {
-          toValue: 0,
-          duration: 200,
-          useNativeDriver: true,
-        }),
-      ]).start();
-    }
+    const animations = [
+      Animated.timing(rotationAnim, {
+        toValue: showOptions ? 1 : 0,
+        duration: 200,
+        easing: Easing.linear,
+        useNativeDriver: true,
+      }),
+      Animated.timing(scaleAnim, {
+        toValue: showOptions ? 0 : 1,
+        duration: 200,
+        easing: Easing.linear,
+        useNativeDriver: true,
+      }),
+      Animated.timing(opacityAnim, {
+        toValue: showOptions ? 1 : 0,
+        duration: 200,
+        useNativeDriver: true,
+      }),
+    ];
+
+    Animated.parallel(animations).start();
   }, [showOptions]);
 
   const rotation = rotationAnim.interpolate({
@@ -165,6 +107,106 @@ export default function HomeScreen() {
     outputRange: [0, 1],
   });
 
+  const requestMediaPermissions = async (mediaType: "photo" | "video") => {
+    const [mediaLibraryStatus, imagePickerStatus] = await Promise.all([
+      MediaLibrary.requestPermissionsAsync(),
+      ImagePicker.requestMediaLibraryPermissionsAsync(),
+    ]);
+
+    if (
+      mediaLibraryStatus.status !== "granted" ||
+      imagePickerStatus.status !== "granted"
+    ) {
+      Alert.alert(
+        "Permission required",
+        `Sorry, we need access to your media library to select ${
+          mediaType === "photo" ? "images" : "videos"
+        }!`
+      );
+      return false;
+    }
+    return true;
+  };
+
+  const pickVideo = async () => {
+    if (!(await requestMediaPermissions("video"))) return;
+
+    try {
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Videos,
+        allowsEditing: false,
+        allowsMultipleSelection: false,
+        quality: 1,
+      });
+
+      if (!result.canceled && result.assets) {
+        const pickedVideo = result.assets[0];
+        const video = {
+          url: pickedVideo.uri,
+          description: pickedVideo.fileName ?? "",
+          title: pickedVideo.fileName ?? "Untitled Video",
+          image: pickedVideo.uri,
+          tags: [],
+          publisher: session?.displayName || "Anonymous",
+          publisherPicUrl: session?.profilePic || "",
+        };
+        setCreatedPostVideo(video);
+      }
+    } catch (error) {
+      console.error("Error picking video:", error);
+      Alert.alert("Error", "Failed to pick video");
+    }
+  };
+
+  const pickImage = async () => {
+    if (!(await requestMediaPermissions("photo"))) return;
+
+    try {
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.All,
+        allowsEditing: false,
+        allowsMultipleSelection: true,
+        quality: 1,
+        selectionLimit: 10,
+      });
+
+      if (!result.canceled && result.assets) {
+        const pictures = result.assets.map((asset, idx) => ({
+          id: asset.assetId ?? `${idx}-${asset.fileName}`,
+          url: asset.uri,
+          description: asset.fileName ?? "",
+          createdAt: new Date(),
+          modifiedAt: new Date(),
+        }));
+
+        if (pictures.length > 0) {
+          setCreatedPostImage(pictures);
+        }
+      }
+    } catch (error) {
+      console.error("Error picking images:", error);
+      Alert.alert("Error", "Failed to pick images");
+    }
+  };
+
+  const handleOptionPress = async (
+    route:
+      | "/(protected)/(create-post)/new-link-post"
+      | "/(protected)/(create-post)/new-image-post"
+      | "/(protected)/(create-post)/new-podcast-post"
+      | "/(protected)/(create-post)/new-event-post"
+  ) => {
+    setShowOptions(false);
+  
+    if (route === "/(protected)/(create-post)/new-image-post") {
+      await pickImage();
+    } else if (route === "/(protected)/(create-post)/new-link-post") {
+      await pickVideo();
+    }
+  
+    router.push(route);
+  };
+
   return (
     <Box className="flex-1 relative">
       <ScrollView
@@ -175,7 +217,7 @@ export default function HomeScreen() {
         <SideBar open={open} onOpenChange={setOpen} />
       </ScrollView>
 
-      {/* Main Floating Button */}
+      {/* Floating Action Button */}
       <Animated.View
         style={{
           position: "absolute",
@@ -194,11 +236,8 @@ export default function HomeScreen() {
         </TouchableOpacity>
       </Animated.View>
 
-      <Modal
-        isOpen={showOptions}
-        onClose={() => setShowOptions(false)}
-        className=""
-      >
+      {/* Post Options Modal */}
+      <Modal isOpen={showOptions} onClose={() => setShowOptions(false)}>
         <ModalBackdrop style={{ backgroundColor: "black" }} />
         <ModalContent className="w-fit absolute bg-transparent -right-4 bottom-10 border-0">
           <ModalBody className="p-0">
@@ -215,7 +254,6 @@ export default function HomeScreen() {
                       {option.icon}
                     </View>
                   </TouchableOpacity>
-
                   <Text size="sm" className="text-white font-medium">
                     {option.title}
                   </Text>

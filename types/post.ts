@@ -118,6 +118,7 @@ export type Picture = {
   description: string;
   createdAt: Date;
   modifiedAt: Date;
+  type?: string;
 };
 
 export type Document = {

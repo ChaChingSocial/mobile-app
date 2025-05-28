@@ -1,6 +1,7 @@
-import { Picture, Post } from "@/types/post";
+import { LinkPreview, Picture, Post } from "@/types/post";
 import { create } from "zustand";
 import { Community } from "@/_sdk";
+import { Asset } from "expo-media-library";
 
 interface PostState {
   createdPost: Post | null;
@@ -8,6 +9,7 @@ interface PostState {
   createdPostCommunityId: string;
   createdPostCommunityData: Community | null;
   createdPostImage: Picture[] | null;
+  createdPostVideo: LinkPreview | null;
   posts: Post[];
   pinPost: { id: string; order: number } | null;
   pinnedPosts: Post[];
@@ -16,6 +18,7 @@ interface PostState {
   setCreatedPostCommunityId: (createdPostCommunityId: string) => void;
   setCreatedPostCommunityData: (createdPostCommunityData: Community) => void;
   setCreatedPostImage: (createdPostImage: Picture[]) => void;
+  setCreatedPostVideo: (createdPostVideo: LinkPreview) => void;
   setPosts: (posts: Post[]) => void;
   setPinPost: (pinPost: { id: string; order: number }) => void;
   setPinnedPosts: (pinnedPosts: Post[]) => void;
@@ -26,7 +29,8 @@ export const usePostStore = create<PostState>((set) => ({
   deletedPostId: "",
   createdPostCommunityId: "",
   createdPostCommunityData: null,
-  createdPostImage: null,
+  createdPostImage: [],
+  createdPostVideo: null,
   posts: [],
   pinPost: null,
   pinnedPosts: [],
@@ -37,6 +41,7 @@ export const usePostStore = create<PostState>((set) => ({
   setCreatedPostCommunityData: (createdPostCommunityData) =>
     set({ createdPostCommunityData }),
   setCreatedPostImage: (createdPostImage) => set({ createdPostImage }),
+  setCreatedPostVideo: (createdPostVideo) => set({ createdPostVideo }),
   setPosts: (posts) => set({ posts }),
   setPinPost: (pinPost) => set({ pinPost }),
   setPinnedPosts: (pinnedPosts) => set({ pinnedPosts: pinnedPosts ?? [] }),
