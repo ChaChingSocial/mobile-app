@@ -16,7 +16,7 @@ export default function CommunityCard({ community }: { community: Community }) {
       <TouchableOpacity
         onPress={() => {
           router.push({
-            pathname: "/(protected)/(communities)/[slug]",
+            pathname: "/(protected)/communities/[slug]",
             params: { slug: community.slug, communityId: community.id },
           });
         }}
@@ -34,7 +34,6 @@ export default function CommunityCard({ community }: { community: Community }) {
           </Avatar>
           <Box>
             <Text className="font-bold flex-wrap">
-
               {community.title.length > 28
                 ? `${community.title.slice(0, 25)}...`
                 : community.title}

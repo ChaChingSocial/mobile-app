@@ -54,22 +54,22 @@ export default function HomeScreen() {
     {
       title: "Video Link",
       icon: <FontAwesome5 name="video" size={18} color="white" />,
-      route: "/(protected)/(create-post)/new-link-post",
+      route: "/(protected)/create-post/new-link-post",
     },
     {
       title: "Images",
       icon: <Entypo name="image" size={20} color="white" />,
-      route: "/(protected)/(create-post)/new-image-post",
+      route: "/(protected)/create-post/new-image-post",
     },
     {
       title: "Podcast",
       icon: <FontAwesome5 name="spotify" size={18} color="white" />,
-      route: "/(protected)/(create-post)/new-podcast-post",
+      route: "/(protected)/create-post/new-podcast-post",
     },
     {
       title: "Event",
       icon: <Ionicons name="ticket-outline" size={20} color="white" />,
-      route: "/(protected)/(create-post)/new-event-post",
+      route: "/(protected)/create-post/new-event-post",
     },
   ];
 
@@ -191,19 +191,19 @@ export default function HomeScreen() {
 
   const handleOptionPress = async (
     route:
-      | "/(protected)/(create-post)/new-link-post"
-      | "/(protected)/(create-post)/new-image-post"
-      | "/(protected)/(create-post)/new-podcast-post"
-      | "/(protected)/(create-post)/new-event-post"
+      | "/(protected)/create-post/new-link-post"
+      | "/(protected)/create-post/new-image-post"
+      | "/(protected)/create-post/new-podcast-post"
+      | "/(protected)/create-post/new-event-post"
   ) => {
     setShowOptions(false);
-  
-    if (route === "/(protected)/(create-post)/new-image-post") {
+
+    if (route === "/(protected)/create-post/new-image-post") {
       await pickImage();
-    } else if (route === "/(protected)/(create-post)/new-link-post") {
+    } else if (route === "/(protected)/create-post/new-link-post") {
       await pickVideo();
     }
-  
+
     router.push(route);
   };
 
@@ -266,7 +266,7 @@ export default function HomeScreen() {
                 className="flex-row-reverse items-center rounded-full pl-2 py-2 mr-1"
                 onPress={() => {
                   setShowOptions(false);
-                  router.push("/(protected)/(create-post)");
+                  router.push("/(protected)/create-post");
                 }}
               >
                 <View className="h-16 w-16 bg-secondary-0 rounded-full justify-center items-center ml-2">

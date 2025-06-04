@@ -29,7 +29,7 @@ export default function ProtectedLayout() {
             headerShown: true,
           }}
         />
-        <Stack.Screen name="(create-post)" />
+        <Stack.Screen name="create-post" />
         <Stack.Screen
           name="search-community"
           options={{
@@ -41,16 +41,16 @@ export default function ProtectedLayout() {
           }}
         />
         <Stack.Screen
-          name="(communities)/[slug]"
+          name="communities"
           options={{
             title: "Community",
             headerBackTitle: "Back",
             headerShown: true,
             headerLargeTitle: true,
             headerShadowVisible: true,
-            headerLargeStyle:{
+            headerLargeStyle: {
               backgroundColor: "black",
-            }
+            },
           }}
         />
       </Stack>

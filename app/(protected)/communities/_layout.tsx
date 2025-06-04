@@ -87,7 +87,7 @@ export default function CommunitiesLayout() {
           ),
         })}
       >
-        <Stack.Screen name="(about)/[slug]" />
+        <Stack.Screen name="about" />
         <Stack.Screen name="[slug]" />
       </Stack>
       <Drawer

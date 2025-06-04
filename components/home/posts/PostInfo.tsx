@@ -75,7 +75,7 @@ export const PostInfo = ({
         <Pressable
           onPress={() =>
             router.push(
-              `/(protected)/(communities)/${communitySlug}?communityId=${communityId}`
+              `/(protected)/communities/${communitySlug}?communityId=${communityId}`
             )
           }
           className="flex flex-row items-center justify-between px-4 rounded-lg"
