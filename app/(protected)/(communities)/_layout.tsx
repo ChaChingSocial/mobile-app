@@ -1,0 +1,121 @@
+import { Center } from "@/components/ui/center";
+import {
+  Drawer,
+  DrawerBackdrop,
+  DrawerBody,
+  DrawerContent,
+  DrawerHeader,
+} from "@/components/ui/drawer";
+import { Heading } from "@/components/ui/heading";
+import { Text } from "@/components/ui/text";
+import { VStack } from "@/components/ui/vstack";
+import { communityApi } from "@/config/backend";
+import { useSession } from "@/lib/providers/AuthContext";
+import { FontAwesome, Fontisto, Ionicons } from "@expo/vector-icons";
+import { router, Stack, useLocalSearchParams } from "expo-router";
+import { useEffect, useState } from "react";
+import { TouchableOpacity } from "react-native";
+import * as Clipboard from "expo-clipboard";
+import { StatusBar } from "expo-status-bar";
+
+export default function CommunitiesLayout() {
+  const { session } = useSession();
+  const params = useLocalSearchParams();
+  const { slug, communityId } = params;
+
+  const [showDrawer, setShowDrawer] = useState(false);
+  const [isMember, setIsMember] = useState(false);
+
+  useEffect(() => {
+    if (!communityId) {
+      console.error("No communityId provided in params");
+      return;
+    }
+    const fetchCommunityData = async () => {
+      try {
+        const res = await communityApi.getUserCommunityMembership({
+          userId: session?.uid ?? "",
+        });
+        if (res) {
+          console.log("Community data fetched:", res);
+          setIsMember(Array.isArray(res) && res.length > 0);
+        }
+      } catch (error) {
+        console.error("Error fetching community data:", error);
+      }
+    };
+    fetchCommunityData();
+  }, [session]);
+
+  const copyToClipboard = async () => {
+    setShowDrawer(false);
+    const communityUrl = `https://www.chaching.social/communities/${
+      Array.isArray(slug) ? slug[0] : slug
+    }?id=${Array.isArray(communityId) ? communityId[0] : communityId}`;
+    await Clipboard.setStringAsync(communityUrl);
+  };
+
+  return (
+    <>
+      <Stack
+        screenOptions={() => ({
+          title: "",
+          headerRight: () => (
+            <>
+              <TouchableOpacity
+                onPressOut={() => setShowDrawer(true)}
+                className="mr-5"
+              >
+                <Fontisto name="share-a" size={24} color="black" />
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPressOut={() => {
+                  communityApi.joinCommunity({
+                    communityId: Array.isArray(communityId)
+                      ? communityId[0]
+                      : "",
+                    userId: session?.uid ?? "",
+                  });
+                }}
+                className="mr-5 border border-gray-900 px-3 rounded-2xl"
+              >
+                <Text className="text-gray-900">
+                  {isMember ? "Joined" : "Join"}
+                </Text>
+              </TouchableOpacity>
+            </>
+          ),
+        })}
+      >
+        <Stack.Screen name="(about)/[slug]" />
+        <Stack.Screen name="[slug]" />
+      </Stack>
+      <Drawer
+        isOpen={showDrawer}
+        onClose={() => {
+          setShowDrawer(false);
+        }}
+        size="sm"
+        anchor="bottom"
+      >
+        <DrawerBackdrop />
+        <DrawerContent>
+          <DrawerHeader>
+            <Heading size="3xl">Share</Heading>
+          </DrawerHeader>
+          <DrawerBody>
+            <TouchableOpacity onPressOut={copyToClipboard}>
+              <VStack className="items-center ">
+                <Center className="bg-gray-200 w-12 h-12 rounded-full">
+                  <FontAwesome name="link" size={24} color="black" />
+                </Center>
+                <Text className="text-gray-800">Copy Link</Text>
+              </VStack>
+            </TouchableOpacity>
+          </DrawerBody>
+        </DrawerContent>
+      </Drawer>
+      <StatusBar />
+    </>
+  );
+}

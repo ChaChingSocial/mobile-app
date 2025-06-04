@@ -211,7 +211,7 @@ export default function HomeScreen() {
     <Box className="flex-1 relative">
       <ScrollView
         contentInsetAdjustmentBehavior="automatic"
-        className="bg-white"
+        className="bg-[#E6F8F1] flex-1"
       >
         <MainNewsfeed />
         <SideBar open={open} onOpenChange={setOpen} />

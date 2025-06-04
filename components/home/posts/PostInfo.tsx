@@ -11,7 +11,7 @@ import { checkIfFinFluencer } from "@/lib/api/user";
 import { useSession } from "@/lib/providers/AuthContext";
 import { formatPostDate, formatTimestamp } from "@/lib/utils/dates";
 import { Post as PostType } from "@/types/post";
-import { useRouter } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import { Timestamp } from "firebase/firestore";
 import { useEffect, useState } from "react";
 import { Pressable, TouchableOpacity } from "react-native";
@@ -25,6 +25,9 @@ export const PostInfo = ({
 }) => {
   const { session: user } = useSession();
   const { posterName, posterUserId, posterPic } = post;
+
+  const params = useLocalSearchParams();
+  const { slug } = params;
 
   const communityId = post.newsfeedId;
   const [communityName, setCommunityName] = useState<string | null>(null);
@@ -68,15 +71,26 @@ export const PostInfo = ({
 
   return (
     <>
-      {communityName && (
-        <Pressable onPress={() => router.push(`/community/${communitySlug}`)}>
+      {communityName && !slug && (
+        <Pressable
+          onPress={() =>
+            router.push(
+              `/(protected)/(communities)/${communitySlug}?communityId=${communityId}`
+            )
+          }
+          className="flex flex-row items-center justify-between px-4 rounded-lg"
+        >
           <Badge
             size="md"
             variant="solid"
             action="info"
             className="ml-auto -mt-2 rounded-md bg-violet-600"
           >
-            <BadgeText className="text-purple-50 font-semibold">{communityName}</BadgeText>
+            <BadgeText className="text-purple-50 font-semibold text-xs">
+              {communityName.length > 30
+                ? `${communityName.slice(0, 30)}...`
+                : communityName}
+            </BadgeText>
           </Badge>
         </Pressable>
       )}

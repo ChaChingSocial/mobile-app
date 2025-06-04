@@ -16,7 +16,7 @@ export function NewsfeedList({
   isUserCommunityAdmin,
 }: NewsfeedListProps) {
   const { pinnedPosts, setPinnedPosts } = usePostStore();
-  const prevPostsRef = useRef<Post[]>();
+  const prevPostsRef = useRef<Post[]>([]);
 
   useEffect(() => {
     // Skip if posts haven't changed
@@ -32,10 +32,8 @@ export function NewsfeedList({
   }, [posts]);
 
   return (
-    <Box className="p-2 sm:p-8">
+    <Box className="p-2">
       {posts
-        .slice()
-        .slice(0, 2)
         .map(
           (item, key) =>
             item && item.featured && <PostComponent key={key} post={item} />

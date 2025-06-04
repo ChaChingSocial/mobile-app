@@ -99,22 +99,19 @@ export default function SearchCommunity() {
   );
 
   return (
-    <SafeAreaView className="flex-1 bg-white py-6 px-4">
-      <Box className="py-6">
-        <Input>
-          <InputSlot className="pl-3">
-            <InputIcon as={SearchIcon} />
-          </InputSlot>
-          <InputField
-            placeholder="Search for a community..."
-            onChangeText={debouncedFilterCommunities}
-            value={searchText}
-            autoCapitalize="none"
-            autoCorrect={false}
-          />
-        </Input>
-      </Box>
-
+    <SafeAreaView className="flex-1 bg-white py-3 px-4">
+      <Input size="xl" className="mb-4">
+        <InputSlot className="pl-3">
+          <InputIcon as={SearchIcon} />
+        </InputSlot>
+        <InputField
+          placeholder="Search for a community..."
+          onChangeText={debouncedFilterCommunities}
+          value={searchText}
+          autoCapitalize="none"
+          autoCorrect={false}
+        />
+      </Input>
       <ScrollView className="flex-1">
         <Box className="flex-1">
           {loading ? (

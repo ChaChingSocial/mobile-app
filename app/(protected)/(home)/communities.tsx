@@ -1,11 +1,14 @@
 import { Community } from "@/_sdk";
+import CommunityCard from "@/components/communities/CommunityCard";
 import ParallaxScrollView from "@/components/ParallaxScrollView";
 import { Box } from "@/components/ui/box";
 import { Center } from "@/components/ui/center";
+import { SearchIcon } from "@/components/ui/icon";
+import { Input, InputField, InputIcon, InputSlot } from "@/components/ui/input";
 import { Spinner } from "@/components/ui/spinner";
 import { Text } from "@/components/ui/text";
 import { communityApi } from "@/config/backend";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { StyleSheet } from "react-native";
 
 export default function CommunitiesScreen() {
@@ -13,7 +16,7 @@ export default function CommunitiesScreen() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<unknown>(null);
 
-  useEffect(() => {
+  useMemo(() => {
     const fetchCommunityData = async () => {
       setLoading(true);
       try {
@@ -35,32 +38,24 @@ export default function CommunitiesScreen() {
 
   return (
     <ParallaxScrollView>
-      {loading && (
-        <Center>
-          <Spinner color="green" size="large" />
-          <Text size="md">Please Wait...</Text>
-        </Center>
-      )}
-      <Box className="flex-1">
-        {communityData.length > 0 ? (
-          communityData.map((community) => (
-            <Box key={community.id} className="p-4 border-b">
-              <Text>{community.title}</Text>
-            </Box>
-          ))
-        ) : (
-          <Text>No communities found</Text>
+     
+      <Box className="bg-[#E6F8F1] flex-1">
+        {loading && (
+          <Center className="flex-1">
+            <Spinner color="green" size="large" />
+            <Text size="md">Please Wait...</Text>
+          </Center>
         )}
+        <Box className="gap-5 flex mt-4 p-4">
+          {communityData.length > 0 ? (
+            communityData.map((community) => (
+              <CommunityCard key={community.id} community={community} />
+            ))
+          ) : (
+            <Text>No communities found</Text>
+          )}
+        </Box>
       </Box>
     </ParallaxScrollView>
   );
 }
-
-const styles = StyleSheet.create({
-  headerImage: {
-    color: "#808080",
-    bottom: -90,
-    left: -35,
-    position: "absolute",
-  },
-});
