@@ -10,6 +10,7 @@
 		13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB51A68108700A75B9A /* Images.xcassets */; };
 		257B8FB93807E7A21EE3A3D5 /* ExpoModulesProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5AEE7BE2935950356886BEE7 /* ExpoModulesProvider.swift */; };
 		2670A9A3B1085166140C9DB2 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = E1D433EC084D84E2767555DF /* PrivacyInfo.xcprivacy */; };
+		342A51C22DF05E830084D276 /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 342A51C12DF05E830084D276 /* GoogleService-Info.plist */; };
 		3E461D99554A48A4959DE609 /* SplashScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = AA286B85B6C04FC6940260E9 /* SplashScreen.storyboard */; };
 		95A1041BCC3D0ACCD6776C1A /* libPods-chachingmobileapp.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 38E00BC89623238F150C070E /* libPods-chachingmobileapp.a */; };
 		BB2F792D24A3F905000567C9 /* Expo.plist in Resources */ = {isa = PBXBuildFile; fileRef = BB2F792C24A3F905000567C9 /* Expo.plist */; };
@@ -20,13 +21,14 @@
 		13B07F961A680F5B00A75B9A /* chachingmobileapp.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = chachingmobileapp.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		13B07FB51A68108700A75B9A /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; name = Images.xcassets; path = chachingmobileapp/Images.xcassets; sourceTree = "<group>"; };
 		13B07FB61A68108700A75B9A /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = Info.plist; path = chachingmobileapp/Info.plist; sourceTree = "<group>"; };
+		342A51C12DF05E830084D276 /* GoogleService-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
 		38E00BC89623238F150C070E /* libPods-chachingmobileapp.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-chachingmobileapp.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 		5869D3791EA35BF4BECCADCE /* Pods-chachingmobileapp.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-chachingmobileapp.release.xcconfig"; path = "Target Support Files/Pods-chachingmobileapp/Pods-chachingmobileapp.release.xcconfig"; sourceTree = "<group>"; };
 		5AEE7BE2935950356886BEE7 /* ExpoModulesProvider.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = ExpoModulesProvider.swift; path = "Pods/Target Support Files/Pods-chachingmobileapp/ExpoModulesProvider.swift"; sourceTree = "<group>"; };
 		AA286B85B6C04FC6940260E9 /* SplashScreen.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; name = SplashScreen.storyboard; path = chachingmobileapp/SplashScreen.storyboard; sourceTree = "<group>"; };
 		BB2F792C24A3F905000567C9 /* Expo.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = Expo.plist; sourceTree = "<group>"; };
 		C53091AF5BA025CDDA0A77EC /* Pods-chachingmobileapp.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-chachingmobileapp.debug.xcconfig"; path = "Target Support Files/Pods-chachingmobileapp/Pods-chachingmobileapp.debug.xcconfig"; sourceTree = "<group>"; };
-		E1D433EC084D84E2767555DF /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; includeInIndex = 1; name = PrivacyInfo.xcprivacy; path = chachingmobileapp/PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
+		E1D433EC084D84E2767555DF /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xml; name = PrivacyInfo.xcprivacy; path = chachingmobileapp/PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		ED297162215061F000B7C4FE /* JavaScriptCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = JavaScriptCore.framework; path = System/Library/Frameworks/JavaScriptCore.framework; sourceTree = SDKROOT; };
 		F11748412D0307B40044C1D9 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = AppDelegate.swift; path = chachingmobileapp/AppDelegate.swift; sourceTree = "<group>"; };
 		F11748442D0722820044C1D9 /* chachingmobileapp-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "chachingmobileapp-Bridging-Header.h"; path = "chachingmobileapp/chachingmobileapp-Bridging-Header.h"; sourceTree = "<group>"; };
@@ -81,7 +83,6 @@
 				C53091AF5BA025CDDA0A77EC /* Pods-chachingmobileapp.debug.xcconfig */,
 				5869D3791EA35BF4BECCADCE /* Pods-chachingmobileapp.release.xcconfig */,
 			);
-			name = Pods;
 			path = Pods;
 			sourceTree = "<group>";
 		};
@@ -101,6 +102,7 @@
 				2D16E6871FA4F8E400B85C8A /* Frameworks */,
 				7B2066E47B69D6829872652F /* Pods */,
 				E7069CF2AB1373507FE673B2 /* ExpoModulesProviders */,
+				342A51C12DF05E830084D276 /* GoogleService-Info.plist */,
 			);
 			indentWidth = 2;
 			sourceTree = "<group>";
@@ -195,6 +197,7 @@
 			files = (
 				BB2F792D24A3F905000567C9 /* Expo.plist in Resources */,
 				13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */,
+				342A51C22DF05E830084D276 /* GoogleService-Info.plist in Resources */,
 				3E461D99554A48A4959DE609 /* SplashScreen.storyboard in Resources */,
 				2670A9A3B1085166140C9DB2 /* PrivacyInfo.xcprivacy in Resources */,
 			);
@@ -457,10 +460,7 @@
 				LIBRARY_SEARCH_PATHS = "$(SDKROOT)/usr/lib/swift\"$(inherited)\"";
 				MTL_ENABLE_DEBUG_INFO = YES;
 				ONLY_ACTIVE_ARCH = YES;
-				OTHER_LDFLAGS = (
-					"$(inherited)",
-					" ",
-				);
+				OTHER_LDFLAGS = "$(inherited)  ";
 				REACT_NATIVE_PATH = "${PODS_ROOT}/../../node_modules/react-native";
 				SDKROOT = iphoneos;
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "$(inherited) DEBUG";
@@ -515,10 +515,7 @@
 				);
 				LIBRARY_SEARCH_PATHS = "$(SDKROOT)/usr/lib/swift\"$(inherited)\"";
 				MTL_ENABLE_DEBUG_INFO = NO;
-				OTHER_LDFLAGS = (
-					"$(inherited)",
-					" ",
-				);
+				OTHER_LDFLAGS = "$(inherited)  ";
 				REACT_NATIVE_PATH = "${PODS_ROOT}/../../node_modules/react-native";
 				SDKROOT = iphoneos;
 				USE_HERMES = true;

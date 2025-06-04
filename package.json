@@ -41,6 +41,8 @@
     "@gluestack-ui/tooltip": "^0.1.44",
     "@legendapp/motion": "^2.4.0",
     "@react-native-async-storage/async-storage": "2.1.2",
+    "@react-native-firebase/app": "^22.2.0",
+    "@react-native-firebase/auth": "^22.2.0",
     "@react-native-masked-view/masked-view": "^0.3.2",
     "@react-navigation/bottom-tabs": "^7.2.0",
     "@react-navigation/drawer": "^7.1.1",

@@ -59,6 +59,7 @@ export default function SingleCommunity() {
 
   return (
     <ScrollView className="bg-white">
+      
       {communityData.image && (
         <View className="w-full h-60 overflow-hidden">
           <Image

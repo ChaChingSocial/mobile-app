@@ -44,13 +44,7 @@ export default function ProtectedLayout() {
           name="communities"
           options={{
             title: "Community",
-            headerBackTitle: "Back",
-            headerShown: true,
-            headerLargeTitle: true,
-            headerShadowVisible: true,
-            headerLargeStyle: {
-              backgroundColor: "black",
-            },
+            headerShown: false,
           }}
         />
       </Stack>

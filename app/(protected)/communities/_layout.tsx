@@ -85,6 +85,7 @@ export default function CommunitiesLayout() {
               </TouchableOpacity>
             </>
           ),
+          headerLargeTitle: false, 
         })}
       >
         <Stack.Screen name="about" />
