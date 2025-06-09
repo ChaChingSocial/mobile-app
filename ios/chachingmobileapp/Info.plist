@@ -34,6 +34,12 @@
       <dict>
         <key>CFBundleURLSchemes</key>
         <array>
+          <string>com.googleusercontent.apps.615685871214-a2vcibr8jt26gm2l9j3akhq61krkp6kb</string>
+        </array>
+      </dict>
+      <dict>
+        <key>CFBundleURLSchemes</key>
+        <array>
           <string>exp+chaching-mobile-app</string>
         </array>
       </dict>
