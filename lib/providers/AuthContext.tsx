@@ -7,6 +7,7 @@ import {
 } from "react";
 import { useRouter, SplashScreen } from "expo-router";
 import { SessionValue } from "@/types";
+import { GoogleSignin } from "@react-native-google-signin/google-signin";
 
 SplashScreen.preventAutoHideAsync();
 
@@ -57,7 +58,9 @@ export function SessionProvider({ children }: PropsWithChildren) {
           // Perform sign-in logic here
           router.replace("/(protected)/(home)");
         },
-        signOut: () => {
+        signOut: async () => {
+          await GoogleSignin.signOut();
+          
           setSession(null);
           router.replace("/login");
         },
