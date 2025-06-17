@@ -1,7 +1,6 @@
 import { Tabs, useRouter } from "expo-router";
 import { useContext, useEffect, useState } from "react";
 import { Image, Platform, TouchableOpacity } from "react-native";
-
 import {
   Avatar,
   AvatarFallbackText,

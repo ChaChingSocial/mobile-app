@@ -1,26 +1,17 @@
-import { useSession } from "@/lib/providers/AuthContext";
 import { DrawerProvider } from "@/lib/providers/DrawerContext";
-import { Redirect, Stack } from "expo-router";
+import { getAuth, onAuthStateChanged, FirebaseAuthTypes } from "@react-native-firebase/auth";
+import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
-import { getAuth, onAuthStateChanged } from "@react-native-firebase/auth";
-import { useState, useEffect } from "react";
-import { View } from "react-native";
+import { useEffect, useState } from "react";
 
 export default function ProtectedLayout() {
-  // const { session } = useSession();
-
-  // // if session is null, redirect to login
-  // if (!session) {
-  //   return <Redirect href="/login" />;
-  // }
-
-  // Set an initializing state whilst Firebase connects
   const [initializing, setInitializing] = useState(true);
-  const [user, setUser] = useState();
+  const [user, setUser] = useState<FirebaseAuthTypes.User | null>();
 
   // Handle user state changes
-  function handleAuthStateChanged(user) {
+  function handleAuthStateChanged(user: FirebaseAuthTypes.User | null) {
     setUser(user);
+    
     if (initializing) setInitializing(false);
   }
 
@@ -30,10 +21,6 @@ export default function ProtectedLayout() {
   }, []);
 
   if (initializing) return null;
-
-  if (!user) {
-    return <Redirect href="/login" />;
-  }
 
   return (
     <DrawerProvider>

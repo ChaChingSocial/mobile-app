@@ -1,22 +1,10 @@
-import { app, auth } from "@/config/firebase";
+import { userApi } from "@/config/backend";
+import { auth } from "@/config/firebase";
 import {
-  createUserWithEmailAndPassword,
-  sendEmailVerification,
   sendPasswordResetEmail,
   signInWithEmailAndPassword,
-  updateEmail,
-  updatePassword,
-  updateProfile,
-  onAuthStateChanged,
-  setPersistence,
-  browserSessionPersistence,
-  getAuth,
-  GoogleAuthProvider,
-  signInWithPopup,
 } from "firebase/auth";
 import { useUserStore } from "../store/user";
-import { userApi } from "@/config/backend";
-import { useSession } from "../providers/AuthContext";
 
 export async function loginWithEmail(
   email: string,
@@ -32,21 +20,33 @@ export async function loginWithEmail(
   const { user } = userCredential;
   const tokenResult = await user.getIdTokenResult();
   console.log("token", user, tokenResult);
-  const { token } = tokenResult;
-
-  // Update user store
-  const { setUser } = useUserStore.getState();
-
+  // const { token } = tokenResult;
   setSession({
     uid: user.uid,
     email: user.email,
     displayName: user.displayName,
     profilePic: user.photoURL,
   });
+  // Update user store
+  const { setUser } = useUserStore.getState();
 
-  userApi.getUserById({ userId: user.uid }).then((res) => {
+  await userApi.getUserById({ userId: user.uid }).then((res) => {
     setUser(res);
-    console.log("user get user bt ID", res);
+    setSession({
+      uid: res.id,
+      email: res.email,
+      displayName: res.username,
+      profilePic: res.profilePic,
+    });
+    console.log("user get user but ni ID", res);
     return user;
   });
+}
+
+export async function resetPassword(email: string) {
+  try {
+    await sendPasswordResetEmail(auth, email);
+  } catch (error) {
+    console.error("Error resetting password: ", error);
+  }
 }
