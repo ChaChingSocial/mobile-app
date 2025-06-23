@@ -1,16 +1,26 @@
-import { useSession } from "@/lib/providers/AuthContext";
 import { DrawerProvider } from "@/lib/providers/DrawerContext";
-import { S } from "@expo/html-elements";
-import { Redirect, Stack } from "expo-router";
+import { getAuth, onAuthStateChanged, FirebaseAuthTypes } from "@react-native-firebase/auth";
+import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
+import { useEffect, useState } from "react";
 
 export default function ProtectedLayout() {
-  const { session } = useSession();
+  const [initializing, setInitializing] = useState(true);
+  const [user, setUser] = useState<FirebaseAuthTypes.User | null>();
 
-  // if session is null, redirect to login
-  if (!session) {
-    return <Redirect href="/login" />;
+  // Handle user state changes
+  function handleAuthStateChanged(user: FirebaseAuthTypes.User | null) {
+    setUser(user);
+    
+    if (initializing) setInitializing(false);
   }
+
+  useEffect(() => {
+    const subscriber = onAuthStateChanged(getAuth(), handleAuthStateChanged);
+    return subscriber; // unsubscribe on unmount
+  }, []);
+
+  if (initializing) return null;
 
   return (
     <DrawerProvider>
@@ -44,13 +54,14 @@ export default function ProtectedLayout() {
           name="communities"
           options={{
             title: "Community",
-            headerBackTitle: "Back",
-            headerShown: true,
-            headerLargeTitle: true,
-            headerShadowVisible: true,
-            headerLargeStyle: {
-              backgroundColor: "black",
-            },
+            headerShown: false,
+          }}
+        />
+        <Stack.Screen
+          name="blog"
+          options={{
+            title: "Blog",
+            headerShown: false,
           }}
         />
       </Stack>

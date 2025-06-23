@@ -859,6 +859,28 @@ paths:
                 $ref: "#/components/schemas/User"
         default:
           $ref: "#/components/responses/UnexpectedError"
+  "/user/get-user-by-email/{email}":
+    get:
+      summary: Get user by email
+      operationId: getUserByEmail
+      tags:
+        - User
+      parameters:
+        - name: email
+          in: path
+          required: true
+          schema:
+            type: string
+          description: email to filter by
+      responses:
+        "200":
+          description: Expected response to a valid request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        default:
+          $ref: "#/components/responses/UnexpectedError"
   "/user/get-user-info/{user-id}":
     get:
       summary: Get user by id

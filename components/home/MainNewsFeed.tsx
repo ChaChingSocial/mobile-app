@@ -1,5 +1,4 @@
 import useFeaturedPosts from "@/hooks/useSubscribeToPosts";
-import { useRouter } from "expo-router";
 import React from "react";
 import { Image, TouchableOpacity } from "react-native";
 import { Box } from "../ui/box";
@@ -7,16 +6,26 @@ import { Text } from "../ui/text";
 import NewsfeedList from "./NewsfeedList";
 
 export function MainNewsfeed() {
-  // const setCommunityId = useCommunityStore((state) => state.setCommunityId);
-  // const setInCommunity = useCommunityStore((state) => state.setInCommunity);
-
   const { posts, fetchMorePosts, loading, hasMore } = useFeaturedPosts();
+  // const [posts, setPosts] = useState<Post[]>([]);
+  // const [loading, setLoading] = useState(false);
 
   // useEffect(() => {
-  //   setCommunityId("");
-  //   setInCommunity(false);
+  //   async function fetchInitialPosts() {
+  //     setLoading(true);
+  //     try {
+  //       const allPosts = await newsfeedApi.getPosts();
+  //       setPosts(allPosts);
+  //       console.log("Fetched initial posts:", allPosts.length);
+  //     } catch (error) {
+  //       console.error("Error fetching initial posts:", error);
+  //     } finally {
+  //       setLoading(false);
+  //     }
+  //   }
+
+  //   fetchInitialPosts();
   // }, []);
-  const router = useRouter();
 
   return (
     <Box className="flex-1">

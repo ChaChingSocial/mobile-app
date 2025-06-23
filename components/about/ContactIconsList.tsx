@@ -1,9 +1,9 @@
-import Linking from "expo-linking";
 import { Box } from "../ui/box";
 import { Text } from "../ui/text";
 import { TouchableOpacity } from "react-native";
 import { FontAwesome, FontAwesome5 } from "@expo/vector-icons";
 import { VStack } from "../ui/vstack";
+import { Linking } from "react-native";
 
 interface ContactIconProps
   extends Omit<React.ComponentPropsWithoutRef<typeof Box>, "title"> {

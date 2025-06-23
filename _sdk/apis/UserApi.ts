@@ -48,6 +48,10 @@ export interface GetAllUserInfoRequest {
     limit?: number;
 }
 
+export interface GetUserByEmailRequest {
+    email: string;
+}
+
 export interface GetUserByIdRequest {
     userId: string;
 }
@@ -241,6 +245,39 @@ export class UserApi extends runtime.BaseAPI {
      */
     async getAllUserInfo(requestParameters: GetAllUserInfoRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<UserInfo>> {
         const response = await this.getAllUserInfoRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Get user by email
+     */
+    async getUserByEmailRaw(requestParameters: GetUserByEmailRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<User>> {
+        if (requestParameters['email'] == null) {
+            throw new runtime.RequiredError(
+                'email',
+                'Required parameter "email" was null or undefined when calling getUserByEmail().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        const response = await this.request({
+            path: `/user/get-user-by-email/{email}`.replace(`{${"email"}}`, encodeURIComponent(String(requestParameters['email']))),
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => UserFromJSON(jsonValue));
+    }
+
+    /**
+     * Get user by email
+     */
+    async getUserByEmail(requestParameters: GetUserByEmailRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<User> {
+        const response = await this.getUserByEmailRaw(requestParameters, initOverrides);
         return await response.value();
     }
 
