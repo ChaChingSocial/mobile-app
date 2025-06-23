@@ -59,7 +59,7 @@ export default function TabLayout() {
                   size={28}
                   color="black"
                 />
-                {/* {totalUnreadNotifications > 0 && ( */}
+                {totalUnreadNotifications > 0 && (
                   <Box className="absolute -top-1 -right-1 bg-red-500 rounded-full min-w-[20px] h-5 flex items-center justify-center">
                     <Text className="text-white text-xs font-bold px-1">
                       {totalUnreadNotifications > 9
@@ -67,7 +67,7 @@ export default function TabLayout() {
                         : totalUnreadNotifications}
                     </Text>
                   </Box>
-                {/* )} */}
+                )} 
               </Box>
             </TouchableOpacity>
           ),
@@ -148,12 +148,19 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="blog"
+        name="blog/index"
         options={{
           title: "Blog",
           tabBarIcon: ({ color }) => (
             <FontAwesome size={22} name="book" color={color} />
           ),
+          headerTitle: "Blog",
+        }}
+      />
+      <Tabs.Screen
+        name="blog/[slug]"
+        options={{
+          href: null,
         }}
       />
     </Tabs>

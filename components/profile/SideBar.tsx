@@ -8,7 +8,7 @@ import {
 } from "@/components/ui/drawer";
 import { Heading } from "@/components/ui/heading";
 import { FontAwesome, FontAwesome5 } from "@expo/vector-icons";
-import { Pressable, TouchableOpacity } from "react-native";
+import { Linking, Pressable, TouchableOpacity } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Avatar, AvatarFallbackText, AvatarImage } from "../ui/avatar";
 
@@ -19,6 +19,8 @@ import { HStack } from "../ui/hstack";
 import { Text } from "../ui/text";
 import { VStack } from "../ui/vstack";
 import { useSession } from "@/lib/providers/AuthContext";
+import { useEffect, useState } from "react";
+import { checkIfFinFluencer, fetchFollowers, fetchFollowing } from "@/lib/api/user";
 
 export default function SideBar({
   open,
@@ -29,6 +31,30 @@ export default function SideBar({
 }) {
   const router = useRouter();
   const { signOut, session } = useSession();
+  const [isFinfluencer, setIsFinfluencer] = useState(false);
+  const [followers, setFollowers] = useState(0);
+  const [following, setFollowing] = useState(0);
+
+  const fetchFinfluencerStatus = async () => {
+    if (session?.uid) {
+      const res = await checkIfFinFluencer(session.uid);
+      setIsFinfluencer(res);
+    }
+  };
+
+  const fetchFollowersAndFollowing = async () => {
+    if (session?.uid) {
+      const followersRes = await fetchFollowers(session.uid);
+      const followingRes = await fetchFollowing(session.uid);
+      setFollowers(followersRes.size);
+      setFollowing(followingRes.size);
+    }
+  };
+
+  useEffect(() => {
+    fetchFollowersAndFollowing();
+    fetchFinfluencerStatus();
+  }, [session?.uid]);
 
   return (
     <SafeAreaView>
@@ -64,11 +90,11 @@ export default function SideBar({
               </Box>
               <HStack space="md" reversed={false}>
                 <Box className="flex flex-row gap-1">
-                  <Text bold>206</Text>
+                  <Text bold>{following}</Text>
                   <Text className="font-extralight">Following</Text>
                 </Box>
                 <Box className="flex flex-row gap-1">
-                  <Text bold>262</Text>
+                  <Text bold>{followers}</Text>
                   <Text className="font-extralight">Followers</Text>
                 </Box>
               </HStack>
@@ -81,8 +107,9 @@ export default function SideBar({
                 <Pressable
                   className="flex flex-row gap-3 items-center"
                   onPress={() => {
-                    router.push("/(protected)/(profile)");
-                    onOpenChange(false);
+                    Linking.openURL(
+                      `https://www.chaching.social/profile/${session?.displayName}?userId=${session?.uid}&isFinfluencer=${isFinfluencer}`
+                    );
                   }}
                 >
                   <FontAwesome5 name="user" size={20} color="black" />
@@ -93,7 +120,7 @@ export default function SideBar({
                 <Pressable
                   className="flex flex-row gap-3 items-center"
                   onPress={() => {
-                    router.push("/(protected)/(profile)/settings");
+                    Linking.openURL("https://www.chaching.social/settings");
                     onOpenChange(false);
                   }}
                 >

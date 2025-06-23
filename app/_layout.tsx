@@ -23,11 +23,12 @@ function RootLayoutNav() {
 
   }, []);
 
-
-  if (!session && pathname !== "/login") {
+  // if the user is not logged in and the pathname starts with /(protected) redirect to /login
+  if (!session && pathname.startsWith("/(protected)")) {
     return <Redirect href="/login" />;
   }
 
+  console.log("session layout", session, pathname);
 
   return (
     <GluestackUIProvider mode="light">

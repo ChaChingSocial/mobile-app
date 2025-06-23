@@ -9,29 +9,30 @@ import GoalPost from "./posts/GoalPost";
 // import { PresentationPost } from "@/components/NewsFeed/Post/PresentationPost";
 
 import { PointsGift } from "@/_sdk";
-import { scoreApi } from "@/config/backend";
+import { communityApi, scoreApi } from "@/config/backend";
 import { commentOnPost, likePost, unlikePost } from "@/lib/api/newsfeed";
 import { useSession } from "@/lib/providers/AuthContext";
 import { Post as PostType } from "@/types/post";
 import { useEffect, useState } from "react";
-import { TextInput, TouchableOpacity, View } from "react-native";
+import { Pressable, TextInput, TouchableOpacity, View } from "react-native";
 import { Button, ButtonText } from "../ui/button";
 import { Card } from "../ui/card";
 
+import { useRouter } from "expo-router";
 import { Image } from "react-native";
 import { Badge, BadgeText } from "../ui/badge";
 import { Box } from "../ui/box";
 import PostEditor from "./post-editor/PostEditor";
 import { PicturePost } from "./posts/PicturePost";
+import { PodcastPost } from "./posts/PodcastPost";
 import { PostComments } from "./posts/PostComments";
 import { PostWrapper } from "./posts/PostWrapper";
 import { PresentationPost } from "./posts/PresentationPost";
-import { PodcastPost } from "./posts/PodcastPost";
-import { AdvertPost } from "./posts/AdvertPost";
 
 export function PostComponent({ post }: { post: PostType }) {
   const { session } = useSession();
   const currentUserId = session?.uid;
+  const router = useRouter();
 
   const [userLikedPost, setUserLikedPost] = useState(false);
   const [userOinkedPost, setUserOinkedPost] = useState(false);
@@ -41,6 +42,8 @@ export function PostComponent({ post }: { post: PostType }) {
   const [comment, setComment] = useState("");
   const [editing, setEditing] = useState(false);
   const [showAllComments, setShowAllComments] = useState(false);
+  const [communityName, setCommunityName] = useState<string | null>(null);
+  const [communitySlug, setCommunitySlug] = useState<string | null>(null);
 
   useEffect(() => {
     if (post) {
@@ -55,6 +58,27 @@ export function PostComponent({ post }: { post: PostType }) {
       setEnableComments(post.advert.commentable);
     }
   }, [post]);
+
+  useEffect(() => {
+    const fetchCommunityData = async () => {
+      if (post.newsfeedId) {
+        try {
+          const res = await communityApi.communityById({
+            communityId: post.newsfeedId,
+          });
+          if (res) {
+            setCommunityName(res.title);
+            setCommunitySlug(res.slug);
+          }
+        } catch (error) {
+          console.error("Error fetching community data:", error);
+        }
+      }
+    };
+
+    fetchCommunityData();
+    console.log("Community name:", communityName);
+  }, []);
 
   const handleLike = () => {
     if (!post.id || !currentUserId) return;
@@ -200,17 +224,30 @@ export function PostComponent({ post }: { post: PostType }) {
 
   return (
     <Box className="mt-8">
-      <Box className="relative -top-4 left-6">
-        <Image
-          source={require("@/assets/images/pig-face.png")}
-          className="w-10 h-10 absolute top-0 -left-7 z-20"
-        />
-        <Badge className="absolute bg-[#36454F] top-3 left-0 z-10 rounded-full px-6 py-0.5 w-fit">
-          <BadgeText className="text-white uppercase text-center font-bold text-xs">
-            {postTypeTitle(post.category)}
-          </BadgeText>
-        </Badge>
-      </Box>
+      {communityName && (
+        <Box className="relative -top-4 left-6">
+          <Pressable
+            onPress={() =>
+              router.push(
+                `/(protected)/communities/${communitySlug}?communityId=${post.newsfeedId}`
+              )
+            }
+            className="flex flex-row items-center justify-between px-4 rounded-lg"
+          >
+            <Image
+              source={require("@/assets/images/pig-face.png")}
+              className="w-10 h-10 absolute top-0 -left-7 z-20"
+            />
+            <Badge className="absolute bg-[#36454F] top-3 left-0 z-10 rounded-full px-6 py-0.5 w-fit">
+              <BadgeText className="text-white uppercase text-center font-bold text-xs">
+              {communityName.length > 30
+                ? `${communityName.slice(0, 30)}...`
+                : communityName}
+              </BadgeText>
+            </Badge>
+          </Pressable>
+        </Box>
+      )}
       <Card className="m-2 p-4 rounded-lg bg-[#f3e8ff] border border-[#6b21a8] ">
         <PostWrapper
           post={post}

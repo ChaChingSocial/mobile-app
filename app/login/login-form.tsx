@@ -11,10 +11,14 @@ import { FontAwesome5 } from "@expo/vector-icons";
 import { useState } from "react";
 import { Center } from "@/components/ui/center";
 import { useRouter } from "expo-router";
+import { useUserStore } from "@/lib/store/user";
+import { userApi } from "@/config/backend";
 
 export default function LoginFormScreen() {
   const [_, setSession] = useStorageState("session");
   const { session, signIn } = useSession();
+  const { setUser } = useUserStore.getState();
+
   const router = useRouter();
 
   console.log("SeSSSIon INOF PREV", session);
@@ -29,14 +33,24 @@ export default function LoginFormScreen() {
       console.log("email", email);
       console.log("password", password);
 
-      const res = await loginWithEmail(email, password, setSession);
+      const user = await loginWithEmail(email, password, setSession);
       // const res = await signInWithEmailAndPassword(auth, email, password);
       console.log("SeSSSIon INOF NEXT", session);
-      console.log("res Login", res);
-    
-      router.push("/(protected)/(home)");
-      signIn();
+      console.log("res Login", user);
 
+      await userApi.getUserById({ userId: user.uid }).then((res) => {
+        setUser(res);
+        setSession({
+          uid: res.id ?? "",
+          email: res.email ?? "",
+          displayName: res.username ?? "",
+          profilePic: res.profilePic ?? "",
+        });
+        console.log("session in loginWithEmail", session);
+        console.log("user get user but ni ID", res);
+      });
+      // router.push("/(protected)/(home)");
+      signIn();
     } catch (error) {
       console.log("error", error);
       setError(

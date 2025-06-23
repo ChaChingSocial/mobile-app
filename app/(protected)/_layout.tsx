@@ -57,6 +57,13 @@ export default function ProtectedLayout() {
             headerShown: false,
           }}
         />
+        <Stack.Screen
+          name="blog"
+          options={{
+            title: "Blog",
+            headerShown: false,
+          }}
+        />
       </Stack>
       <StatusBar />
     </DrawerProvider>
