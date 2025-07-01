@@ -5,7 +5,7 @@ import { updatePost } from "@/lib/api/newsfeed";
 import { Post as PostType } from "@/types/post";
 import React, { useState } from "react";
 import { Text, View } from "react-native";
-import PostEditor from "../post-editor/PostEditor";
+// import PostEditor from "../post-editor/PostEditor";
 import { HStack } from "@/components/ui/hstack";
 import PostTags from "../post-editor/PostTag";
 
@@ -37,11 +37,12 @@ export function TextPost({
     <View className="my-1">
       {editing ? (
         <View className="p-4">
-          <PostEditor
+          {/* <PostEditor
             message={editedContent}
             setContent={setEditedContent}
             editorType="post"
-          />
+          /> */}
+          <HtmlRenderText source={editedContent} />
           <View className="flex-row mt-4 space-x-2">
             <Button
               onPress={handleSave}

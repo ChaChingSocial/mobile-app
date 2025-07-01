@@ -13,7 +13,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { useSession } from "@/lib/providers/AuthContext";
 import { PostMenu } from "@/components/menu/PostMenu";
-import PostEditor from "../post-editor/PostEditor";
+// import PostEditor from "../post-editor/PostEditor";
 import { PostWrapper } from "./PostWrapper";
 import HtmlRenderText from "@/components/common/HtmlRenderText";
 import { Comment as CommentType, Post as PostType } from "@/types/post";
@@ -98,11 +98,12 @@ export function Comment({
     >
       {editing ? (
         <View className="border border-purple-700 rounded-md p-4 ml-4 bg-purple-50 shadow-sm mt-4">
-          <PostEditor
+          {/* <PostEditor
             message={editedContent}
             setContent={setEditedContent}
             editorType="comment"
-          />
+          /> */}
+          <HtmlRenderText source={editedContent} />
           <View className="flex-row mt-2 space-x-2">
             <Button
               onPress={handleSave}

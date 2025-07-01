@@ -9,6 +9,7 @@ import { useRouter } from "expo-router";
 import React from "react";
 import { TouchableOpacity, View } from "react-native";
 import { Text } from "../ui/text";
+import HtmlRenderText from "../common/HtmlRenderText";
 
 type NotificationCardProps = {
   notification: Notification;
@@ -131,12 +132,12 @@ export function NotificationCard({
   return (
     <TouchableOpacity
       onPress={handlePress}
-      className={`w-full p-3 mt-3 rounded-lg flex-row items-center ${getNotificationColor(
+      className={`w-full p-3 mt-3 rounded-lg flex-row items-start ${getNotificationColor(
         notification.notificationType
       )}`}
     >
       <View
-        className={`w-8 h-8 rounded-full flex items-center justify-center border ${
+        className={`w-10 h-10 rounded-full flex items-center justify-center border ${
           notification.notificationType === "PRODUCT_SHIPPED" ||
           notification.notificationType === "PRODUCT_DELIVERED" ||
           notification.notificationType === "FOLLOWED" ||
@@ -171,7 +172,11 @@ export function NotificationCard({
 
       <View className="ml-3 flex-1">
         <Text className="text-sm">
-          {notification.notificationMessage || "New notification"}
+          <HtmlRenderText
+            source={
+              notification.notificationMessage || "<b>New notification</b>"
+            }
+          />
         </Text>
         {showDate && notification.createdAt && (
           <Text className="text-xs text-gray-500 mt-1">

@@ -22,12 +22,13 @@ import { useRouter } from "expo-router";
 import { Image } from "react-native";
 import { Badge, BadgeText } from "../ui/badge";
 import { Box } from "../ui/box";
-import PostEditor from "./post-editor/PostEditor";
+// import PostEditor from "./post-editor/PostEditor";
 import { PicturePost } from "./posts/PicturePost";
 import { PodcastPost } from "./posts/PodcastPost";
 import { PostComments } from "./posts/PostComments";
 import { PostWrapper } from "./posts/PostWrapper";
 import { PresentationPost } from "./posts/PresentationPost";
+import HtmlRenderText from "../common/HtmlRenderText";
 
 export function PostComponent({ post }: { post: PostType }) {
   const { session } = useSession();
@@ -267,11 +268,12 @@ export function PostComponent({ post }: { post: PostType }) {
 
         {writeComment && currentUserId ? (
           <View className="border border-secondary-0 rounded-md p-4 ml-4 bg-[#f3e8ff] mb-4">
-            <PostEditor
+            {/* <PostEditor
               message=""
               setContent={(content) => setComment(content)}
               editorType="post"
-            />
+            /> */}
+            <HtmlRenderText source={commentText} />
             <View className="flex flex-row justify-end mt-2 gap-2">
               <Button
                 // mode="outlined"
