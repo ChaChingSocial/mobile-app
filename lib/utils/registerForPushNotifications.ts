@@ -4,6 +4,11 @@ import * as Notifications from "expo-notifications";
 import { Platform } from "react-native";
 import Toast from "react-native-toast-message";
 
+/**
+ * Displays an error toast with the provided message and prompts the user to retry, then throws an error to halt execution.
+ *
+ * @param errorMessage - The error message to display and throw
+ */
 function handleRegistrationError(errorMessage: string) {
   Toast.show({
     text1: errorMessage,
@@ -18,6 +23,13 @@ function handleRegistrationError(errorMessage: string) {
   throw new Error(errorMessage);
 }
 
+/**
+ * Registers the device for push notifications and returns the Expo push token.
+ *
+ * Configures the notification channel on Android, checks for required permissions, ensures the device is physical, retrieves the Expo project ID, and obtains the Expo push token. Displays an error toast and throws if any step fails.
+ *
+ * @returns The Expo push token string if registration is successful
+ */
 export async function registerForPushNotificationsAsync() {
   if (Platform.OS === "android") {
     Notifications.setNotificationChannelAsync("default", {

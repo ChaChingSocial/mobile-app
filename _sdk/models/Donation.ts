@@ -54,16 +54,32 @@ export interface Donation {
 }
 
 /**
- * Check if a given object implements the Donation interface.
+ * Type guard that always treats any object as a `Donation`.
+ *
+ * This function does not perform any runtime checks and always returns `true`.
  */
 export function instanceOfDonation(value: object): value is Donation {
     return true;
 }
 
+/**
+ * Converts a JSON object into a `Donation` instance.
+ *
+ * Delegates to `DonationFromJSONTyped` with discriminator checks enabled.
+ *
+ * @returns The corresponding `Donation` object.
+ */
 export function DonationFromJSON(json: any): Donation {
     return DonationFromJSONTyped(json, false);
 }
 
+/**
+ * Converts a JSON object into a `Donation` instance, mapping each property and converting the `amount` field using `AmountFromJSON`.
+ *
+ * @param json - The JSON object to convert
+ * @param ignoreDiscriminator - If true, discriminator properties are ignored during conversion
+ * @returns The resulting `Donation` instance, or `null` if the input is `null`
+ */
 export function DonationFromJSONTyped(json: any, ignoreDiscriminator: boolean): Donation {
     if (json == null) {
         return json;
@@ -77,10 +93,23 @@ export function DonationFromJSONTyped(json: any, ignoreDiscriminator: boolean): 
     };
 }
 
+/**
+ * Converts a JSON object to a `Donation` instance.
+ *
+ * Delegates to `DonationToJSONTyped` with discriminator checks enabled.
+ * @returns The resulting `Donation` object.
+ */
 export function DonationToJSON(json: any): Donation {
     return DonationToJSONTyped(json, false);
 }
 
+/**
+ * Converts a `Donation` object to a JSON representation.
+ *
+ * @param value - The `Donation` object to convert, or `null`/`undefined`
+ * @param ignoreDiscriminator - If true, discriminator properties are ignored (not used in this implementation)
+ * @returns The JSON object representing the `Donation`, or the input if it is `null` or `undefined`
+ */
 export function DonationToJSONTyped(value?: Donation | null, ignoreDiscriminator: boolean = false): any {
     if (value == null) {
         return value;

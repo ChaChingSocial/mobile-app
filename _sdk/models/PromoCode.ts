@@ -34,16 +34,30 @@ export interface PromoCode {
 }
 
 /**
- * Check if a given object implements the PromoCode interface.
+ * Determines whether the given object can be treated as a PromoCode.
+ *
+ * Always returns `true`, treating any object as a PromoCode regardless of its properties.
  */
 export function instanceOfPromoCode(value: object): value is PromoCode {
     return true;
 }
 
+/**
+ * Converts a JSON object to a `PromoCode` instance.
+ *
+ * @returns The corresponding `PromoCode` object.
+ */
 export function PromoCodeFromJSON(json: any): PromoCode {
     return PromoCodeFromJSONTyped(json, false);
 }
 
+/**
+ * Converts a JSON object to a `PromoCode` instance, mapping `promoCode` and `percentageOff` fields and setting them to `undefined` if they are `null` in the input.
+ *
+ * @param json - The JSON object to convert
+ * @param ignoreDiscriminator - If true, discriminator properties are ignored (not used in this implementation)
+ * @returns A `PromoCode` instance with mapped properties, or `null` if the input is `null`
+ */
 export function PromoCodeFromJSONTyped(json: any, ignoreDiscriminator: boolean): PromoCode {
     if (json == null) {
         return json;
@@ -55,10 +69,21 @@ export function PromoCodeFromJSONTyped(json: any, ignoreDiscriminator: boolean):
     };
 }
 
+/**
+ * Converts a JSON object to a `PromoCode` instance.
+ *
+ * @returns The `PromoCode` representation of the input JSON.
+ */
 export function PromoCodeToJSON(json: any): PromoCode {
     return PromoCodeToJSONTyped(json, false);
 }
 
+/**
+ * Converts a `PromoCode` instance to a JSON object, preserving `null` or `undefined` values.
+ *
+ * @param value - The `PromoCode` instance to convert, or `null`/`undefined`
+ * @returns A JSON object representing the promo code, or the original value if `null` or `undefined`
+ */
 export function PromoCodeToJSONTyped(value?: PromoCode | null, ignoreDiscriminator: boolean = false): any {
     if (value == null) {
         return value;

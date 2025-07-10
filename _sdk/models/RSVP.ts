@@ -56,16 +56,32 @@ export interface RSVP {
 
 
 /**
- * Check if a given object implements the RSVP interface.
+ * Determines whether the given object can be treated as an RSVP.
+ *
+ * Always returns `true`, regardless of the object's properties.
  */
 export function instanceOfRSVP(value: object): value is RSVP {
     return true;
 }
 
+/**
+ * Converts a JSON object to an RSVP instance.
+ *
+ * @returns An RSVP object created from the provided JSON data
+ */
 export function RSVPFromJSON(json: any): RSVP {
     return RSVPFromJSONTyped(json, false);
 }
 
+/**
+ * Converts a JSON object to an RSVP instance, optionally handling discriminator properties.
+ *
+ * If the input is `null`, returns `null`. Properties missing or set to `null` in the JSON are mapped to `undefined` in the resulting RSVP object. The `rsvpStatus` property is converted using `RSVPStatusFromJSON`.
+ *
+ * @param json - The JSON object to convert
+ * @param ignoreDiscriminator - Whether to ignore discriminator properties during conversion
+ * @returns The resulting RSVP object, or `null` if the input is `null`
+ */
 export function RSVPFromJSONTyped(json: any, ignoreDiscriminator: boolean): RSVP {
     if (json == null) {
         return json;
@@ -79,10 +95,22 @@ export function RSVPFromJSONTyped(json: any, ignoreDiscriminator: boolean): RSVP
     };
 }
 
+/**
+ * Converts a JSON object to an RSVP instance.
+ *
+ * @returns The RSVP object created from the input JSON.
+ */
 export function RSVPToJSON(json: any): RSVP {
     return RSVPToJSONTyped(json, false);
 }
 
+/**
+ * Converts an RSVP object to a JSON representation, with optional discriminator handling.
+ *
+ * @param value - The RSVP object to convert, or null/undefined
+ * @param ignoreDiscriminator - If true, discriminator properties are ignored during conversion
+ * @returns The JSON representation of the RSVP object, or null/undefined if input is null/undefined
+ */
 export function RSVPToJSONTyped(value?: RSVP | null, ignoreDiscriminator: boolean = false): any {
     if (value == null) {
         return value;

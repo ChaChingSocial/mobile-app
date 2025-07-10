@@ -64,17 +64,32 @@ export interface TicketOptions {
 }
 
 /**
- * Check if a given object implements the TicketOptions interface.
+ * Determines whether the provided object conforms to the TicketOptions interface by verifying the presence of the required `eventId` property.
+ *
+ * @returns `true` if the object has a defined `eventId` property; otherwise, `false`.
  */
 export function instanceOfTicketOptions(value: object): value is TicketOptions {
     if (!('eventId' in value) || value['eventId'] === undefined) return false;
     return true;
 }
 
+/**
+ * Converts a JSON object to a `TicketOptions` instance.
+ *
+ * @param json - The JSON object to convert
+ * @returns The corresponding `TicketOptions` object
+ */
 export function TicketOptionsFromJSON(json: any): TicketOptions {
     return TicketOptionsFromJSONTyped(json, false);
 }
 
+/**
+ * Converts a JSON object to a `TicketOptions` instance, mapping each property and setting optional fields to `undefined` if missing or null.
+ *
+ * @param json - The JSON object to convert
+ * @param ignoreDiscriminator - If true, discriminator properties are ignored during conversion
+ * @returns The corresponding `TicketOptions` object, or `null` if the input is `null`
+ */
 export function TicketOptionsFromJSONTyped(json: any, ignoreDiscriminator: boolean): TicketOptions {
     if (json == null) {
         return json;
@@ -91,10 +106,22 @@ export function TicketOptionsFromJSONTyped(json: any, ignoreDiscriminator: boole
     };
 }
 
+/**
+ * Converts a JSON object to a `TicketOptions` instance.
+ *
+ * @returns The corresponding `TicketOptions` object
+ */
 export function TicketOptionsToJSON(json: any): TicketOptions {
     return TicketOptionsToJSONTyped(json, false);
 }
 
+/**
+ * Converts a `TicketOptions` object to a plain JSON representation.
+ *
+ * @param value - The `TicketOptions` object to convert, or `null`/`undefined` to return as-is
+ * @param ignoreDiscriminator - If true, discriminator properties are ignored (not used in this implementation)
+ * @returns A JSON object representing the `TicketOptions`, or `null`/`undefined` if the input is `null`/`undefined`
+ */
 export function TicketOptionsToJSONTyped(value?: TicketOptions | null, ignoreDiscriminator: boolean = false): any {
     if (value == null) {
         return value;

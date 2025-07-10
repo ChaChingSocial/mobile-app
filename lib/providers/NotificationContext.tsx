@@ -17,6 +17,13 @@ export const NotificationContext = createContext<
   NotificationContextType | undefined
 >(undefined);
 
+/**
+ * Provides Expo push notification state and handlers to descendant components via React context.
+ *
+ * Manages registration for push notifications, tracks the Expo push token, the latest received notification, and any registration errors. Sets up listeners for notifications received while the app is in the foreground and for user interactions with notifications. Cleans up listeners on unmount.
+ *
+ * @param children - React child components that will have access to the notification context
+ */
 export function NotificationProvider({ children }: PropsWithChildren) {
   const [expoPushToken, setExpoPushToken] = useState<string | null>(null);
   const [notification, setNotification] =

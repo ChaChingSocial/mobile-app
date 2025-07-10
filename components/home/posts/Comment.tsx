@@ -18,6 +18,11 @@ import { PostWrapper } from "./PostWrapper";
 import HtmlRenderText from "@/components/common/HtmlRenderText";
 import { Comment as CommentType, Post as PostType } from "@/types/post";
 
+/**
+ * Renders a comment within a post, providing UI for viewing, liking, editing, and deleting the comment.
+ *
+ * Displays the comment content, like count, and like button. If the current user is the comment author, editing and deletion options are available. When editing, the comment content is shown in a non-editable HTML view with options to save or cancel changes. Like status and like count are updated in response to user actions.
+ */
 export function Comment({
   comment,
   post,

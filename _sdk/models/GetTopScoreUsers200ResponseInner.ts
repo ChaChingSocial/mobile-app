@@ -42,16 +42,32 @@ export interface GetTopScoreUsers200ResponseInner {
 }
 
 /**
- * Check if a given object implements the GetTopScoreUsers200ResponseInner interface.
+ * Determines whether the provided object is treated as a `GetTopScoreUsers200ResponseInner` instance.
+ *
+ * Always returns `true`, so all objects are considered valid instances.
  */
 export function instanceOfGetTopScoreUsers200ResponseInner(value: object): value is GetTopScoreUsers200ResponseInner {
     return true;
 }
 
+/**
+ * Converts a JSON object to a `GetTopScoreUsers200ResponseInner` instance.
+ *
+ * @returns The corresponding `GetTopScoreUsers200ResponseInner` object
+ */
 export function GetTopScoreUsers200ResponseInnerFromJSON(json: any): GetTopScoreUsers200ResponseInner {
     return GetTopScoreUsers200ResponseInnerFromJSONTyped(json, false);
 }
 
+/**
+ * Converts a JSON object to a typed `GetTopScoreUsers200ResponseInner` instance.
+ *
+ * If the input is `null`, returns `null`. The `user` property is deserialized using `UserInfoFromJSON` if present; otherwise, it is set to `undefined`. The `score` property is assigned directly if present, or set to `undefined` if missing.
+ *
+ * @param json - The JSON object to convert
+ * @param ignoreDiscriminator - If true, discriminator properties are ignored (not used in this implementation)
+ * @returns The corresponding `GetTopScoreUsers200ResponseInner` instance, or `null` if input is `null`
+ */
 export function GetTopScoreUsers200ResponseInnerFromJSONTyped(json: any, ignoreDiscriminator: boolean): GetTopScoreUsers200ResponseInner {
     if (json == null) {
         return json;
@@ -63,10 +79,22 @@ export function GetTopScoreUsers200ResponseInnerFromJSONTyped(json: any, ignoreD
     };
 }
 
+/**
+ * Converts a JSON object to a `GetTopScoreUsers200ResponseInner` instance.
+ *
+ * @returns The deserialized `GetTopScoreUsers200ResponseInner` object
+ */
 export function GetTopScoreUsers200ResponseInnerToJSON(json: any): GetTopScoreUsers200ResponseInner {
     return GetTopScoreUsers200ResponseInnerToJSONTyped(json, false);
 }
 
+/**
+ * Converts a `GetTopScoreUsers200ResponseInner` instance to a JSON object, serializing the `user` property if present.
+ *
+ * @param value - The `GetTopScoreUsers200ResponseInner` instance to convert, or `null`/`undefined`
+ * @param ignoreDiscriminator - If true, discriminator properties are ignored (not used in this implementation)
+ * @returns The JSON representation of the input instance, or `null`/`undefined` if the input is `null`/`undefined`
+ */
 export function GetTopScoreUsers200ResponseInnerToJSONTyped(value?: GetTopScoreUsers200ResponseInner | null, ignoreDiscriminator: boolean = false): any {
     if (value == null) {
         return value;

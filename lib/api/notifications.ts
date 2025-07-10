@@ -5,6 +5,11 @@ import {
 } from "@/_sdk";
 import { notificationApi, pushNotificationApi } from "@/config/backend";
 
+/**
+ * Sends a notification to a user via the notification API and attempts to deliver a push notification as well.
+ *
+ * Constructs and sends a notification with the specified details, then triggers a push notification for the user. Errors in either process are logged but do not interrupt the overall flow.
+ */
 export async function sendNotification(
   userId: string,
   communityId: string,
@@ -37,7 +42,13 @@ export async function sendNotification(
 }
 
 /**
- * Send push notification to user's device
+ * Sends a push notification to the specified user's device with the given message and notification details.
+ *
+ * @param userId - The ID of the user to receive the push notification
+ * @param message - The message content of the notification
+ * @param notificationType - The type of notification to send
+ * @param entityType - The entity type associated with the notification
+ * @throws Rethrows any error encountered during the push notification API call
  */
 async function sendPushNotification(
   userId: string,
@@ -77,7 +88,10 @@ async function sendPushNotification(
 }
 
 /**
- * Get notification title based on notification type
+ * Returns a notification title string corresponding to the given notification type.
+ *
+ * @param notificationType - The type of notification to generate a title for
+ * @returns The title string appropriate for the specified notification type, or "New Notification" if the type is unrecognized
  */
 function getNotificationTitle(notificationType: NotificationNotificationTypeEnum): string {
   switch (notificationType) {
@@ -128,6 +142,17 @@ function getNotificationTitle(notificationType: NotificationNotificationTypeEnum
   }
 }
 
+/**
+ * Sends an email notification to the specified recipients using the provided notification details.
+ *
+ * @param notificationType - The type of notification to send
+ * @param notificationImage - Optional image URL to include in the notification
+ * @param notificationTitle - Optional title for the notification email
+ * @param notificationLink - Optional link to include in the notification
+ * @param notificationMessage - Optional message body for the notification
+ * @param entityType - The entity type associated with the notification
+ * @param emails - List of recipient email addresses
+ */
 export async function sendNotificationEmail(
   notificationType: NotificationNotificationTypeEnum,
   notificationImage: string = "",

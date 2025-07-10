@@ -59,6 +59,15 @@ export function User1FromJSON(json: any): User1 {
     return User1FromJSONTyped(json, false);
 }
 
+/**
+ * Converts a JSON object to a `User1` instance, mapping properties and handling the optional `city` field.
+ *
+ * If the input JSON is `null` or `undefined`, returns the input as is. The `city` property is set to `undefined` if it is `null` or missing in the input.
+ *
+ * @param json - The JSON object to convert
+ * @param ignoreDiscriminator - Whether to ignore discriminator properties (not used in this function)
+ * @returns A `User1` object constructed from the JSON input
+ */
 export function User1FromJSONTyped(json: any, ignoreDiscriminator: boolean): User1 {
     if (json == null) {
         return json;
@@ -76,6 +85,11 @@ export function User1ToJSON(json: any): User1 {
     return User1ToJSONTyped(json, false);
 }
 
+/**
+ * Converts a `User1` object to a JSON representation, including the optional `city` property.
+ *
+ * @returns A JSON object with the properties of the `User1` instance, or `null`/`undefined` if the input is `null` or `undefined`.
+ */
 export function User1ToJSONTyped(value?: User1 | null, ignoreDiscriminator: boolean = false): any {
     if (value == null) {
         return value;

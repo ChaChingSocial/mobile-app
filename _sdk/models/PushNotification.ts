@@ -109,7 +109,9 @@ export type PushNotificationPlatformEnum = typeof PushNotificationPlatformEnum[k
 
 
 /**
- * Check if a given object implements the PushNotification interface.
+ * Determines whether the provided object conforms to the PushNotification interface.
+ *
+ * @returns `true` if the object has all required PushNotification properties; otherwise, `false`.
  */
 export function instanceOfPushNotification(value: object): value is PushNotification {
     if (!('userId' in value) || value['userId'] === undefined) return false;
@@ -122,10 +124,24 @@ export function instanceOfPushNotification(value: object): value is PushNotifica
     return true;
 }
 
+/**
+ * Converts a JSON object to a `PushNotification` instance.
+ *
+ * @returns The corresponding `PushNotification` object.
+ */
 export function PushNotificationFromJSON(json: any): PushNotification {
     return PushNotificationFromJSONTyped(json, false);
 }
 
+/**
+ * Converts a JSON object into a typed `PushNotification` instance.
+ *
+ * Parses date strings into `Date` objects and converts nested `notification` and optional `user` fields using their respective deserialization functions.
+ *
+ * @param json - The JSON object to convert
+ * @param ignoreDiscriminator - If true, discriminator properties are ignored during conversion
+ * @returns The resulting `PushNotification` object, or `null` if input is `null`
+ */
 export function PushNotificationFromJSONTyped(json: any, ignoreDiscriminator: boolean): PushNotification {
     if (json == null) {
         return json;
@@ -145,10 +161,22 @@ export function PushNotificationFromJSONTyped(json: any, ignoreDiscriminator: bo
     };
 }
 
+/**
+ * Converts a JSON object to a `PushNotification` instance.
+ *
+ * @returns The corresponding `PushNotification` object.
+ */
 export function PushNotificationToJSON(json: any): PushNotification {
     return PushNotificationToJSONTyped(json, false);
 }
 
+/**
+ * Converts a `PushNotification` object to its JSON representation.
+ *
+ * Serializes date fields to ISO strings and converts nested `notification` and `user` objects using their respective JSON conversion functions.
+ *
+ * @returns The JSON representation of the `PushNotification` object, or `null`/`undefined` if the input is `null` or `undefined`.
+ */
 export function PushNotificationToJSONTyped(value?: PushNotification | null, ignoreDiscriminator: boolean = false): any {
     if (value == null) {
         return value;
