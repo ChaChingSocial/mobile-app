@@ -64,7 +64,7 @@ function RootLayoutNav() {
                 headerShown: false,
               }}
             />
-            <Stack.Screen name="+not-found" />
+            <Stack.Screen name="+not-found" options={{ title: "Oops!" }} />
           </Stack>
         </GestureHandlerRootView>
       </GluestackUIProvider>

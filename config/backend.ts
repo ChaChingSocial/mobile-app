@@ -4,6 +4,7 @@ import {
   Configuration,
   NewsfeedApi,
   NotificationApi,
+  PushNotificationApi,
   ScoreApi,
   UserApi,
 } from "@/_sdk";
@@ -21,3 +22,4 @@ export const notificationApi = new NotificationApi(config);
 export const scoreApi = new ScoreApi(config);
 export const newsfeedApi = new NewsfeedApi(config);
 export const blogApi = new BlogApi(config);
+export const pushNotificationApi = new PushNotificationApi(config);

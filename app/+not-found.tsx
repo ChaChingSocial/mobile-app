@@ -5,15 +5,12 @@ import { StyleSheet, View } from "react-native";
 
 export default function NotFoundScreen() {
   return (
-    <>
-      <Stack.Screen options={{ title: "Oops!" }} />
       <View style={styles.container}>
         <Heading size="2xl">This screen doesn't exist.</Heading>
         <Link href="/(protected)/(home)" style={styles.link}>
           <Text>Go to home screen!</Text>
         </Link>
       </View>
-    </>
   );
 }
 

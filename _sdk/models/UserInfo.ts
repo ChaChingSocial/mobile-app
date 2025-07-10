@@ -37,6 +37,12 @@ export interface UserInfo {
      * @memberof UserInfo
      */
     profilePic: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof UserInfo
+     */
+    city?: string;
 }
 
 /**
@@ -62,6 +68,7 @@ export function UserInfoFromJSONTyped(json: any, ignoreDiscriminator: boolean): 
         'id': json['id'],
         'username': json['username'],
         'profilePic': json['profilePic'],
+        'city': json['city'] == null ? undefined : json['city'],
     };
 }
 
@@ -79,6 +86,7 @@ export function UserInfoToJSONTyped(value?: UserInfo | null, ignoreDiscriminator
         'id': value['id'],
         'username': value['username'],
         'profilePic': value['profilePic'],
+        'city': value['city'],
     };
 }
 

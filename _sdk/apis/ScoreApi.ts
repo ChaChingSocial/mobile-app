@@ -16,12 +16,15 @@
 import * as runtime from '../runtime';
 import type {
   Actions,
+  GetTopScoreUsers200ResponseInner,
   PointsGift,
   ScoreLedger,
 } from '../models/index';
 import {
     ActionsFromJSON,
     ActionsToJSON,
+    GetTopScoreUsers200ResponseInnerFromJSON,
+    GetTopScoreUsers200ResponseInnerToJSON,
     PointsGiftFromJSON,
     PointsGiftToJSON,
     ScoreLedgerFromJSON,
@@ -122,6 +125,32 @@ export class ScoreApi extends runtime.BaseAPI {
      */
     async getScoreLedger(requestParameters: GetScoreLedgerRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<ScoreLedger>> {
         const response = await this.getScoreLedgerRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Get top score users with their scores
+     */
+    async getTopScoreUsersRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<GetTopScoreUsers200ResponseInner>>> {
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        const response = await this.request({
+            path: `/score/top-users`,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(GetTopScoreUsers200ResponseInnerFromJSON));
+    }
+
+    /**
+     * Get top score users with their scores
+     */
+    async getTopScoreUsers(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<GetTopScoreUsers200ResponseInner>> {
+        const response = await this.getTopScoreUsersRaw(initOverrides);
         return await response.value();
     }
 

@@ -226,7 +226,7 @@ export function PostComponent({ post }: { post: PostType }) {
   return (
     <Box className="mt-8">
       {communityName && (
-        <Box className="relative -top-4 left-6">
+        <Box className="relative -top-4 left-6 z-10">
           <Pressable
             onPress={() =>
               router.push(

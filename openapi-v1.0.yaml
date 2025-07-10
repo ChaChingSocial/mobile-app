@@ -30,6 +30,8 @@ tags:
       handle user authentication.
   - name: Badge
     description: Badge requests are used to handle badge activity.
+  - name: Web3
+    description: Web3 requests are used to handle web3 activity.
   - name: Financing
     description: All personal finance management operations like monthly transactions,
       metric goals, etc.
@@ -252,6 +254,309 @@ paths:
                 example: Notification created successfully
         default:
           $ref: "#/components/responses/UnexpectedError"
+  /events/create-event:
+    post:
+      summary: Create an event
+      operationId: createEvent
+      description: Create an event
+      tags:
+        - Event
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Event"
+      responses:
+        "201":
+          description: Expected response to a valid request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Event"
+        default:
+          $ref: "#/components/responses/UnexpectedError"
+  /events/create-event-slot:
+    post:
+      summary: Create an event slot
+      operationId: createEventSlot
+      tags:
+        - Event
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/EventSlot"
+      responses:
+        "201":
+          description: Expected response to a valid request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EventSlot"
+        default:
+          $ref: "#/components/responses/UnexpectedError"
+  /events/update-event:
+    post:
+      summary: Update an event
+      operationId: updateEvent
+      tags:
+        - Event
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Event"
+      responses:
+        "201":
+          description: Expected response to a valid request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Event"
+        default:
+          $ref: "#/components/responses/UnexpectedError"
+  "/events/delete-event/{event-id}":
+    delete:
+      summary: Delete Event
+      operationId: deleteEvent
+      tags:
+        - Event
+      parameters:
+        - $ref: "#/components/parameters/event-id"
+      responses:
+        "201":
+          description: Expected response to a valid request
+          content:
+            application/json:
+              schema:
+                type: string
+                example: Ticket created successfully
+        default:
+          $ref: "#/components/responses/UnexpectedError"
+  "/events/delete-event-slot/{event-slot-id}":
+    delete:
+      summary: Delete Event Slot
+      operationId: deleteEventSlot
+      tags:
+        - Event
+      parameters:
+        - $ref: "#/components/parameters/event-slot-id"
+      responses:
+        "201":
+          description: Expected response to a valid request
+          content:
+            application/json:
+              schema:
+                type: string
+                example: Ticket created successfully
+        default:
+          $ref: "#/components/responses/UnexpectedError"
+  /events/update-event-slot:
+    post:
+      summary: Update an event slot
+      operationId: updateEventSlot
+      tags:
+        - Event
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/EventSlot"
+      responses:
+        "201":
+          description: Expected response to a valid request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EventSlot"
+        default:
+          $ref: "#/components/responses/UnexpectedError"
+  /events/create-ticket:
+    post:
+      summary: Create Ticket
+      operationId: createTicket
+      tags:
+        - Event
+      requestBody:
+        description: Create a new ticket for an event
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Ticket"
+      responses:
+        "201":
+          description: Expected response to a valid request
+          content:
+            application/json:
+              schema:
+                type: string
+                example: Ticket created successfully
+        default:
+          $ref: "#/components/responses/UnexpectedError"
+  "/events/get-ticket/{ticket-id}":
+    get:
+      summary: Get all events that fit the query
+      operationId: getTickets
+      tags:
+        - Event
+      parameters:
+        - $ref: "#/components/parameters/user-id"
+        - $ref: "#/components/parameters/event-id"
+      responses:
+        "200":
+          description: Expected response to a valid request
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Ticket"
+        default:
+          $ref: "#/components/responses/UnexpectedError"
+  "/events/get-user-event-slot-tickets/{event-slot-id}/{user-id}":
+    get:
+      summary: Get all tickets for user for an event slot
+      operationId: getUserEventSlotTickets
+      tags:
+        - Event
+      parameters:
+        - $ref: "#/components/parameters/event-slot-id"
+        - $ref: "#/components/parameters/user-id"
+      responses:
+        "200":
+          description: Expected response to a valid request
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Ticket"
+        default:
+          $ref: "#/components/responses/UnexpectedError"
+  "/events/get-user-events/{user-id}":
+    get:
+      summary: Get all tickets for a user
+      operationId: userEvents
+      tags:
+        - Event
+      parameters:
+        - $ref: "#/components/parameters/user-id"
+      responses:
+        "201":
+          description: Expected response to a valid request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Ticket"
+        default:
+          $ref: "#/components/responses/UnexpectedError"
+  /events/add-promo-code:
+    put:
+      summary: Add Promo
+      operationId: addPromoCode
+      tags:
+        - Event
+      parameters:
+        - $ref: "#/components/parameters/event-slot-id"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PromoCode"
+      responses:
+        "200":
+          description: Promo applied successfully
+          content:
+            application/json:
+              schema:
+                type: boolean
+        "400":
+          description: Invalid input
+        "404":
+          description: Score not found
+        "500":
+          description: Internal server error
+  /events/add-host:
+    put:
+      summary: Add Host
+      operationId: addHost
+      tags:
+        - Event
+      parameters:
+        - $ref: "#/components/parameters/event-slot-id"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Host"
+      responses:
+        "200":
+          description: Add host successfully
+          content:
+            application/json:
+              schema:
+                type: boolean
+        "400":
+          description: Invalid input
+        "500":
+          description: Internal server error
+  /events/add-sponsor:
+    put:
+      summary: Add Host
+      operationId: addSponsor
+      tags:
+        - Event
+      parameters:
+        - $ref: "#/components/parameters/event-slot-id"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/EventSponsor"
+      responses:
+        "200":
+          description: Add host successfully
+          content:
+            application/json:
+              schema:
+                type: boolean
+        "400":
+          description: Invalid input
+        "500":
+          description: Internal server error
+  /events/donate:
+    put:
+      summary: Donate Event
+      operationId: donateEvent
+      tags:
+        - Event
+      parameters:
+        - $ref: "#/components/parameters/event-slot-id"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Donation"
+      responses:
+        "200":
+          description: Donation successfully
+          content:
+            application/json:
+              schema:
+                type: boolean
+        "400":
+          description: Invalid input
+        "500":
+          description: Internal server error
   "/community/{community-id}":
     get:
       summary: Get a community by its ID
@@ -461,6 +766,9 @@ paths:
                     profilePic:
                       type: string
                       example: https://www.google.com/images/branding/googlelogo/1x/googlelogo_color_272x92dp.png
+                    city:
+                      type: string
+                      example: San Francisco
         default:
           $ref: "#/components/responses/UnexpectedError"
   "/community/community-rules/{community-id}":
@@ -767,6 +1075,98 @@ paths:
               schema:
                 type: boolean
                 example: "true"
+        default:
+          $ref: "#/components/responses/UnexpectedError"
+  /push-notification/push-notification:
+    post:
+      summary: Push Notification
+      operationId: pushNotification
+      tags:
+        - PushNotification
+      requestBody:
+        description: Push Notification
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PushNotification"
+      responses:
+        "201":
+          description: Expected response to a valid request
+          content:
+            application/json:
+              schema:
+                type: string
+                example: Push notification sent successfully
+        default:
+          $ref: "#/components/responses/UnexpectedError"
+  /push-notification/register-device-token:
+    post:
+      summary: Register a device token
+      operationId: registerDeviceToken
+      tags:
+        - PushNotification
+      requestBody:
+        description: Register a device token
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PushNotification"
+      responses:
+        "201":
+          description: Expected response to a valid request
+          content:
+            application/json:
+              schema:
+                type: string
+                example: Device token registered successfully
+        default:
+          $ref: "#/components/responses/UnexpectedError"
+  /push-notification/unregister-device-token:
+    post:
+      summary: Unregister a device token
+      operationId: unregisterDeviceToken
+      tags:
+        - PushNotification
+      requestBody:
+        description: Unregister a device token
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PushNotification"
+      responses:
+        "201":
+          description: Expected response to a valid request
+          content:
+            application/json:
+              schema:
+                type: string
+                example: Device token unregistered successfully
+        default:
+          $ref: "#/components/responses/UnexpectedError"
+  /push-notification/test-push-notification:
+    post:
+      summary: Test push notification
+      operationId: testPushNotification
+      tags:
+        - PushNotification
+      requestBody:
+        description: Test push notification
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PushNotification"
+      responses:
+        "201":
+          description: Expected response to a valid request
+          content:
+            application/json:
+              schema:
+                type: string
+                example: Push notification sent successfully
         default:
           $ref: "#/components/responses/UnexpectedError"
   /newsfeed/posts:
@@ -1141,8 +1541,91 @@ paths:
                 example: Notification created successfully
         default:
           $ref: "#/components/responses/UnexpectedError"
+  /score/top-users:
+    get:
+      summary: Get top score users with their scores
+      operationId: getTopScoreUsers
+      tags:
+        - Score
+      responses:
+        "200":
+          description: Expected response to a valid request
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    user:
+                      $ref: "#/components/schemas/UserInfo"
+                    score:
+                      type: integer
+                      format: int32
+                      description: The user's score
+        "400":
+          description: Invalid input
+        "404":
+          description: Score not found
+        "500":
+          description: Internal server error
+        default:
+          $ref: "#/components/responses/UnexpectedError"
+  /web3/crypto-pricing:
+    get:
+      summary: Get crypto pricing
+      operationId: getCryptoPricing
+      tags:
+        - Web3
+      parameters:
+        - in: query
+          name: crypto_id
+          schema:
+            type: array
+            items:
+              type: string
+              enum:
+                - bitcoin
+                - ethereum
+                - solana
+                - sui
+                - base
+          required: true
+          description: The ID of the cryptocurrency
+        - in: query
+          name: currency
+          schema:
+            type: string
+            enum:
+              - usd
+              - eur
+              - gbp
+              - jpy
+              - aud
+          required: true
+          description: The currency to get the price in
+      responses:
+        "200":
+          description: Expected response to a valid request
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties:
+                  type: number
+                  format: float
+        default:
+          $ref: "#/components/responses/UnexpectedError"
 components:
   parameters:
+    ticket-id:
+      name: ticket-id
+      in: path
+      required: true
+      description: ticket id to filter by
+      schema:
+        type: string
+        example: 123e4567-e89b-12d3-a456-426614174000
     slug-name:
       name: slug-name
       in: path
@@ -1156,6 +1639,14 @@ components:
       in: path
       required: true
       description: post id to filter by
+      schema:
+        type: string
+        example: 123e4567-e89b-12d3-a456-426614174000
+    event-slot-id:
+      name: event-slot-id
+      in: path
+      required: true
+      description: event slot id to filter by
       schema:
         type: string
         example: 123e4567-e89b-12d3-a456-426614174000
@@ -1193,6 +1684,14 @@ components:
       schema:
         type: string
         format: uuid
+        example: 123e4567-e89b-12d3-a456-426614174000
+    event-id:
+      name: event-id
+      in: path
+      required: true
+      description: event id to filter by
+      schema:
+        type: string
         example: 123e4567-e89b-12d3-a456-426614174000
     community-id:
       name: community-id
@@ -1620,6 +2119,34 @@ components:
         resourceType:
           $ref: "#/components/schemas/Category"
           description: The type of the resource.
+    CryptoPricing:
+      title: CryptoPricing
+      type: object
+      properties:
+        cryptos:
+          type: array
+          items:
+            type: string
+            enum:
+              - ethereum
+              - solana
+              - bitcoin
+              - base
+            description: The list of cryptocurrencies to fetch prices for.
+        fiat:
+          type: string
+          enum:
+            - usd
+            - eur
+            - gbp
+            - jpy
+            - aud
+            - cad
+            - chf
+            - cny
+            - sek
+            - nzd
+          description: The fiat currency to convert the prices to.
     Subscription:
       title: Subscription
       type: object
@@ -1666,6 +2193,9 @@ components:
         profilePic:
           type: string
           example: https://www.google.com/images/branding/googlelogo/1x/googlelogo_color_272x92dp.png
+        city:
+          type: string
+          example: San Francisco
     Social:
       title: Social
       type: object
@@ -1744,6 +2274,9 @@ components:
         email:
           type: string
           format: email
+        phoneNumber:
+          type: string
+          example: 14155552671
         profilePic:
           type: string
           example: https://www.google.com/images/branding/googlelogo/1x/googlelogo_color_272x92dp.png
@@ -1763,9 +2296,13 @@ components:
         finfluencer:
           type: boolean
           example: false
-        moneyPersonality:
-          type: string
-          example: SAVER
+        persona:
+          type: array
+          items:
+            type: string
+          example:
+            - Investor
+            - Saver
         industry:
           type: string
           example: Education
@@ -1913,12 +2450,19 @@ components:
       properties:
         amount:
           type: number
-          format: currency
+          format: float
         currency:
           type: string
           enum:
             - USD
             - EUR
+        crypto:
+          type: string
+          enum:
+            - BTC
+            - BASE
+            - ETH
+            - SOL
     Category:
       title: Category
       type: string
@@ -2235,6 +2779,9 @@ components:
           type: string
           format: uuid
           description: The unique identifier for the community.
+        postId:
+          type: string
+          description: The unique identifier for the post.
         amount:
           type: number
           format: double
@@ -2243,6 +2790,9 @@ components:
           type: string
           format: date-time
           description: The date of the payment.
+        note:
+          type: string
+          description: A note or message associated with the payment.
         status:
           type: string
           enum:
@@ -2565,6 +3115,398 @@ components:
         note:
           type: string
           description: A note or comment about the wallet.
+    PushNotification:
+      title: PushNotification
+      type: object
+      required:
+        - userId
+        - deviceToken
+        - platform
+        - isActive
+        - createdAt
+        - deviceTokenId
+        - notification
+      properties:
+        userId:
+          type: string
+          format: uuid
+          description: The unique identifier for the user.
+        deviceToken:
+          type: string
+          description: The device token for the user.
+        platform:
+          type: string
+          enum:
+            - ios
+            - android
+            - web
+          description: The platform of the user.
+        appVersion:
+          type: string
+          description: The version of the app.
+        isActive:
+          type: boolean
+          description: Whether the device token is active.
+        createdAt:
+          type: string
+          format: date-time
+          description: The date and time the device token was created.
+        deviceTokenUpdatedAt:
+          type: string
+          format: date-time
+          description: The date and time the device token was updated.
+        deviceTokenId:
+          type: string
+          format: uuid
+          description: The unique identifier for the device token.
+        notification:
+          $ref: "#/components/schemas/Notification"
+        user:
+          $ref: "#/components/schemas/User"
+    Host:
+      title: Host
+      type: object
+      properties:
+        eventSlotId:
+          type: string
+          example: 123e4567-e89b-12d3-a456-426614174000
+        userId:
+          type: string
+          example: 123e4567-e89b-12d3-a456-426614174000
+        email:
+          type: string
+          format: email
+          example: support@chaching.com
+        phone:
+          type: string
+          example: "+1234567890"
+        name:
+          type: string
+          example: John Doe
+    EventType:
+      title: EventType
+      type: string
+      enum:
+        - PRE_RECORDED
+        - IN_PERSON
+        - LIVE_STREAM
+    RSVP:
+      title: RSVP
+      type: object
+      properties:
+        id:
+          type: string
+          example: 123e4567-e89b-12d3-a456-426614174000
+        eventSlotId:
+          type: string
+          example: 123e4567-e89b-12d3-a456-426614174000
+        userId:
+          type: string
+          example: 123e4567-e89b-12d3-a456-426614174000
+        rsvpStatus:
+          type: string
+          $ref: "#/components/schemas/RSVPStatus"
+    RSVPStatus:
+      title: RSVPStatus
+      type: string
+      enum:
+        - GOING
+        - NOT_GOING
+    EventPrivacy:
+      title: EventPrivacy
+      type: string
+      enum:
+        - PUBLIC
+        - INVITE_ONLY
+        - PAID_MEMBERS
+    EventSponsor:
+      title: EventSponsor
+      type: object
+      properties:
+        eventSlotId:
+          type: string
+          example: 123e4567-e89b-12d3-a456-426614174000
+        title:
+          type: string
+          example: Event Sponsor
+        description:
+          type: string
+          example: This is a description of the event sponsor.
+        images:
+          type: array
+          items:
+            type: string
+            format: uri
+            example: https://example.com/sponsor-image.jpg
+        links:
+          type: array
+          items:
+            type: string
+            format: uri
+            example: https://example.com/sponsor-link
+    PromoCode:
+      title: PromoCode
+      type: object
+      properties:
+        promoCode:
+          type: string
+          example: SUMMER2023
+        percentageOff:
+          type: number
+          format: float
+          example: 20
+    Event:
+      title: Event
+      type: object
+      required:
+        - title
+        - startTimeDate
+        - endTimeDate
+        - eventType
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: 123e4567-e89b-12d3-a456-426614174000
+        title:
+          type: string
+          example: Event Title
+        description:
+          type: string
+          example: Event Description
+        images:
+          type: array
+          items:
+            type: string
+            format: uri
+            example: https://example.com/image.jpg
+        address:
+          $ref: "#/components/schemas/Address"
+        timezone:
+          type: string
+          example: America/New_York
+        recurrence:
+          $ref: "#/components/schemas/Recurrence"
+        eventType:
+          $ref: "#/components/schemas/EventType"
+        eventPrivacy:
+          $ref: "#/components/schemas/EventPrivacy"
+        commentsEnabled:
+          type: boolean
+          example: true
+        lumaWidget:
+          type: string
+        links:
+          type: array
+          items:
+            type: string
+            format: uri
+            example: https://example.com
+        eventSlots:
+          type: array
+          items:
+            $ref: "#/components/schemas/EventSlot"
+        sameSlotDetails:
+          type: boolean
+          description: Indicates if all event slots have the same details
+    Recurrence:
+      title: Recurrence
+      type: object
+      properties:
+        frequency:
+          type: string
+          enum:
+            - DAILY
+            - WEEKLY
+            - MONTHLY
+            - YEARLY
+        interval:
+          type: integer
+          example: 1
+        count:
+          type: integer
+          example: 10
+        byDay:
+          type: string
+          enum:
+            - MON
+            - TUE
+            - WED
+            - THU
+            - FRI
+            - SAT
+            - SUN
+        byMonthDay:
+          type: array
+          items:
+            type: integer
+        byMonth:
+          type: array
+          items:
+            type: integer
+    Ticket:
+      title: Ticket
+      type: object
+      properties:
+        id:
+          type: string
+          example: 123e4567-e89b-12d3-a456-426614174000
+        eventSlotId:
+          type: string
+          example: 123e4567-e89b-12d3-a456-426614174000
+        eventId:
+          type: string
+          example: 123e4567-e89b-12d3-a456-426614174000
+        ticketOption:
+          $ref: "#/components/schemas/Amount"
+        qrCode:
+          type: string
+          format: uri
+          example: https://example.com/qr-code.png
+        createdAt:
+          type: string
+          format: date-time
+        expiresAt:
+          type: string
+          format: date-time
+        userId:
+          type: string
+          example: 123e4567-e89b-12d3-a456-426614174000
+        username:
+          type: string
+          example: John Doe
+        email:
+          type: string
+          format: email
+        phoneNumber:
+          type: string
+          example: 14155552671
+        promoCode:
+          type: string
+          example: PROMO123
+        ticketStatus:
+          type: string
+          enum:
+            - SOLD
+            - REFUNDED
+            - CHECKED_IN
+            - CANCELLED
+            - PENDING
+    EventSlot:
+      title: EventSlot
+      type: object
+      properties:
+        id:
+          type: string
+          example: 123e4567-e89b-12d3-a456-426614174000
+        eventId:
+          type: string
+          example: 123e4567-e89b-12d3-a456-426614174000
+        title:
+          type: string
+          example: Premium Event Slot
+        description:
+          type: string
+          example: This is a premium event slot with exclusive benefits.
+        startTimeDate:
+          type: string
+          format: date-time
+        endTimeDate:
+          type: string
+          format: date-time
+        eventSlotStatus:
+          type: string
+          enum:
+            - AVAILABLE
+            - SOLD_OUT
+            - EXPIRED
+        promoCodes:
+          type: array
+          items:
+            $ref: "#/components/schemas/PromoCode"
+        price:
+          type: number
+          format: float
+        currency:
+          type: string
+        cryptoAccepted:
+          type: boolean
+        sponsors:
+          type: array
+          items:
+            $ref: "#/components/schemas/EventSponsor"
+        locationNeeded:
+          type: boolean
+        locationPartnership:
+          type: string
+        fundsNeeded:
+          type: boolean
+        fundGoal:
+          type: number
+          format: float
+        address:
+          $ref: "#/components/schemas/Address"
+        donations:
+          type: array
+          items:
+            $ref: "#/components/schemas/Donation"
+        tickets:
+          type: array
+          items:
+            $ref: "#/components/schemas/Ticket"
+        hosts:
+          type: array
+          items:
+            $ref: "#/components/schemas/Host"
+        ticketOptions:
+          type: array
+          items:
+            $ref: "#/components/schemas/TicketOptions"
+    TicketOptions:
+      title: TicketOption
+      type: object
+      required:
+        - eventId
+      properties:
+        id:
+          type: string
+          example: 123e4567-e89b-12d3-a456-426614174000
+        title:
+          type: string
+          example: General Admission
+        eventId:
+          type: string
+          example: 123e4567-e89b-12d3-a456-426614174000
+        quantity:
+          type: integer
+          example: 100
+        maxQuantity:
+          type: integer
+          example: 500
+        anyPrice:
+          type: boolean
+          example: false
+        price:
+          type: number
+          format: float
+          example: 20
+          description: Price in the event's currency, if applicable. If `anyPrice` is true,
+            this field may be omitted.
+    Donation:
+      title: Donation
+      type: object
+      properties:
+        id:
+          type: string
+          example: 123e4567-e89b-12d3-a456-426614174000
+        eventSlotId:
+          type: string
+          example: 123e4567-e89b-12d3-a456-426614174000
+        amount:
+          $ref: "#/components/schemas/Amount"
+        sponsorId:
+          type: string
+          example: 123e4567-e89b-12d3-a456-426614174000
     Option:
       title: Option
       type: object

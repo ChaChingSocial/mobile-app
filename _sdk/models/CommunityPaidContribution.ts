@@ -32,6 +32,12 @@ export interface CommunityPaidContribution {
      */
     communityId: string;
     /**
+     * The unique identifier for the post.
+     * @type {string}
+     * @memberof CommunityPaidContribution
+     */
+    postId?: string;
+    /**
      * The amount paid by the user.
      * @type {number}
      * @memberof CommunityPaidContribution
@@ -43,6 +49,12 @@ export interface CommunityPaidContribution {
      * @memberof CommunityPaidContribution
      */
     date: Date;
+    /**
+     * A note or message associated with the payment.
+     * @type {string}
+     * @memberof CommunityPaidContribution
+     */
+    note?: string;
     /**
      * The status of the payment.
      * @type {string}
@@ -132,8 +144,10 @@ export function CommunityPaidContributionFromJSONTyped(json: any, ignoreDiscrimi
         
         'userId': json['userId'],
         'communityId': json['communityId'],
+        'postId': json['postId'] == null ? undefined : json['postId'],
         'amount': json['amount'],
         'date': (new Date(json['date'])),
+        'note': json['note'] == null ? undefined : json['note'],
         'status': json['status'],
         'transactionId': json['transactionId'],
         'paymentMethod': json['paymentMethod'],
@@ -154,8 +168,10 @@ export function CommunityPaidContributionToJSONTyped(value?: CommunityPaidContri
         
         'userId': value['userId'],
         'communityId': value['communityId'],
+        'postId': value['postId'],
         'amount': value['amount'],
         'date': ((value['date']).toISOString()),
+        'note': value['note'],
         'status': value['status'],
         'transactionId': value['transactionId'],
         'paymentMethod': value['paymentMethod'],
