@@ -25,6 +25,12 @@ export const EventPrivacy = {
 export type EventPrivacy = typeof EventPrivacy[keyof typeof EventPrivacy];
 
 
+/**
+ * Determines whether a given value is a valid `EventPrivacy` enum value.
+ *
+ * @param value - The value to check for membership in the `EventPrivacy` enum
+ * @returns `true` if the value matches one of the defined `EventPrivacy` values; otherwise, `false`
+ */
 export function instanceOfEventPrivacy(value: any): boolean {
     for (const key in EventPrivacy) {
         if (Object.prototype.hasOwnProperty.call(EventPrivacy, key)) {
@@ -36,18 +42,40 @@ export function instanceOfEventPrivacy(value: any): boolean {
     return false;
 }
 
+/**
+ * Converts a JSON value to an `EventPrivacy` type.
+ *
+ * @returns The corresponding `EventPrivacy` value.
+ */
 export function EventPrivacyFromJSON(json: any): EventPrivacy {
     return EventPrivacyFromJSONTyped(json, false);
 }
 
+/**
+ * Converts a JSON value to the `EventPrivacy` type without validation or transformation.
+ *
+ * @returns The input value cast as `EventPrivacy`
+ */
 export function EventPrivacyFromJSONTyped(json: any, ignoreDiscriminator: boolean): EventPrivacy {
     return json as EventPrivacy;
 }
 
+/**
+ * Serializes an `EventPrivacy` value to JSON format.
+ *
+ * @returns The input value as a JSON-compatible value
+ */
 export function EventPrivacyToJSON(value?: EventPrivacy | null): any {
     return value as any;
 }
 
+/**
+ * Casts the input value to the EventPrivacy type for JSON serialization.
+ *
+ * @param value - The value to be cast as EventPrivacy
+ * @param ignoreDiscriminator - Unused parameter included for compatibility with code generation patterns
+ * @returns The input value cast as EventPrivacy
+ */
 export function EventPrivacyToJSONTyped(value: any, ignoreDiscriminator: boolean): EventPrivacy {
     return value as EventPrivacy;
 }

@@ -136,6 +136,13 @@ export function CommunityPaidContributionFromJSON(json: any): CommunityPaidContr
     return CommunityPaidContributionFromJSONTyped(json, false);
 }
 
+/**
+ * Converts a JSON object to a `CommunityPaidContribution` instance, mapping all required and optional fields.
+ *
+ * @param json - The JSON object to convert
+ * @param ignoreDiscriminator - If true, discriminator properties are ignored (not used in this function)
+ * @returns A `CommunityPaidContribution` object with properties parsed from the input JSON
+ */
 export function CommunityPaidContributionFromJSONTyped(json: any, ignoreDiscriminator: boolean): CommunityPaidContribution {
     if (json == null) {
         return json;
@@ -159,6 +166,14 @@ export function CommunityPaidContributionToJSON(json: any): CommunityPaidContrib
     return CommunityPaidContributionToJSONTyped(json, false);
 }
 
+/**
+ * Converts a `CommunityPaidContribution` object to a JSON-compatible representation.
+ *
+ * Serializes the `date` property to an ISO string and includes all properties, preserving optional fields as-is.
+ *
+ * @param value - The `CommunityPaidContribution` object to serialize, or `null`/`undefined`
+ * @returns A JSON-compatible object representing the contribution, or `null`/`undefined` if input is `null`/`undefined`
+ */
 export function CommunityPaidContributionToJSONTyped(value?: CommunityPaidContribution | null, ignoreDiscriminator: boolean = false): any {
     if (value == null) {
         return value;

@@ -9,6 +9,15 @@ import { Text, View } from "react-native";
 import { HStack } from "@/components/ui/hstack";
 import PostTags from "../post-editor/PostTag";
 
+/**
+ * Renders a text-based post with support for viewing and editing modes.
+ *
+ * Displays the post's title, content, and tags. When in editing mode, shows the current content in a non-editable format and provides options to save changes or cancel editing.
+ *
+ * @param post - The post data to display and edit
+ * @param editing - Whether the post is currently in editing mode
+ * @param onEditingChange - Callback to toggle the editing state
+ */
 export function TextPost({
   post,
   editing,

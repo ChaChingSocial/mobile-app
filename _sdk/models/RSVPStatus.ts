@@ -24,6 +24,12 @@ export const RSVPStatus = {
 export type RSVPStatus = typeof RSVPStatus[keyof typeof RSVPStatus];
 
 
+/**
+ * Determines whether a given value is a valid RSVPStatus.
+ *
+ * @param value - The value to check for RSVPStatus membership
+ * @returns True if the value matches one of the defined RSVPStatus values; otherwise, false
+ */
 export function instanceOfRSVPStatus(value: any): boolean {
     for (const key in RSVPStatus) {
         if (Object.prototype.hasOwnProperty.call(RSVPStatus, key)) {
@@ -35,18 +41,42 @@ export function instanceOfRSVPStatus(value: any): boolean {
     return false;
 }
 
+/**
+ * Converts a JSON value to an `RSVPStatus` type.
+ *
+ * @returns The corresponding `RSVPStatus` value.
+ */
 export function RSVPStatusFromJSON(json: any): RSVPStatus {
     return RSVPStatusFromJSONTyped(json, false);
 }
 
+/**
+ * Casts a JSON value to the RSVPStatus type without validation or transformation.
+ *
+ * @param json - The input value to cast
+ * @param ignoreDiscriminator - Unused parameter included for compatibility with code generation patterns
+ * @returns The input value cast as RSVPStatus
+ */
 export function RSVPStatusFromJSONTyped(json: any, ignoreDiscriminator: boolean): RSVPStatus {
     return json as RSVPStatus;
 }
 
+/**
+ * Converts an `RSVPStatus` value to its JSON representation.
+ *
+ * @returns The input value as a JSON-compatible value
+ */
 export function RSVPStatusToJSON(value?: RSVPStatus | null): any {
     return value as any;
 }
 
+/**
+ * Casts a value to the RSVPStatus type without validation or transformation.
+ *
+ * @param value - The value to cast to RSVPStatus
+ * @param ignoreDiscriminator - Unused parameter included for compatibility with code generation patterns
+ * @returns The input value cast as RSVPStatus
+ */
 export function RSVPStatusToJSONTyped(value: any, ignoreDiscriminator: boolean): RSVPStatus {
     return value as RSVPStatus;
 }

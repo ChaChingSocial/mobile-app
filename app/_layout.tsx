@@ -21,6 +21,13 @@ Notifications.setNotificationHandler({
   }),
 });
 
+/**
+ * Renders the root navigation stack with authentication, notification, and UI providers.
+ *
+ * Redirects unauthenticated users away from protected routes and configures Google Sign-In on mount. Wraps the navigation stack with notification context, UI theming, and gesture handling.
+ *
+ * @returns The root navigation layout component tree
+ */
 function RootLayoutNav() {
   const pathname = usePathname();
   const { session } = useSession();
@@ -72,6 +79,11 @@ function RootLayoutNav() {
   );
 }
 
+/**
+ * Provides the root layout for the app, including authentication context and global toast notifications.
+ *
+ * Wraps the navigation structure with a session provider to manage user authentication state and renders a toast component for displaying messages across the app.
+ */
 export default function RootLayout() {
   return (
     <>

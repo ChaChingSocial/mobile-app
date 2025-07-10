@@ -64,16 +64,32 @@ export type CryptoPricingFiatEnum = typeof CryptoPricingFiatEnum[keyof typeof Cr
 
 
 /**
- * Check if a given object implements the CryptoPricing interface.
+ * Determines whether the provided object can be treated as a `CryptoPricing` instance.
+ *
+ * Always returns `true` without performing any property checks.
  */
 export function instanceOfCryptoPricing(value: object): value is CryptoPricing {
     return true;
 }
 
+/**
+ * Converts a JSON object to a `CryptoPricing` instance.
+ *
+ * @returns A `CryptoPricing` object created from the provided JSON data.
+ */
 export function CryptoPricingFromJSON(json: any): CryptoPricing {
     return CryptoPricingFromJSONTyped(json, false);
 }
 
+/**
+ * Converts a JSON object to a `CryptoPricing` instance, mapping the `cryptos` and `fiat` properties if present.
+ *
+ * If the input is `null` or `undefined`, returns it as is.
+ *
+ * @param json - The JSON object to convert
+ * @param ignoreDiscriminator - Ignored in this implementation
+ * @returns The corresponding `CryptoPricing` instance or `null`/`undefined` if input is nullish
+ */
 export function CryptoPricingFromJSONTyped(json: any, ignoreDiscriminator: boolean): CryptoPricing {
     if (json == null) {
         return json;
@@ -85,10 +101,22 @@ export function CryptoPricingFromJSONTyped(json: any, ignoreDiscriminator: boole
     };
 }
 
+/**
+ * Converts a JSON object to a `CryptoPricing` instance.
+ *
+ * @returns The corresponding `CryptoPricing` object
+ */
 export function CryptoPricingToJSON(json: any): CryptoPricing {
     return CryptoPricingToJSONTyped(json, false);
 }
 
+/**
+ * Converts a `CryptoPricing` object to a JSON representation.
+ *
+ * If the input is `null` or `undefined`, returns it as is. Otherwise, returns an object containing the `cryptos` and `fiat` properties.
+ *
+ * @returns A JSON object representing the `CryptoPricing` instance, or `null`/`undefined` if the input is `null`/`undefined`.
+ */
 export function CryptoPricingToJSONTyped(value?: CryptoPricing | null, ignoreDiscriminator: boolean = false): any {
     if (value == null) {
         return value;

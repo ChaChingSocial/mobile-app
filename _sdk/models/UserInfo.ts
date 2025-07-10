@@ -59,6 +59,15 @@ export function UserInfoFromJSON(json: any): UserInfo {
     return UserInfoFromJSONTyped(json, false);
 }
 
+/**
+ * Converts a JSON object to a `UserInfo` instance, mapping the `id`, `username`, `profilePic`, and optionally `city` properties.
+ *
+ * If the input JSON is `null`, returns `null`.
+ *
+ * @param json - The JSON object to convert
+ * @param ignoreDiscriminator - If true, discriminator properties are ignored (not used in this function)
+ * @returns A `UserInfo` object with properties mapped from the input JSON
+ */
 export function UserInfoFromJSONTyped(json: any, ignoreDiscriminator: boolean): UserInfo {
     if (json == null) {
         return json;
@@ -76,6 +85,13 @@ export function UserInfoToJSON(json: any): UserInfo {
     return UserInfoToJSONTyped(json, false);
 }
 
+/**
+ * Converts a `UserInfo` object to a JSON representation.
+ *
+ * @param value - The `UserInfo` object to serialize, or `null`/`undefined` to return as-is
+ * @param ignoreDiscriminator - Ignored in this context
+ * @returns A JSON object representing the `UserInfo`, or `null`/`undefined` if input is nullish
+ */
 export function UserInfoToJSONTyped(value?: UserInfo | null, ignoreDiscriminator: boolean = false): any {
     if (value == null) {
         return value;

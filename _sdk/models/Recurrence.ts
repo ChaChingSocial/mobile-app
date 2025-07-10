@@ -85,16 +85,30 @@ export type RecurrenceByDayEnum = typeof RecurrenceByDayEnum[keyof typeof Recurr
 
 
 /**
- * Check if a given object implements the Recurrence interface.
+ * Type guard that always considers the input object as a `Recurrence` instance.
+ *
+ * This function does not perform any runtime validation or property checks.
  */
 export function instanceOfRecurrence(value: object): value is Recurrence {
     return true;
 }
 
+/**
+ * Converts a JSON object to a `Recurrence` instance.
+ *
+ * @returns A `Recurrence` object created from the provided JSON data.
+ */
 export function RecurrenceFromJSON(json: any): Recurrence {
     return RecurrenceFromJSONTyped(json, false);
 }
 
+/**
+ * Converts a JSON object to a `Recurrence` instance, mapping each property and assigning `undefined` for missing or null fields.
+ *
+ * @param json - The JSON object to convert
+ * @param ignoreDiscriminator - If true, discriminator properties are ignored (not used in this implementation)
+ * @returns A `Recurrence` instance with properties populated from the JSON object, or `null`/`undefined` if the input is `null`/`undefined`
+ */
 export function RecurrenceFromJSONTyped(json: any, ignoreDiscriminator: boolean): Recurrence {
     if (json == null) {
         return json;
@@ -110,10 +124,21 @@ export function RecurrenceFromJSONTyped(json: any, ignoreDiscriminator: boolean)
     };
 }
 
+/**
+ * Converts a JSON object to a `Recurrence` instance.
+ *
+ * @returns The corresponding `Recurrence` object
+ */
 export function RecurrenceToJSON(json: any): Recurrence {
     return RecurrenceToJSONTyped(json, false);
 }
 
+/**
+ * Converts a `Recurrence` instance to a JSON object, preserving all defined properties.
+ *
+ * @param value - The `Recurrence` instance to convert, or `null`/`undefined`
+ * @returns A JSON object representing the `Recurrence`, or `null`/`undefined` if the input is `null`/`undefined`
+ */
 export function RecurrenceToJSONTyped(value?: Recurrence | null, ignoreDiscriminator: boolean = false): any {
     if (value == null) {
         return value;

@@ -25,6 +25,12 @@ export const EventType = {
 export type EventType = typeof EventType[keyof typeof EventType];
 
 
+/**
+ * Determines whether a given value is a valid EventType.
+ *
+ * @param value - The value to check for EventType membership
+ * @returns True if the value matches one of the defined EventType values; otherwise, false
+ */
 export function instanceOfEventType(value: any): boolean {
     for (const key in EventType) {
         if (Object.prototype.hasOwnProperty.call(EventType, key)) {
@@ -36,18 +42,42 @@ export function instanceOfEventType(value: any): boolean {
     return false;
 }
 
+/**
+ * Converts a JSON value to an `EventType`.
+ *
+ * @returns The corresponding `EventType` value.
+ */
 export function EventTypeFromJSON(json: any): EventType {
     return EventTypeFromJSONTyped(json, false);
 }
 
+/**
+ * Converts a JSON value to an `EventType` without validation or transformation.
+ *
+ * @param json - The input value to convert
+ * @param ignoreDiscriminator - Unused parameter included for compatibility with code generation patterns
+ * @returns The input value cast as an `EventType`
+ */
 export function EventTypeFromJSONTyped(json: any, ignoreDiscriminator: boolean): EventType {
     return json as EventType;
 }
 
+/**
+ * Converts an `EventType` value to a JSON-compatible format.
+ *
+ * @returns The input `EventType` value as a JSON-serializable value, or `null` if input is `null` or `undefined`.
+ */
 export function EventTypeToJSON(value?: EventType | null): any {
     return value as any;
 }
 
+/**
+ * Converts a value to the `EventType` type without validation or transformation.
+ *
+ * @param value - The value to cast to `EventType`
+ * @param ignoreDiscriminator - Unused parameter included for compatibility with code generation patterns
+ * @returns The input value cast as an `EventType`
+ */
 export function EventTypeToJSONTyped(value: any, ignoreDiscriminator: boolean): EventType {
     return value as EventType;
 }

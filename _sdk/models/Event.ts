@@ -144,7 +144,9 @@ export interface Event {
 
 
 /**
- * Check if a given object implements the Event interface.
+ * Determines whether the provided object satisfies the required properties of the Event interface.
+ *
+ * @returns `true` if the object has defined `title` and `eventType` properties; otherwise, `false`.
  */
 export function instanceOfEvent(value: object): value is Event {
     if (!('title' in value) || value['title'] === undefined) return false;
@@ -152,10 +154,22 @@ export function instanceOfEvent(value: object): value is Event {
     return true;
 }
 
+/**
+ * Converts a JSON object into an `Event` instance.
+ *
+ * @returns The `Event` object created from the provided JSON data.
+ */
 export function EventFromJSON(json: any): Event {
     return EventFromJSONTyped(json, false);
 }
 
+/**
+ * Converts a JSON object to an `Event` instance, handling optional fields and nested objects.
+ *
+ * @param json - The JSON object to convert
+ * @param ignoreDiscriminator - If true, discriminator properties are ignored during conversion
+ * @returns The corresponding `Event` instance
+ */
 export function EventFromJSONTyped(json: any, ignoreDiscriminator: boolean): Event {
     if (json == null) {
         return json;
@@ -179,10 +193,22 @@ export function EventFromJSONTyped(json: any, ignoreDiscriminator: boolean): Eve
     };
 }
 
+/**
+ * Converts an `Event` instance to its JSON representation.
+ *
+ * @returns The JSON object corresponding to the provided `Event` instance.
+ */
 export function EventToJSON(json: any): Event {
     return EventToJSONTyped(json, false);
 }
 
+/**
+ * Converts an `Event` instance to a JSON object, including nested and optional fields.
+ *
+ * @param value - The `Event` instance to convert, or `null`/`undefined`
+ * @param ignoreDiscriminator - If true, discriminator properties are ignored during conversion
+ * @returns The JSON representation of the `Event`, or `null`/`undefined` if input is nullish
+ */
 export function EventToJSONTyped(value?: Event | null, ignoreDiscriminator: boolean = false): any {
     if (value == null) {
         return value;

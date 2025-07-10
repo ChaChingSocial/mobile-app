@@ -72,6 +72,13 @@ export function AmountFromJSON(json: any): Amount {
     return AmountFromJSONTyped(json, false);
 }
 
+/**
+ * Converts a JSON object to an `Amount` instance, mapping the `amount`, `currency`, and `crypto` properties if present.
+ *
+ * @param json - The JSON object to convert
+ * @param ignoreDiscriminator - Unused parameter for compatibility with discriminator-based deserialization
+ * @returns An `Amount` object with properties extracted from the JSON, or `undefined` if the input is `null`
+ */
 export function AmountFromJSONTyped(json: any, ignoreDiscriminator: boolean): Amount {
     if (json == null) {
         return json;
@@ -88,6 +95,13 @@ export function AmountToJSON(json: any): Amount {
     return AmountToJSONTyped(json, false);
 }
 
+/**
+ * Converts an `Amount` instance to a JSON object, including the `amount`, `currency`, and `crypto` properties.
+ *
+ * @param value - The `Amount` instance to convert, or `null`/`undefined`
+ * @param ignoreDiscriminator - Unused parameter included for compatibility
+ * @returns A JSON object representing the `Amount`, or `null`/`undefined` if the input is `null`/`undefined`
+ */
 export function AmountToJSONTyped(value?: Amount | null, ignoreDiscriminator: boolean = false): any {
     if (value == null) {
         return value;

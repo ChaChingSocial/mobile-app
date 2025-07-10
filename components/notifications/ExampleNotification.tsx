@@ -2,6 +2,11 @@ import { useNotification } from "@/hooks/useNotification";
 import { Button, Text, View } from "react-native";
 import Toast from "react-native-toast-message";
 
+/**
+ * Sends a push notification to the specified Expo push token using Expo's push notification service.
+ *
+ * @param expoPushToken - The Expo push token identifying the target device
+ */
 async function sendPushNotification(expoPushToken: string) {
   const message = {
     to: expoPushToken,
@@ -22,6 +27,13 @@ async function sendPushNotification(expoPushToken: string) {
   });
 }
 
+/**
+ * Displays the current Expo push token and the latest received notification, and allows sending a test push notification to the device.
+ *
+ * Renders the Expo push token and details of the most recent notification if available. Provides a button to send a push notification to the device using the Expo push notification service. If no push token is available, shows an error toast message.
+ *
+ * @returns A React element displaying notification information and a button to trigger a test notification.
+ */
 export default function ExampleNotification() {
   const { expoPushToken, notification } = useNotification();
   return (

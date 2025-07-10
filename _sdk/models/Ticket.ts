@@ -122,16 +122,28 @@ export type TicketTicketStatusEnum = typeof TicketTicketStatusEnum[keyof typeof 
 
 
 /**
- * Check if a given object implements the Ticket interface.
+ * Acts as a type guard for the Ticket interface, always returning true.
+ *
+ * This function does not perform any runtime validation and should not be relied upon for actual type checking.
  */
 export function instanceOfTicket(value: object): value is Ticket {
     return true;
 }
 
+/**
+ * Converts a JSON object into a `Ticket` instance.
+ *
+ * @returns The deserialized `Ticket` object.
+ */
 export function TicketFromJSON(json: any): Ticket {
     return TicketFromJSONTyped(json, false);
 }
 
+/**
+ * Converts a JSON object into a `Ticket` instance, mapping fields and parsing nested and date properties.
+ *
+ * If the input is `null`, returns `null`. Fields not present or set to `null` in the JSON are mapped to `undefined` in the resulting `Ticket`.
+ */
 export function TicketFromJSONTyped(json: any, ignoreDiscriminator: boolean): Ticket {
     if (json == null) {
         return json;
@@ -154,10 +166,22 @@ export function TicketFromJSONTyped(json: any, ignoreDiscriminator: boolean): Ti
     };
 }
 
+/**
+ * Converts a JSON object to a `Ticket` instance.
+ *
+ * @returns The deserialized `Ticket` object
+ */
 export function TicketToJSON(json: any): Ticket {
     return TicketToJSONTyped(json, false);
 }
 
+/**
+ * Converts a `Ticket` instance to a JSON-compatible object.
+ *
+ * Serializes nested `ticketOption` and formats date fields as ISO strings. Returns `null` or `undefined` if the input is `null` or `undefined`.
+ *
+ * @returns The JSON representation of the `Ticket` instance, or `null`/`undefined` if input is `null`/`undefined`.
+ */
 export function TicketToJSONTyped(value?: Ticket | null, ignoreDiscriminator: boolean = false): any {
     if (value == null) {
         return value;

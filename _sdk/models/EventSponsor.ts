@@ -52,16 +52,30 @@ export interface EventSponsor {
 }
 
 /**
- * Check if a given object implements the EventSponsor interface.
+ * Determines if the provided object is considered an `EventSponsor`.
+ *
+ * Always returns `true`, so any object will be treated as an `EventSponsor` regardless of its structure.
  */
 export function instanceOfEventSponsor(value: object): value is EventSponsor {
     return true;
 }
 
+/**
+ * Converts a JSON object to an `EventSponsor` instance.
+ *
+ * @returns An `EventSponsor` object created from the provided JSON data.
+ */
 export function EventSponsorFromJSON(json: any): EventSponsor {
     return EventSponsorFromJSONTyped(json, false);
 }
 
+/**
+ * Converts a JSON object to an `EventSponsor` instance, mapping missing or null properties to `undefined`.
+ *
+ * @param json - The JSON object to convert
+ * @param ignoreDiscriminator - If true, skips discriminator property checks (not used in this implementation)
+ * @returns An `EventSponsor` instance with properties populated from the JSON object
+ */
 export function EventSponsorFromJSONTyped(json: any, ignoreDiscriminator: boolean): EventSponsor {
     if (json == null) {
         return json;
@@ -76,10 +90,24 @@ export function EventSponsorFromJSONTyped(json: any, ignoreDiscriminator: boolea
     };
 }
 
+/**
+ * Converts a JSON object to an `EventSponsor` instance.
+ *
+ * @returns The corresponding `EventSponsor` object.
+ */
 export function EventSponsorToJSON(json: any): EventSponsor {
     return EventSponsorToJSONTyped(json, false);
 }
 
+/**
+ * Converts an `EventSponsor` instance to a JSON object.
+ *
+ * If the input is `null` or `undefined`, returns it as is. Otherwise, constructs a JSON object with the corresponding `EventSponsor` properties.
+ *
+ * @param value - The `EventSponsor` instance to convert
+ * @param ignoreDiscriminator - Ignored in this implementation
+ * @returns A JSON object representing the `EventSponsor`, or `null`/`undefined` if the input is `null`/`undefined`
+ */
 export function EventSponsorToJSONTyped(value?: EventSponsor | null, ignoreDiscriminator: boolean = false): any {
     if (value == null) {
         return value;

@@ -16,6 +16,15 @@ type NotificationCardProps = {
   showDate?: boolean;
 };
 
+/**
+ * Renders a styled notification card displaying an icon, message, and optional timestamp based on the notification type and data.
+ *
+ * The card visually distinguishes notification types with different colors and icons, supports HTML-formatted messages, and navigates to a linked route when pressed.
+ *
+ * @param notification - The notification data to display
+ * @param showDate - Whether to show the notification's creation time (defaults to true)
+ * @returns A React element representing the notification card
+ */
 export function NotificationCard({
   notification,
   showDate = true,

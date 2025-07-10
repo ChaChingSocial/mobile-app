@@ -30,6 +30,14 @@ import { PostWrapper } from "./posts/PostWrapper";
 import { PresentationPost } from "./posts/PresentationPost";
 import HtmlRenderText from "../common/HtmlRenderText";
 
+/**
+ * Renders a social media post with interactive features, supporting multiple content types and user actions.
+ *
+ * Displays the post content based on its category, allows users to like, give points, and comment, and shows community information if available. Handles comment input, editing state, and integrates with backend APIs for post interactions.
+ *
+ * @param post - The post object to display, including metadata, content, and comments.
+ * @returns The rendered post component with interactive UI elements.
+ */
 export function PostComponent({ post }: { post: PostType }) {
   const { session } = useSession();
   const currentUserId = session?.uid;

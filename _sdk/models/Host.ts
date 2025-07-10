@@ -52,16 +52,30 @@ export interface Host {
 }
 
 /**
- * Check if a given object implements the Host interface.
+ * Type guard that always treats any object as a `Host`.
+ *
+ * This function does not perform any property checks and always returns `true`.
  */
 export function instanceOfHost(value: object): value is Host {
     return true;
 }
 
+/**
+ * Converts a JSON object to a `Host` instance.
+ *
+ * @returns A `Host` object created from the provided JSON data.
+ */
 export function HostFromJSON(json: any): Host {
     return HostFromJSONTyped(json, false);
 }
 
+/**
+ * Converts a JSON object to a `Host` instance, mapping each property if present or setting it to `undefined` if absent.
+ *
+ * @param json - The JSON object to convert
+ * @param ignoreDiscriminator - Ignored in this implementation; included for compatibility
+ * @returns A `Host` object with properties populated from the JSON input, or `null`/`undefined` if the input is `null`/`undefined`
+ */
 export function HostFromJSONTyped(json: any, ignoreDiscriminator: boolean): Host {
     if (json == null) {
         return json;
@@ -76,10 +90,21 @@ export function HostFromJSONTyped(json: any, ignoreDiscriminator: boolean): Host
     };
 }
 
+/**
+ * Converts a JSON object to a `Host` instance.
+ *
+ * @returns The corresponding `Host` object.
+ */
 export function HostToJSON(json: any): Host {
     return HostToJSONTyped(json, false);
 }
 
+/**
+ * Serializes a `Host` object into a JSON-compatible object.
+ *
+ * @param value - The `Host` instance to serialize, or `null`/`undefined`
+ * @returns A JSON object representing the `Host`, or the input if it is `null` or `undefined`
+ */
 export function HostToJSONTyped(value?: Host | null, ignoreDiscriminator: boolean = false): any {
     if (value == null) {
         return value;

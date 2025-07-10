@@ -15,6 +15,14 @@ export interface UsePushNotificationsReturn {
   sendTestNotification: (title: string, body: string) => Promise<void>;
 }
 
+/**
+ * React hook for managing push notification lifecycle for a specific user.
+ *
+ * Provides state and functions to initialize, clean up, and send test push notifications. Automatically initializes on mount if `autoInitialize` is true and a `userId` is provided, and cleans up on unmount.
+ *
+ * @param options - Options including the user ID and optional auto-initialization flag
+ * @returns An object with initialization state, error message, and functions to initialize, clean up, and send test notifications
+ */
 export function usePushNotifications({
   userId,
   autoInitialize = true,

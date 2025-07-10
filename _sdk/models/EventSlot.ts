@@ -210,16 +210,30 @@ export type EventSlotEventSlotStatusEnum = typeof EventSlotEventSlotStatusEnum[k
 
 
 /**
- * Check if a given object implements the EventSlot interface.
+ * Determines whether the provided object is an `EventSlot`.
+ *
+ * Always returns `true` without performing any property checks.
  */
 export function instanceOfEventSlot(value: object): value is EventSlot {
     return true;
 }
 
+/**
+ * Converts a JSON object to an `EventSlot` instance.
+ *
+ * @returns The `EventSlot` object created from the provided JSON data
+ */
 export function EventSlotFromJSON(json: any): EventSlot {
     return EventSlotFromJSONTyped(json, false);
 }
 
+/**
+ * Converts a JSON object into an `EventSlot` instance, mapping fields and nested arrays to their corresponding types.
+ *
+ * @param json - The JSON object to convert
+ * @param ignoreDiscriminator - If true, discriminator properties are ignored during conversion
+ * @returns The resulting `EventSlot` instance, or `null` if the input is `null`
+ */
 export function EventSlotFromJSONTyped(json: any, ignoreDiscriminator: boolean): EventSlot {
     if (json == null) {
         return json;
@@ -250,10 +264,22 @@ export function EventSlotFromJSONTyped(json: any, ignoreDiscriminator: boolean):
     };
 }
 
+/**
+ * Converts a JSON object to an `EventSlot` instance.
+ *
+ * @returns The `EventSlot` object created from the provided JSON.
+ */
 export function EventSlotToJSON(json: any): EventSlot {
     return EventSlotToJSONTyped(json, false);
 }
 
+/**
+ * Converts an `EventSlot` instance to a JSON-compatible object, serializing dates and nested entities.
+ *
+ * @param value - The `EventSlot` instance to convert, or `null`/`undefined`
+ * @param ignoreDiscriminator - If true, discriminator properties are ignored (default: false)
+ * @returns A JSON-compatible object representing the `EventSlot`, or `null`/`undefined` if input is null/undefined
+ */
 export function EventSlotToJSONTyped(value?: EventSlot | null, ignoreDiscriminator: boolean = false): any {
     if (value == null) {
         return value;

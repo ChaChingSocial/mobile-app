@@ -185,6 +185,13 @@ export function UserFromJSON(json: any): User {
     return UserFromJSONTyped(json, false);
 }
 
+/**
+ * Converts a JSON object to a `User` instance, mapping all fields and deserializing nested objects as needed.
+ *
+ * @param json - The JSON object to convert
+ * @param ignoreDiscriminator - If true, discriminator properties are ignored during conversion
+ * @returns A `User` object with properties populated from the input JSON, or `undefined` if input is `null`
+ */
 export function UserFromJSONTyped(json: any, ignoreDiscriminator: boolean): User {
     if (json == null) {
         return json;
@@ -217,6 +224,13 @@ export function UserToJSON(json: any): User {
     return UserToJSONTyped(json, false);
 }
 
+/**
+ * Serializes a `User` object into a JSON-compatible format, including nested objects.
+ *
+ * @param value - The `User` instance to serialize, or `null`/`undefined` to return as-is
+ * @param ignoreDiscriminator - If true, discriminator properties are ignored during serialization
+ * @returns A JSON object representing the `User`, or `null`/`undefined` if input is `null`/`undefined`
+ */
 export function UserToJSONTyped(value?: User | null, ignoreDiscriminator: boolean = false): any {
     if (value == null) {
         return value;
