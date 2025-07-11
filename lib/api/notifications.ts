@@ -2,8 +2,11 @@ import {
   Notification,
   NotificationEntityTypeEnum,
   NotificationNotificationTypeEnum,
+  PushNotification,
 } from "@/_sdk";
 import { notificationApi, pushNotificationApi } from "@/config/backend";
+import { Platform } from "react-native";
+import { registerForPushNotificationsAsync } from "@/lib/utils/registerForPushNotifications";
 
 export async function sendNotification(
   userId: string,
@@ -48,20 +51,37 @@ async function sendPushNotification(
   try {
     const title = getNotificationTitle(notificationType);
     
+    // Get the current device token
+    const expoPushToken = await registerForPushNotificationsAsync();
+    
+    if (!expoPushToken) {
+      console.error('No device token available for push notification');
+      return;
+    }
 
-    const pushNotification = {
+    // Get platform for backend
+    const platform = Platform.OS === 'ios' || Platform.OS === 'android' || Platform.OS === 'web' 
+      ? Platform.OS 
+      : 'web';
+
+    const pushNotification: PushNotification = {
       userId,
-      deviceToken: '', // Backend will look up user's device tokens
-      platform: 'ios' as const, // Backend will handle platform detection
+      deviceToken: expoPushToken, // Use actual device token
+      platform: platform as 'ios' | 'android' | 'web',
       isActive: true,
       createdAt: new Date(),
-      deviceTokenId: '', // Backend will generate this
+      deviceTokenId: '',
       notification: {
         notificationType,
         entityType,
         notificationMessage: message,
         notificationTitle: title,
         userId,
+      },
+      user: {
+        id: userId,
+        username: `user_${userId.substring(0, 8)}`, // Generate a username from userId
+        email: `${userId}@example.com`, // Generate an email
       },
     };
 

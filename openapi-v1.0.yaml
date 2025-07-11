@@ -1107,12 +1107,13 @@ paths:
       tags:
         - PushNotification
       requestBody:
-        description: Register a device token
+        description: Register a device token. Only userId, deviceToken, and platform are
+          required fields for this endpoint.
         required: true
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/PushNotification"
+              $ref: "#/components/schemas/DeviceTokenRegistration"
       responses:
         "201":
           description: Expected response to a valid request
@@ -1130,12 +1131,13 @@ paths:
       tags:
         - PushNotification
       requestBody:
-        description: Unregister a device token
+        description: Unregister a device token. Only userId and deviceToken are required
+          fields for this endpoint.
         required: true
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/PushNotification"
+              $ref: "#/components/schemas/DeviceTokenUnregistration"
       responses:
         "201":
           description: Expected response to a valid request
@@ -3115,6 +3117,20 @@ components:
         note:
           type: string
           description: A note or comment about the wallet.
+    DeviceTokenUnregistration:
+      title: DeviceTokenUnregistration
+      type: object
+      required:
+        - userId
+        - deviceToken
+      properties:
+        userId:
+          type: string
+          format: uuid
+          description: The unique identifier for the user.
+        deviceToken:
+          type: string
+          description: The device token for the user.
     PushNotification:
       title: PushNotification
       type: object
@@ -3122,10 +3138,6 @@ components:
         - userId
         - deviceToken
         - platform
-        - isActive
-        - createdAt
-        - deviceTokenId
-        - notification
       properties:
         userId:
           type: string
@@ -3163,6 +3175,31 @@ components:
           $ref: "#/components/schemas/Notification"
         user:
           $ref: "#/components/schemas/User"
+    DeviceTokenRegistration:
+      title: DeviceTokenRegistration
+      type: object
+      required:
+        - userId
+        - deviceToken
+        - platform
+      properties:
+        userId:
+          type: string
+          format: uuid
+          description: The unique identifier for the user.
+        deviceToken:
+          type: string
+          description: The device token for the user.
+        platform:
+          type: string
+          enum:
+            - ios
+            - android
+            - web
+          description: The platform of the user.
+        appVersion:
+          type: string
+          description: The version of the app.
     Host:
       title: Host
       type: object

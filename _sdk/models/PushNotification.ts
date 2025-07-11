@@ -63,13 +63,13 @@ export interface PushNotification {
      * @type {boolean}
      * @memberof PushNotification
      */
-    isActive: boolean;
+    isActive?: boolean;
     /**
      * The date and time the device token was created.
      * @type {Date}
      * @memberof PushNotification
      */
-    createdAt: Date;
+    createdAt?: Date;
     /**
      * The date and time the device token was updated.
      * @type {Date}
@@ -81,13 +81,13 @@ export interface PushNotification {
      * @type {string}
      * @memberof PushNotification
      */
-    deviceTokenId: string;
+    deviceTokenId?: string;
     /**
      * 
      * @type {Notification}
      * @memberof PushNotification
      */
-    notification: Notification;
+    notification?: Notification;
     /**
      * 
      * @type {User}
@@ -115,10 +115,6 @@ export function instanceOfPushNotification(value: object): value is PushNotifica
     if (!('userId' in value) || value['userId'] === undefined) return false;
     if (!('deviceToken' in value) || value['deviceToken'] === undefined) return false;
     if (!('platform' in value) || value['platform'] === undefined) return false;
-    if (!('isActive' in value) || value['isActive'] === undefined) return false;
-    if (!('createdAt' in value) || value['createdAt'] === undefined) return false;
-    if (!('deviceTokenId' in value) || value['deviceTokenId'] === undefined) return false;
-    if (!('notification' in value) || value['notification'] === undefined) return false;
     return true;
 }
 
@@ -136,11 +132,11 @@ export function PushNotificationFromJSONTyped(json: any, ignoreDiscriminator: bo
         'deviceToken': json['deviceToken'],
         'platform': json['platform'],
         'appVersion': json['appVersion'] == null ? undefined : json['appVersion'],
-        'isActive': json['isActive'],
-        'createdAt': (new Date(json['createdAt'])),
+        'isActive': json['isActive'] == null ? undefined : json['isActive'],
+        'createdAt': json['createdAt'] == null ? undefined : (new Date(json['createdAt'])),
         'deviceTokenUpdatedAt': json['deviceTokenUpdatedAt'] == null ? undefined : (new Date(json['deviceTokenUpdatedAt'])),
-        'deviceTokenId': json['deviceTokenId'],
-        'notification': NotificationFromJSON(json['notification']),
+        'deviceTokenId': json['deviceTokenId'] == null ? undefined : json['deviceTokenId'],
+        'notification': json['notification'] == null ? undefined : NotificationFromJSON(json['notification']),
         'user': json['user'] == null ? undefined : UserFromJSON(json['user']),
     };
 }
@@ -161,7 +157,7 @@ export function PushNotificationToJSONTyped(value?: PushNotification | null, ign
         'platform': value['platform'],
         'appVersion': value['appVersion'],
         'isActive': value['isActive'],
-        'createdAt': ((value['createdAt']).toISOString()),
+        'createdAt': value['createdAt'] == null ? undefined : ((value['createdAt']).toISOString()),
         'deviceTokenUpdatedAt': value['deviceTokenUpdatedAt'] == null ? undefined : ((value['deviceTokenUpdatedAt']).toISOString()),
         'deviceTokenId': value['deviceTokenId'],
         'notification': NotificationToJSON(value['notification']),

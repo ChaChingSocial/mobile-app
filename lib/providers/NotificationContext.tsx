@@ -5,7 +5,9 @@ import {
   useEffect,
   useState,
 } from "react";
-import { registerForPushNotificationsAsync } from "../utils/registerForPushNotifications";
+import { registerForPushNotificationsAsync } from "@/lib/utils/registerForPushNotifications";
+import { registerDeviceTokenWithBackend } from "@/lib/utils/deviceTokenRegistration";
+import { useSession } from "./AuthContext";
 
 interface NotificationContextType {
   expoPushToken: string | null;
@@ -22,10 +24,24 @@ export function NotificationProvider({ children }: PropsWithChildren) {
   const [notification, setNotification] =
     useState<Notifications.Notification | null>(null);
   const [error, setError] = useState<Error | null>(null);
+  const { session } = useSession();
 
   useEffect(() => {
     registerForPushNotificationsAsync()
-      .then((token) => setExpoPushToken(token ?? ""))
+      .then((token) => {
+        setExpoPushToken(token ?? "");
+        
+        // Register the token with the backend if user is logged in
+        if (token && session?.uid) {
+          registerDeviceTokenWithBackend(session.uid)
+            .then(() => {
+              console.log('Device token registered with backend successfully');
+            })
+            .catch((error) => {
+              console.error('Failed to register device token with backend:', error);
+            });
+        }
+      })
       .catch((error: any) => setError(error));
 
     // get notification when app is in foreground
@@ -50,7 +66,7 @@ export function NotificationProvider({ children }: PropsWithChildren) {
       notificationListener.remove();
       responseListener.remove();
     };
-  }, []);
+  }, [session?.uid]); // Re-run when user session changes
 
   return (
     <NotificationContext.Provider

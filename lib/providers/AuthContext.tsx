@@ -1,13 +1,15 @@
+import { useNotification } from "@/hooks/useNotification";
 import { useStorageState } from "@/hooks/useStorageState";
-import {
-  useContext,
-  createContext,
-  type PropsWithChildren,
-  useEffect,
-} from "react";
-import { useRouter, SplashScreen } from "expo-router";
+import { registerDeviceTokenWithBackend, unregisterDeviceTokenFromBackend } from "@/lib/utils/deviceTokenRegistration";
 import { SessionValue } from "@/types";
 import { GoogleSignin } from "@react-native-google-signin/google-signin";
+import { SplashScreen, useRouter } from "expo-router";
+import {
+  createContext,
+  type PropsWithChildren,
+  useContext,
+  useEffect,
+} from "react";
 
 SplashScreen.preventAutoHideAsync();
 
@@ -37,6 +39,7 @@ export function useSession() {
 
 export function SessionProvider({ children }: PropsWithChildren) {
   const router = useRouter();
+  const { expoPushToken } = useNotification();
 
   const [[isLoading, session], setSession] = useStorageState("session");
   console.log("session", session);
@@ -48,8 +51,15 @@ export function SessionProvider({ children }: PropsWithChildren) {
     }
     if (session) {
       router.replace("/(protected)/(home)");
+      
+      // Register device token for push notifications
+      if (session.uid) {
+        registerDeviceTokenWithBackend(session.uid).catch((error) => {
+          console.error("Failed to register device token:", error);
+        });
+      }
     }
-  }, [isLoading]);
+  }, [isLoading, session]);
 
   return (
     <AuthContext.Provider
@@ -59,6 +69,15 @@ export function SessionProvider({ children }: PropsWithChildren) {
           router.replace("/(protected)/(home)");
         },
         signOut: async () => {
+          // Unregister device token before signing out
+          if (session?.uid && expoPushToken) {
+            try {
+              await unregisterDeviceTokenFromBackend(session.uid, expoPushToken);
+            } catch (error) {
+              console.error("Failed to unregister device token:", error);
+            }
+          }
+          
           await GoogleSignin.signOut();
           
           setSession(null);

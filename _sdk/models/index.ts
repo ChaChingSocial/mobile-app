@@ -21,6 +21,8 @@ export * from './CommunitySurvey';
 export * from './CryptoPricing';
 export * from './CryptoWallet';
 export * from './CryptoWallets';
+export * from './DeviceTokenRegistration';
+export * from './DeviceTokenUnregistration';
 export * from './Donation';
 export * from './Event';
 export * from './EventPrivacy';

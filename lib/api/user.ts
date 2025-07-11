@@ -1,4 +1,3 @@
-
 import {
   collection,
   getFirestore,
@@ -12,6 +11,12 @@ import {
 import { UserPreference } from "@/types/user";
 import { useSession } from "../providers/AuthContext";
 import { app } from "@/config/firebase";
+import { sendNotification } from "./notifications";
+import {
+  NotificationEntityTypeEnum,
+  NotificationNotificationTypeEnum,
+} from "@/_sdk";
+import { notificationApi } from "@/config/backend";
 
 const db = getFirestore(app);
 
@@ -83,13 +88,41 @@ const fetchAllUserDisplayNames = async () => {
   }
 };
 
-async function followUser(userId: string, followerId: string) {
+async function followUser(
+  userId: string,
+  followerId: string,
+  followerName?: string
+) {
   const userDoc = doc(db, "users", userId, "followers", followerId);
   const followerDoc = doc(db, "users", followerId, "following", userId);
 
   try {
     await setDoc(userDoc, { followerId });
     await setDoc(followerDoc, { userId });
+
+    // Send notification to the user being followed
+    if (userId !== followerId) {
+      // Get follower's name if not provided
+      let name = followerName;
+      if (!name) {
+        const followerProfileDoc = await getDoc(
+          doc(db, "users", followerId, "profile", followerId)
+        );
+        if (followerProfileDoc.exists()) {
+          name = followerProfileDoc.data().displayName;
+        } else {
+          name = "Someone";
+        }
+      }
+
+      await sendNotification(
+        userId,
+        "",
+        `${name} started following you`,
+        NotificationNotificationTypeEnum.Followed,
+        NotificationEntityTypeEnum.Community
+      );
+    }
 
     return true;
   } catch (error) {
@@ -200,7 +233,7 @@ async function fetchAllUsernames() {
       return [];
     }
 
-    const usernames:string[] = [];
+    const usernames: string[] = [];
     usersSnapshot.forEach((doc) => {
       const userData = doc.data();
       if (userData.displayName) {
@@ -241,28 +274,6 @@ async function checkIfFinFluencer(userId: string) {
   }
 }
 
-// async function checkIfFinFluencer(userId: string) {
-//   try {
-//     const userDocRef = doc(db, "users", userId);
-//     const userDoc = await getDoc(userDocRef);
-
-//     if (!userDoc.exists()) return false;
-
-//     // Case 1: Profile is a field
-//     if (userDoc.data().profile) {
-//       return userDoc.data().profile.finfluencer || false;
-//     }
-
-//     // Case 2: Profile is a subcollection
-//     const profileRef = doc(db, "users", userId, "profile", userId);
-//     const profileDoc = await getDoc(profileRef);
-//     return profileDoc.exists() && profileDoc.data().finfluencer;
-//   } catch (error) {
-//     console.error("Error checking if user is an influencer:", error);
-//     throw error;
-//   }
-// }
-
 async function saveUserSettings(
   userId: string,
   settings: { [key: string]: boolean }
@@ -292,25 +303,16 @@ async function fetchUserSettings(userId: string) {
 }
 
 async function sendEmailInvites(emails: string[], userName: string) {
-  const url =
-    "https://chachingsocial-20694693160.us-central1.run.app/notifications/notify-email";
-  const headers = {
-    accept: "application/json",
-    "Content-Type": "application/json",
-  };
-  const body = JSON.stringify({
+  const notification = {
     emails,
-    notificationType: "INVITE",
+    notificationType: NotificationNotificationTypeEnum.Invited,
     notificationMessage: userName,
-    entityType: "USER",
-  });
-
-  console.log("Sending email invites:", body);
+    entityType: NotificationEntityTypeEnum.Community,
+  };
+  console.log("Sending email invites:", notification);
   try {
-    const response = await fetch(url, {
-      method: "POST",
-      headers,
-      body,
+    const response = await notificationApi.notifyEmail({
+      notification,
     });
 
     if (!response.ok) {

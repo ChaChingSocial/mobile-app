@@ -21,6 +21,10 @@ import { Like, Comment, Post } from "@/types/post";
 import { app, auth } from "@/config/firebase";
 import { sendNotification } from "./notifications";
 import { usePostStore } from "../store/post";
+import {
+  NotificationEntityTypeEnum,
+  NotificationNotificationTypeEnum,
+} from "@/_sdk";
 
 const db = getFirestore(app);
 const user = auth.currentUser;
@@ -257,11 +261,16 @@ export async function updateEventRSVP(
     const postSnap = await getDoc(postDoc);
 
     if (postSnap.exists()) {
-      const postData = postSnap.data() as { event?: Event };
+      const postData = postSnap.data() as {
+        event?: Event;
+        posterUserId?: string;
+      };
+      const isAlreadyRSVPed = postData.event?.rsvps?.some(
+        (rsvp) => rsvp.localId === userData.localId
+      );
+
       if (postData.event?.rsvps) {
-        const updatedRSVPs = postData.event.rsvps.some(
-          (rsvp) => rsvp.localId === userData.localId
-        )
+        const updatedRSVPs = isAlreadyRSVPed
           ? postData.event.rsvps.filter(
               (rsvp) => rsvp.localId !== userData.localId
             )
@@ -270,11 +279,40 @@ export async function updateEventRSVP(
         await updateDoc(postDoc, {
           event: { ...postData.event, rsvps: updatedRSVPs },
         });
+
+        // Send notification to event creator when someone RSVPs
+        if (
+          !isAlreadyRSVPed &&
+          postData.posterUserId &&
+          postData.posterUserId !== userData.localId
+        ) {
+          await sendNotification(
+            postData.posterUserId,
+            "",
+            `${userData.displayName} RSVP'd to your event`,
+            NotificationNotificationTypeEnum.EventInvite,
+            NotificationEntityTypeEnum.Event
+          );
+        }
       } else {
         const updatedRSVPs = [userData];
         await updateDoc(postDoc, {
           event: { ...postData.event, rsvps: updatedRSVPs },
         });
+
+        // Send notification to event creator for first RSVP
+        if (
+          postData.posterUserId &&
+          postData.posterUserId !== userData.localId
+        ) {
+          await sendNotification(
+            postData.posterUserId,
+            "",
+            `${userData.displayName} RSVP'd to your event`,
+            NotificationNotificationTypeEnum.EventInvite,
+            NotificationEntityTypeEnum.Event
+          );
+        }
       }
     }
   } catch (error) {
@@ -374,6 +412,37 @@ export async function likePost(
 
       await updateDoc(postDoc, { likes: postData.likes });
       console.log(`Like added/updated for post ${postId}`);
+
+      // Send notification to post owner if it's a new like (not updating existing)
+      if (!existingLike && postData.posterUserId !== userId) {
+        try {
+          // Get the user who liked the post
+          const userProfileDoc = await getDoc(
+            doc(db, "users", userId, "profile", userId)
+          );
+
+          let likerName = "";
+          if (userProfileDoc.exists()) {
+            const userProfile = userProfileDoc.data();
+            likerName = userProfile.displayName;
+          }
+
+          // Send notification through backend service
+          await sendNotification(
+            postData.posterUserId, // Post owner
+            postData.newsfeedId || "", // Community ID
+            `${likerName} liked your post`, // Notification message
+            "LIKED" as any, // Notification type
+            "POST" as any // Entity type
+          );
+
+          console.log(
+            `Notification sent to post owner ${postData.posterUserId}`
+          );
+        } catch (notificationError) {
+          console.error("Error sending like notification:", notificationError);
+        }
+      }
     } else {
       console.error(`Post ${postId} does not exist`);
     }
@@ -443,13 +512,17 @@ export async function likeComment(
         }
 
         await updateDoc(postDoc, { comments: postData.comments });
-        await sendNotification(
-          posterId,
-          communityId,
-          userName,
-          "LIKED",
-          "POST"
-        );
+
+        // Send notification to comment owner if it's a new like and not their own like
+        if (!existingLike && comment.userId !== userId) {
+          await sendNotification(
+            comment.userId,
+            communityId,
+            `${userName} liked your comment`,
+            NotificationNotificationTypeEnum.CommentLiked,
+            NotificationEntityTypeEnum.Comment
+          );
+        }
 
         console.log(`Like added/updated for comment ${commentId}`);
       } else {
@@ -551,13 +624,15 @@ export async function commentOnPost(
 
       console.log(`Comment added to post ${postId}`);
 
-      await sendNotification(
-        posterId,
-        newComment.communityId,
-        newComment.userName,
-        "COMMENTED",
-        "POST"
-      );
+      if (posterId !== newComment.userId) {
+        await sendNotification(
+          posterId, // Post owner
+          newComment.communityId,
+          `${newComment.userName} commented on your post`,
+          NotificationNotificationTypeEnum.Commented,
+          NotificationEntityTypeEnum.Post
+        );
+      }
 
       return newCommentWithId;
     }
@@ -590,16 +665,34 @@ export async function sharePostOnNewsfeed(postId: string, userId: string) {
   }
 }
 
-export function taggingUsersInPost(postId: string, taggedUsers: string) {
+export async function taggingUsersInPost(
+  postId: string,
+  taggedUsers: string[],
+  posterName: string,
+  communityId: string
+) {
   try {
     const postDoc = doc(db, "posts", postId);
-    const postSnap = getDoc(postDoc);
+    const postSnap = await getDoc(postDoc);
 
-    if (postSnap) {
+    if (postSnap.exists()) {
       const postData = postSnap.data();
       postData.taggedUsers = taggedUsers;
 
-      updateDoc(postDoc, { taggedUsers });
+      await updateDoc(postDoc, { taggedUsers });
+
+      // Send notifications to tagged users
+      for (const taggedUserId of taggedUsers) {
+        if (taggedUserId && taggedUserId !== postData.posterUserId) {
+          await sendNotification(
+            taggedUserId, // Tagged user
+            communityId,
+            `${posterName} tagged you in a post`,
+            NotificationNotificationTypeEnum.Tagged,
+            NotificationEntityTypeEnum.Post
+          );
+        }
+      }
     }
   } catch (error) {
     console.error("Error tagging users in post:", error);

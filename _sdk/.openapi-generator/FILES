@@ -31,6 +31,8 @@ models/CommunitySurvey.ts
 models/CryptoPricing.ts
 models/CryptoWallet.ts
 models/CryptoWallets.ts
+models/DeviceTokenRegistration.ts
+models/DeviceTokenUnregistration.ts
 models/Donation.ts
 models/Event.ts
 models/EventPrivacy.ts

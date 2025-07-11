@@ -15,9 +15,15 @@
 
 import * as runtime from '../runtime';
 import type {
+  DeviceTokenRegistration,
+  DeviceTokenUnregistration,
   PushNotification,
 } from '../models/index';
 import {
+    DeviceTokenRegistrationFromJSON,
+    DeviceTokenRegistrationToJSON,
+    DeviceTokenUnregistrationFromJSON,
+    DeviceTokenUnregistrationToJSON,
     PushNotificationFromJSON,
     PushNotificationToJSON,
 } from '../models/index';
@@ -27,7 +33,7 @@ export interface PushNotificationRequest {
 }
 
 export interface RegisterDeviceTokenRequest {
-    pushNotification: PushNotification;
+    deviceTokenRegistration: DeviceTokenRegistration;
 }
 
 export interface TestPushNotificationRequest {
@@ -35,7 +41,7 @@ export interface TestPushNotificationRequest {
 }
 
 export interface UnregisterDeviceTokenRequest {
-    pushNotification: PushNotification;
+    deviceTokenUnregistration: DeviceTokenUnregistration;
 }
 
 /**
@@ -87,10 +93,10 @@ export class PushNotificationApi extends runtime.BaseAPI {
      * Register a device token
      */
     async registerDeviceTokenRaw(requestParameters: RegisterDeviceTokenRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<string>> {
-        if (requestParameters['pushNotification'] == null) {
+        if (requestParameters['deviceTokenRegistration'] == null) {
             throw new runtime.RequiredError(
-                'pushNotification',
-                'Required parameter "pushNotification" was null or undefined when calling registerDeviceToken().'
+                'deviceTokenRegistration',
+                'Required parameter "deviceTokenRegistration" was null or undefined when calling registerDeviceToken().'
             );
         }
 
@@ -105,7 +111,7 @@ export class PushNotificationApi extends runtime.BaseAPI {
             method: 'POST',
             headers: headerParameters,
             query: queryParameters,
-            body: PushNotificationToJSON(requestParameters['pushNotification']),
+            body: DeviceTokenRegistrationToJSON(requestParameters['deviceTokenRegistration']),
         }, initOverrides);
 
         if (this.isJsonMime(response.headers.get('content-type'))) {
@@ -167,10 +173,10 @@ export class PushNotificationApi extends runtime.BaseAPI {
      * Unregister a device token
      */
     async unregisterDeviceTokenRaw(requestParameters: UnregisterDeviceTokenRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<string>> {
-        if (requestParameters['pushNotification'] == null) {
+        if (requestParameters['deviceTokenUnregistration'] == null) {
             throw new runtime.RequiredError(
-                'pushNotification',
-                'Required parameter "pushNotification" was null or undefined when calling unregisterDeviceToken().'
+                'deviceTokenUnregistration',
+                'Required parameter "deviceTokenUnregistration" was null or undefined when calling unregisterDeviceToken().'
             );
         }
 
@@ -185,7 +191,7 @@ export class PushNotificationApi extends runtime.BaseAPI {
             method: 'POST',
             headers: headerParameters,
             query: queryParameters,
-            body: PushNotificationToJSON(requestParameters['pushNotification']),
+            body: DeviceTokenUnregistrationToJSON(requestParameters['deviceTokenUnregistration']),
         }, initOverrides);
 
         if (this.isJsonMime(response.headers.get('content-type'))) {
