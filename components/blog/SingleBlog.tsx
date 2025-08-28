@@ -83,7 +83,7 @@ export function SingleBlog({ slug }: { slug: string }) {
           Community: {communityTitle}
         </Text>
 
-        {communityPhoto && (
+        {communityPhoto && communityPhoto.trim() !== "" && (
           <Image
             source={{ uri: communityPhoto }}
             className="h-48 rounded-md"
@@ -92,10 +92,12 @@ export function SingleBlog({ slug }: { slug: string }) {
         )}
 
         <HStack space="sm" className="mt-4 px-4">
-          <Image
-            source={{ uri: blog?.authorProfilePic }}
-            className="w-10 h-10 rounded-full border-2 border-purple-900"
-          />
+          {blog?.authorProfilePic && blog.authorProfilePic.trim() !== "" && (
+            <Image
+              source={{ uri: blog.authorProfilePic }}
+              className="w-10 h-10 rounded-full border-2 border-purple-900"
+            />
+          )}
           <VStack>
             <Text className="font-medium">{authorName}</Text>
             <Text className="text-gray-500 text-xs">
