@@ -12,13 +12,20 @@ import { Input, InputField, InputIcon, InputSlot } from "@/components/ui/input";
 import { Spinner } from "@/components/ui/spinner";
 import { Text } from "@/components/ui/text";
 import { communityApi } from "@/config/backend";
+import { getAllCommunities } from "@/lib/api/communities";
 import { usePostStore } from "@/lib/store/post";
-import { useNavigation } from "expo-router";
+import { useNavigation, useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import { SafeAreaView, ScrollView, TouchableOpacity } from "react-native";
 
 export default function SearchCommunity() {
   const navigate = useNavigation();
+  const router = useRouter();
+
+  const routes = navigate.getState()?.routes;
+  const prevRoute = routes[routes.length - 2];
+  console.log("previous route", prevRoute);
+
   const setCreatedPostCommunityData = usePostStore(
     (state) => state.setCreatedPostCommunityData
   );
@@ -30,11 +37,13 @@ export default function SearchCommunity() {
   const [timeoutToClear, setTimeoutToClear] =
     useState<ReturnType<typeof setTimeout>>();
 
+  // console.log("search data", communityData[0]);
+
   useEffect(() => {
     const fetchCommunityData = async () => {
       setLoading(true);
       try {
-        const res = await communityApi.communitiesPaged();
+        const res = await getAllCommunities();
         if (res) {
           setCommunityData(res);
           setFilteredData(res);
@@ -84,10 +93,10 @@ export default function SearchCommunity() {
     }
 
     const filtered = communityData.filter(
-      (community) =>
-        community.title.toLowerCase().includes(text.toLowerCase()) ||
-        (community.description &&
-          community.description.toLowerCase().includes(text.toLowerCase()))
+      ({ data }: { data: Community }) =>
+        data.title.toLowerCase().includes(text.toLowerCase()) ||
+        (data.description &&
+          data.description.toLowerCase().includes(text.toLowerCase()))
     );
     setFilteredData(filtered);
   };
@@ -120,50 +129,67 @@ export default function SearchCommunity() {
               <Text size="md">Loading communities...</Text>
             </Center>
           ) : filteredData.length > 0 ? (
-            filteredData.map((community) => (
-              <TouchableOpacity
-                key={community.id}
-                onPress={() => {
-                  setCreatedPostCommunityData(community);
-                  navigate.goBack();
-                }}
-              >
-                <HStack className="py-4 border-b border-gray-300 gap-4">
-                  <Avatar size="md">
-                    <AvatarFallbackText>
-                      {community.title.charAt(0).toUpperCase()}
-                    </AvatarFallbackText>
-                    <AvatarImage
-                      source={{
-                        uri: community.image || "",
-                      }}
-                    />
-                  </Avatar>
-                  <Box>
-                    <Text className="font-bold text-lg text-wrap">
-                      {community.title}
-                    </Text>
-
-                    <Text>{community.members?.length ?? 0} members</Text>
-
-                    {community.description && (
-                      <Text className="mt-1 line-clamp-2 leading-6 text-base text-gray-400 text-wrap">
-                        {community.description
-                          .slice(0, 100)
-                          .replace(/<[^>]+>/g, "")}
-                        ...
+            filteredData.map(
+              ({ data, id }: { data: Community; id: string }) => (
+                <TouchableOpacity
+                  key={id}
+                  onPress={() => {
+                    if (
+                      ![
+                        "/(protected)/create-post/index",
+                        "/(protected)/create-post/new-event-post",
+                        "/(protected)/create-post/new-image-post",
+                        "/(protected)/create-post/new-link-post",
+                        "/(protected)/create-post/new-podcast-post",
+                      ].includes(prevRoute?.name)
+                    ) {
+                      router.push({
+                        pathname: "/(protected)/communities/[slug]",
+                        params: { slug: data.slug, communityId: id },
+                      });
+                    } else {
+                      setCreatedPostCommunityData(data);
+                      navigate.goBack();
+                    }
+                  }}
+                >
+                  <HStack className="py-4 border-b border-gray-300 gap-4">
+                    <Avatar size="md">
+                      <AvatarFallbackText>
+                        {data.title?.charAt(0).toUpperCase()}
+                      </AvatarFallbackText>
+                      <AvatarImage
+                        source={{
+                          uri: data.image || "",
+                        }}
+                      />
+                    </Avatar>
+                    <Box>
+                      <Text className="font-bold text-lg text-wrap">
+                        {data.title}
                       </Text>
-                    )}
 
-                    {community.requiresPaidSubscription && (
-                      <Text className="text-primary-50 mt-2 text-xs">
-                        💰 paid subscription required
-                      </Text>
-                    )}
-                  </Box>
-                </HStack>
-              </TouchableOpacity>
-            ))
+                      <Text>{data.members?.length ?? 0} members</Text>
+
+                      {data.description && (
+                        <Text className="mt-1 line-clamp-2 leading-6 text-base text-gray-400 text-wrap">
+                          {data.description
+                            .slice(0, 100)
+                            .replace(/<[^>]+>/g, "")}
+                          ...
+                        </Text>
+                      )}
+
+                      {data.requiresPaidSubscription && (
+                        <Text className="text-primary-50 mt-2 text-xs">
+                          💰 paid subscription required
+                        </Text>
+                      )}
+                    </Box>
+                  </HStack>
+                </TouchableOpacity>
+              )
+            )
           ) : (
             <Center className="py-8">
               <Text>No communities found</Text>

@@ -39,35 +39,33 @@ export const PostInfo = ({
   }, [user]);
 
   return (
-    <Box className="items-start">
-      <Box className="flex flex-row items-center justify-between w-full px-4">
-        <TouchableOpacity
-          onPress={() =>
-            Linking.openURL(
-              `https://www.chaching.social/profile/${posterName}?userId=${posterUserId}`
-            )
-          }
-          className="flex items-left justify-start mt-4"
+    <Box className="flex flex-row items-center justify-between w-full px-4">
+      <TouchableOpacity
+        onPress={() =>
+          Linking.openURL(
+            `https://www.chaching.social/profile/${posterName}?userId=${posterUserId}`
+          )
+        }
+        className="flex items-left justify-start mt-4"
+      >
+        <Avatar
+          size="md"
+          className={`object-contain border-2 transform transition-transform duration-200 hover:scale-110 ${
+            isFinfluencer ? "border-amber-500" : "border-purple-800"
+          }`}
         >
-          <Avatar
-            size="md"
-            className={`object-contain border-2 transform transition-transform duration-200 hover:scale-110 ${
-              isFinfluencer ? "border-amber-500" : "border-purple-800"
-            }`}
-          >
-            <AvatarFallbackText>{posterName}</AvatarFallbackText>
-            <AvatarImage
-              source={{
-                uri: posterPic || "",
-              }}
-            />
-          </Avatar>
-          <Text size="sm" className="text-center mt-2 font-semibold">
-            @{posterName}
-          </Text>
-        </TouchableOpacity>
-        <Text size="xs">{formatPostDate(post.createdAt)}</Text>
-      </Box>
+          <AvatarFallbackText>{posterName}</AvatarFallbackText>
+          <AvatarImage
+            source={{
+              uri: posterPic || "",
+            }}
+          />
+        </Avatar>
+        <Text size="sm" className="text-center mt-2 font-semibold">
+          @{posterName}
+        </Text>
+      </TouchableOpacity>
+      <Text size="xs">{formatPostDate(post.createdAt)}</Text>
     </Box>
   );
 };

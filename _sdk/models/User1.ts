@@ -37,6 +37,12 @@ export interface User1 {
      * @memberof User1
      */
     profilePic: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof User1
+     */
+    city?: string;
 }
 
 /**
@@ -62,6 +68,7 @@ export function User1FromJSONTyped(json: any, ignoreDiscriminator: boolean): Use
         'id': json['id'],
         'username': json['username'],
         'profilePic': json['profilePic'],
+        'city': json['city'] == null ? undefined : json['city'],
     };
 }
 
@@ -79,6 +86,7 @@ export function User1ToJSONTyped(value?: User1 | null, ignoreDiscriminator: bool
         'id': value['id'],
         'username': value['username'],
         'profilePic': value['profilePic'],
+        'city': value['city'],
     };
 }
 

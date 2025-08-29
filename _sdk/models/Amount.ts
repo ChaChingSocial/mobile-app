@@ -31,6 +31,12 @@ export interface Amount {
      * @memberof Amount
      */
     currency?: AmountCurrencyEnum;
+    /**
+     * 
+     * @type {string}
+     * @memberof Amount
+     */
+    crypto?: AmountCryptoEnum;
 }
 
 
@@ -42,6 +48,17 @@ export const AmountCurrencyEnum = {
     Eur: 'EUR'
 } as const;
 export type AmountCurrencyEnum = typeof AmountCurrencyEnum[keyof typeof AmountCurrencyEnum];
+
+/**
+ * @export
+ */
+export const AmountCryptoEnum = {
+    Btc: 'BTC',
+    Base: 'BASE',
+    Eth: 'ETH',
+    Sol: 'SOL'
+} as const;
+export type AmountCryptoEnum = typeof AmountCryptoEnum[keyof typeof AmountCryptoEnum];
 
 
 /**
@@ -63,6 +80,7 @@ export function AmountFromJSONTyped(json: any, ignoreDiscriminator: boolean): Am
         
         'amount': json['amount'] == null ? undefined : json['amount'],
         'currency': json['currency'] == null ? undefined : json['currency'],
+        'crypto': json['crypto'] == null ? undefined : json['crypto'],
     };
 }
 
@@ -79,6 +97,7 @@ export function AmountToJSONTyped(value?: Amount | null, ignoreDiscriminator: bo
         
         'amount': value['amount'],
         'currency': value['currency'],
+        'crypto': value['crypto'],
     };
 }
 

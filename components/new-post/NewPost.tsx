@@ -5,7 +5,7 @@ import { useSession } from "@/lib/providers/AuthContext";
 import { usePostStore } from "@/lib/store/post";
 import { Post as PostType } from "@/types/post";
 import { AntDesign, FontAwesome5, Ionicons } from "@expo/vector-icons";
-import { useRouter, useNavigation } from "expo-router";
+import { useNavigation, useRouter } from "expo-router";
 import { useEffect, useRef, useState } from "react";
 import {
   Keyboard,
@@ -20,21 +20,19 @@ import {
   RichToolbar,
   actions,
 } from "react-native-pell-rich-editor";
+import PostTags from "../home/post-editor/PostTag";
 import TagInput from "../TagInput";
-import { CloseIcon } from "../ui/icon";
 import { Avatar, AvatarFallbackText, AvatarImage } from "../ui/avatar";
-import { Heading } from "../ui/heading";
-import { HStack } from "../ui/hstack";
 import { Button, ButtonText } from "../ui/button";
 import {
   Drawer,
   DrawerBackdrop,
-  DrawerContent,
-  DrawerHeader,
   DrawerBody,
+  DrawerContent,
   DrawerFooter,
 } from "../ui/drawer";
-import PostTags from "../home/post-editor/PostTag";
+import { Heading } from "../ui/heading";
+import { HStack } from "../ui/hstack";
 
 export default function NewPost() {
   const { session: user } = useSession();

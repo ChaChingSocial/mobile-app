@@ -28,6 +28,7 @@ import { PodcastPost } from "./posts/PodcastPost";
 import { PostComments } from "./posts/PostComments";
 import { PostWrapper } from "./posts/PostWrapper";
 import { PresentationPost } from "./posts/PresentationPost";
+import { getSingleCommunityById } from "@/lib/api/communities";
 
 export function PostComponent({ post }: { post: PostType }) {
   const { session } = useSession();
@@ -63,9 +64,10 @@ export function PostComponent({ post }: { post: PostType }) {
     const fetchCommunityData = async () => {
       if (post.newsfeedId) {
         try {
-          const res = await communityApi.communityById({
-            communityId: post.newsfeedId,
-          });
+          // const res = await communityApi.communityById({
+          //   communityId: post.newsfeedId,
+          // });
+          const res = await getSingleCommunityById(post.newsfeedId);
           if (res) {
             setCommunityName(res.title);
             setCommunitySlug(res.slug);
@@ -77,7 +79,8 @@ export function PostComponent({ post }: { post: PostType }) {
     };
 
     fetchCommunityData();
-    console.log("Community name:", communityName);
+    console.log("Community name:", communityName, post.newsfeedId);
+
   }, []);
 
   const handleLike = () => {
@@ -225,7 +228,7 @@ export function PostComponent({ post }: { post: PostType }) {
   return (
     <Box className="mt-8">
       {communityName && (
-        <Box className="relative -top-4 left-6">
+        <Box className="relative -top-4 left-6 z-10">
           <Pressable
             onPress={() =>
               router.push(

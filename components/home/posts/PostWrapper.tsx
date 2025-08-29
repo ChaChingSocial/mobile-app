@@ -156,19 +156,7 @@ export function PostWrapper({
         type === "comment" ? "ml-3 border-tertiary-0" : "ml-0"
       }`}
     >
-      <>
-        <PostInfo post={post} createdAt={createdAt} />
-
-        {currentUserId === userId && !editing && (
-          <PostMenu
-            post={post}
-            type="post"
-            onEdit={handleEdit}
-            onDelete={handleDelete}
-            onShare={handleShare}
-          />
-        )}
-      </>
+      <PostInfo post={post} createdAt={createdAt} />
 
       <Box className="mt-4">{children}</Box>
 
@@ -259,6 +247,17 @@ export function PostWrapper({
             title={shareTitle}
             communityTitle={communityTitle}
           /> */}
+          <Box className="ml-auto">
+            <PostMenu
+              post={post}
+              type="post"
+              onEdit={handleEdit}
+              onDelete={handleDelete}
+              onShare={handleShare}
+              userId={userId}
+              editing={editing}
+            />
+          </Box>
         </Box>
       )}
 

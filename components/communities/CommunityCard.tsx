@@ -24,7 +24,7 @@ export default function CommunityCard({ community }: { community: Community }) {
         <HStack className="py-1 gap-4">
           <Avatar size="md">
             <AvatarFallbackText>
-              {community.title.charAt(0).toUpperCase()}
+              {community.title?.charAt(0).toUpperCase()}
             </AvatarFallbackText>
             <AvatarImage
               source={{
@@ -34,8 +34,8 @@ export default function CommunityCard({ community }: { community: Community }) {
           </Avatar>
           <Box>
             <Text className="font-bold flex-wrap">
-              {community.title.length > 28
-                ? `${community.title.slice(0, 25)}...`
+              {community.title?.length > 28
+                ? `${community.title?.slice(0, 25)}...`
                 : community.title}
             </Text>
 

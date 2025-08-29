@@ -131,7 +131,8 @@ export const NotificationNotificationTypeEnum = {
     ProductDelivered: 'PRODUCT_DELIVERED',
     ProductReturned: 'PRODUCT_RETURNED',
     ProductPurchased: 'PRODUCT_PURCHASED',
-    ProductPurchased2: 'PRODUCT_PURCHASED'
+    ProductPurchased2: 'PRODUCT_PURCHASED',
+    Reported: 'REPORTED'
 } as const;
 export type NotificationNotificationTypeEnum = typeof NotificationNotificationTypeEnum[keyof typeof NotificationNotificationTypeEnum];
 

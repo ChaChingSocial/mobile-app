@@ -20,7 +20,6 @@ function RootLayoutNav() {
       iosClientId: process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID,
       profileImageSize: 150,
     });
-
   }, []);
 
   // if the user is not logged in and the pathname starts with /(protected) redirect to /login
@@ -32,7 +31,7 @@ function RootLayoutNav() {
 
   return (
     <GluestackUIProvider mode="light">
-      <GestureHandlerRootView style={{ flex: 1 }}>
+      <GestureHandlerRootView style={{ flex: 1, color: "black" }}>
         <Stack>
           <Stack.Screen
             name="(protected)"

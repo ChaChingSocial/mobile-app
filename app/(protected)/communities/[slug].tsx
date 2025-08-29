@@ -2,6 +2,7 @@ import { Community } from "@/_sdk";
 import NewsfeedList from "@/components/home/NewsfeedList";
 import { Text } from "@/components/ui/text";
 import { communityApi } from "@/config/backend";
+import { getSingleCommunityBySlug } from "@/lib/api/communities";
 import { subscribeToPostsByNewsfeedId } from "@/lib/api/newsfeed";
 import { useSession } from "@/lib/providers/AuthContext";
 import { stripHtml } from "@/lib/utils/stripHtml";
@@ -21,9 +22,14 @@ export default function SingleCommunity() {
 
   const fetchCommunityData = async () => {
     try {
-      const res = await communityApi.communityBySlugName({
-        slugName: Array.isArray(slug) ? slug[0] : slug,
-      });
+      // const res = await communityApi.communityBySlugName({
+      //   slugName: Array.isArray(slug) ? slug[0] : slug,
+      // });
+      const res = await getSingleCommunityBySlug(
+        Array.isArray(slug) ? slug[0] : slug
+      );
+      console.log("slug comm",res[0])
+
       if (res) {
         setCommunityData(res);
       }
@@ -53,13 +59,12 @@ export default function SingleCommunity() {
     );
   }
 
-  const createdAt = communityData.createdAt
-    ? format(new Date(communityData.createdAt), "MMM d, yyyy")
-    : "Unknown date";
+  // const createdAt = communityData.createdAt
+  //   ? format(new Date(communityData.createdAt), "MMM d, yyyy")
+  //   : "Unknown date";
 
   return (
     <ScrollView className="bg-white">
-      
       {communityData.image && (
         <View className="w-full h-60 overflow-hidden">
           <Image
@@ -88,7 +93,7 @@ export default function SingleCommunity() {
           </View>
         )}
         <Text className="text-gray-500 text-sm mb-4">
-          Created on {createdAt}
+          {/* Created on {createdAt} */}
         </Text>
         <View className="mb-6">
           <Text className="text-base">

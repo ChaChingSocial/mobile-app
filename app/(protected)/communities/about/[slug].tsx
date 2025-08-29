@@ -1,6 +1,7 @@
 import { Community } from "@/_sdk";
 import { Text } from "@/components/ui/text";
 import { communityApi } from "@/config/backend";
+import { getSingleCommunityBySlug } from "@/lib/api/communities";
 import { stripHtml } from "@/lib/utils/stripHtml";
 import { format } from "date-fns";
 import { useLocalSearchParams } from "expo-router";
@@ -23,9 +24,12 @@ export default function AboutSingleCommunity() {
 
     const fetchCommunityData = async () => {
       try {
-        const res = await communityApi.communityBySlugName({
-          slugName: Array.isArray(slug) ? slug[0] : slug,
-        });
+        // const res = await communityApi.communityBySlugName({
+        //   slugName: Array.isArray(slug) ? slug[0] : slug,
+        // });
+        const res = await getSingleCommunityBySlug(
+          Array.isArray(slug) ? slug[0] : slug
+        );
         if (res) {
           setCommunityData(res);
         }
@@ -55,9 +59,9 @@ export default function AboutSingleCommunity() {
     );
   }
 
-  const createdAt = communityData.createdAt
-    ? format(new Date(communityData.createdAt), "MMM d, yyyy")
-    : "Unknown date";
+  // const createdAt = communityData.createdAt
+  //   ? format(new Date(communityData.createdAt), "MMM d, yyyy")
+  //   : "Unknown date";
 
   return (
     <ScrollView className="bg-white">
@@ -86,9 +90,9 @@ export default function AboutSingleCommunity() {
             </Text>
           </View>
         )}
-        <Text className="text-gray-500 text-sm mb-4">
+        {/* <Text className="text-gray-500 text-sm mb-4">
           Created on {createdAt}
-        </Text>
+        </Text> */}
         <View className="mb-6">
           <Text className="text-base">
             {stripHtml(communityData?.description ?? "")}

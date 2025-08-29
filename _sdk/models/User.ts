@@ -78,6 +78,12 @@ export interface User {
      * @type {string}
      * @memberof User
      */
+    phoneNumber?: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof User
+     */
     profilePic?: string;
     /**
      * 
@@ -105,10 +111,10 @@ export interface User {
     finfluencer?: boolean;
     /**
      * 
-     * @type {string}
+     * @type {Array<string>}
      * @memberof User
      */
-    moneyPersonality?: string;
+    persona?: Array<string>;
     /**
      * 
      * @type {string}
@@ -188,12 +194,13 @@ export function UserFromJSONTyped(json: any, ignoreDiscriminator: boolean): User
         'id': json['id'] == null ? undefined : json['id'],
         'username': json['username'],
         'email': json['email'] == null ? undefined : json['email'],
+        'phoneNumber': json['phoneNumber'] == null ? undefined : json['phoneNumber'],
         'profilePic': json['profilePic'] == null ? undefined : json['profilePic'],
         'backgroundPic': json['backgroundPic'] == null ? undefined : json['backgroundPic'],
         'bio': json['bio'] == null ? undefined : json['bio'],
         'interests': json['interests'] == null ? undefined : json['interests'],
         'finfluencer': json['finfluencer'] == null ? undefined : json['finfluencer'],
-        'moneyPersonality': json['moneyPersonality'] == null ? undefined : json['moneyPersonality'],
+        'persona': json['persona'] == null ? undefined : json['persona'],
         'industry': json['industry'] == null ? undefined : json['industry'],
         'city': json['city'] == null ? undefined : json['city'],
         'socials': json['socials'] == null ? undefined : SocialFromJSON(json['socials']),
@@ -220,12 +227,13 @@ export function UserToJSONTyped(value?: User | null, ignoreDiscriminator: boolea
         'id': value['id'],
         'username': value['username'],
         'email': value['email'],
+        'phoneNumber': value['phoneNumber'],
         'profilePic': value['profilePic'],
         'backgroundPic': value['backgroundPic'],
         'bio': value['bio'],
         'interests': value['interests'],
         'finfluencer': value['finfluencer'],
-        'moneyPersonality': value['moneyPersonality'],
+        'persona': value['persona'],
         'industry': value['industry'],
         'city': value['city'],
         'socials': SocialToJSON(value['socials']),

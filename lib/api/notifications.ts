@@ -36,7 +36,8 @@ export async function sendNotificationEmail(
   notificationLink: string = "",
   notificationMessage: string = "",
   entityType: NotificationEntityTypeEnum,
-  emails: string[] = []
+  emails: string[] = [],
+  userId: string
 ) {
   try {
     const notification: Notification = {
@@ -47,7 +48,7 @@ export async function sendNotificationEmail(
       notificationMessage,
       entityType,
       emails,
-      userId: "0",
+      userId,
     };
     const response = await notificationApi.notifyEmail({ notification });
 
@@ -55,8 +56,7 @@ export async function sendNotificationEmail(
     //   throw new Error(`HTTP error! status: ${response.status}`);
     // }
 
-    const data = await response;
-    console.log("Notification sent successfully:", data);
+    console.log("Notification sent successfully:", response);
   } catch (error) {
     console.error("Error sending notification:", error);
   }

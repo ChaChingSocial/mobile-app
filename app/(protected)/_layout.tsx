@@ -51,6 +51,16 @@ export default function ProtectedLayout() {
           }}
         />
         <Stack.Screen
+          name="report"
+          options={{
+            title: "Report Content",
+            // headerBackTitle: "Back",
+            headerShown: true,
+            // headerLargeTitle: true,
+            headerShadowVisible: false,
+          }}
+        />
+        <Stack.Screen
           name="communities"
           options={{
             title: "Community",

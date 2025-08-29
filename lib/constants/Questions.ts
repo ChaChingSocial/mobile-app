@@ -65,7 +65,7 @@ export const faq = [
   {
     question: "How can I delete my account?",
     answer:
-      "Right now, you can email us at support@chachingsocial.io to delete your account, eventually we will have a delete button.",
+      "Submit your information to this url: https://form.jotform.com/252326934974063",
   },
   {
     question:
@@ -90,10 +90,5 @@ export const faq = [
     question: "Is my financial profile private",
     answer:
       "We have a privacy setting that allows you to make your profile private or public. In the profile page you always edit the visibility of your profile to the community by selecting the eye on the top of the card.",
-  },
-  {
-    question: "Is my financial profile private",
-    answer:
-      "We have a privacy setting that allows you to make your profile private or public.",
   },
 ];
