@@ -4,6 +4,7 @@ import { SessionProvider, useSession } from "@/lib/providers/AuthContext";
 import { GoogleSignin } from "@react-native-google-signin/google-signin";
 import { Redirect, usePathname } from "expo-router";
 import { Stack } from "expo-router";
+import { StatusBar } from "expo-status-bar";
 import { useEffect } from "react";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import "react-native-reanimated";
@@ -23,7 +24,7 @@ function RootLayoutNav() {
   }, []);
 
   // if the user is not logged in and the pathname starts with /(protected) redirect to /login
-  if (!session && pathname.startsWith("/(protected)")) {
+  if (session === null && !pathname.startsWith("/login") && !pathname.startsWith("/register")) {
     return <Redirect href="/login" />;
   }
 
@@ -33,6 +34,7 @@ function RootLayoutNav() {
     <GluestackUIProvider mode="light">
       <GestureHandlerRootView style={{ flex: 1, color: "black" }}>
         <Stack>
+          <StatusBar style="auto" backgroundColor="transparent" />
           <Stack.Screen
             name="(protected)"
             options={{

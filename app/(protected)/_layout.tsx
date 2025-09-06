@@ -1,7 +1,6 @@
 import { DrawerProvider } from "@/lib/providers/DrawerContext";
 import { getAuth, onAuthStateChanged, FirebaseAuthTypes } from "@react-native-firebase/auth";
 import { Stack } from "expo-router";
-import { StatusBar } from "expo-status-bar";
 import { useEffect, useState } from "react";
 
 export default function ProtectedLayout() {
@@ -75,7 +74,6 @@ export default function ProtectedLayout() {
           }}
         />
       </Stack>
-      <StatusBar />
     </DrawerProvider>
   );
 }

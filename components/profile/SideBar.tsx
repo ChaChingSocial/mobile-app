@@ -7,7 +7,7 @@ import {
   DrawerHeader,
 } from "@/components/ui/drawer";
 import { Heading } from "@/components/ui/heading";
-import { FontAwesome, FontAwesome5 } from "@expo/vector-icons";
+import { EvilIcons, FontAwesome, FontAwesome5 } from "@expo/vector-icons";
 import { Linking, Pressable, TouchableOpacity } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Avatar, AvatarFallbackText, AvatarImage } from "../ui/avatar";
@@ -20,7 +20,11 @@ import { Text } from "../ui/text";
 import { VStack } from "../ui/vstack";
 import { useSession } from "@/lib/providers/AuthContext";
 import { useEffect, useState } from "react";
-import { checkIfFinFluencer, fetchFollowers, fetchFollowing } from "@/lib/api/user";
+import {
+  checkIfFinFluencer,
+  fetchFollowers,
+  fetchFollowing,
+} from "@/lib/api/user";
 
 export default function SideBar({
   open,
@@ -103,7 +107,7 @@ export default function SideBar({
           <DrawerBody>
             <Box className="flex flex-1 justify-between h-full">
               <Divider className="my-0.5" />
-              <VStack space="lg" className="mt-14 ml-2">
+              {/* <VStack space="lg" className="mt-14 ml-2">
                 <Pressable
                   className="flex flex-row gap-3 items-center"
                   onPress={() => {
@@ -115,6 +119,7 @@ export default function SideBar({
                   <FontAwesome5 name="user" size={20} color="black" />
                   <Text size="xl" bold>
                     Profile
+                    <EvilIcons name="external-link" size={12} color="black" />
                   </Text>
                 </Pressable>
                 <Pressable
@@ -128,9 +133,10 @@ export default function SideBar({
 
                   <Text size="xl" bold>
                     Settings
+                    <EvilIcons name="external-link" size={12} color="black" />
                   </Text>
                 </Pressable>
-              </VStack>
+              </VStack> */}
             </Box>
           </DrawerBody>
           <DrawerFooter className="border-t border-background-200 pt-6">
@@ -139,7 +145,7 @@ export default function SideBar({
                 signOut();
                 onOpenChange(false);
               }}
-              className="w-fit border-2 border-background-200 rounded-md bg-background-200 p-2"
+              className="w-fit border-2 border-background-800 rounded-md bg-background-200 p-2"
             >
               <FontAwesome name="sign-out" size={16} color="black" />
             </TouchableOpacity>

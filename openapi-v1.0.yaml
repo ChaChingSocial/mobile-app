@@ -437,6 +437,26 @@ paths:
                   $ref: "#/components/schemas/Ticket"
         default:
           $ref: "#/components/responses/UnexpectedError"
+  "/events/get-event-slot-ticket-emails/{event-slot-id}":
+    get:
+      summary: Get all emails of ticket holders for an event slot
+      operationId: getEventSlotTicketEmails
+      tags:
+        - Event
+      parameters:
+        - $ref: "#/components/parameters/event-slot-id"
+      responses:
+        "200":
+          description: Expected response to a valid request
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string
+                  format: email
+        default:
+          $ref: "#/components/responses/UnexpectedError"
   "/events/get-user-event-slot-tickets/{event-slot-id}/{user-id}":
     get:
       summary: Get all tickets for user for an event slot
@@ -3087,6 +3107,31 @@ components:
         communityFundingDestination:
           type: string
           description: The destination of the community funding.
+        goals:
+          type: object
+          description: The goals of the community.
+          properties:
+            deadline:
+              type: string
+              format: date-time
+              example: 2025-09-16T21:43:37.420Z
+              description: The deadline for the goal.
+            title:
+              type: string
+              example: Create Metamask Wallet
+              description: The title of the goal.
+            group:
+              type: string
+              description: The group of the goal.
+            impact:
+              type: string
+              description: The impact of the goal.
+            kpis:
+              type: string
+              description: The key performance indicators of the goal.
+            source:
+              type: string
+              description: The source of the goal.
     CommunityPaymentInfo:
       title: CommunityPaymentInfo
       type: object
@@ -3290,9 +3335,18 @@ components:
           type: string
           example: This is a description of the event sponsor.
         image:
-          type: string
-          format: uri
-          example: https://example.com/sponsor-image.jpg
+          type: object
+          properties:
+            uri:
+              type: string
+              format: uri
+              example: https://example.com/sponsor-image.jpg
+            name:
+              type: string
+              example: Sponsor Logo
+            type:
+              type: string
+              example: image/jpeg
         link:
           type: string
           format: uri

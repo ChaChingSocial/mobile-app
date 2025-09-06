@@ -46,10 +46,10 @@ export function SessionProvider({ children }: PropsWithChildren) {
     if (isLoading) {
       SplashScreen.hideAsync();
     }
-    if (session) {
+    if (session !== null) {
       router.replace("/(protected)/(home)");
     }
-  }, [isLoading]);
+  }, [isLoading, session]);
 
   return (
     <AuthContext.Provider
@@ -60,7 +60,7 @@ export function SessionProvider({ children }: PropsWithChildren) {
         },
         signOut: async () => {
           await GoogleSignin.signOut();
-          
+
           setSession(null);
           router.replace("/login");
         },

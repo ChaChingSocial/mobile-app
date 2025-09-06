@@ -49,7 +49,7 @@ export default function LoginFormScreen() {
         console.log("session in loginWithEmail", session);
         console.log("user get user but ni ID", res);
       });
-      // router.push("/(protected)/(home)");
+     
       signIn();
     } catch (error) {
       console.log("error", error);

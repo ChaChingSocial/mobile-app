@@ -1,3 +1,4 @@
+import { Box } from "@/components/ui/box";
 import { Center } from "@/components/ui/center";
 import {
   Drawer,
@@ -11,17 +12,17 @@ import { Text } from "@/components/ui/text";
 import { VStack } from "@/components/ui/vstack";
 import { communityApi } from "@/config/backend";
 import { useSession } from "@/lib/providers/AuthContext";
-import { FontAwesome, Fontisto, Ionicons } from "@expo/vector-icons";
-import { router, Stack, useLocalSearchParams } from "expo-router";
+import { FontAwesome, Fontisto } from "@expo/vector-icons";
+import * as Clipboard from "expo-clipboard";
+import { Stack, useLocalSearchParams } from "expo-router";
 import { useEffect, useState } from "react";
 import { TouchableOpacity } from "react-native";
-import * as Clipboard from "expo-clipboard";
-import { StatusBar } from "expo-status-bar";
 
 export default function CommunitiesLayout() {
   const { session } = useSession();
   const params = useLocalSearchParams();
   const { slug, communityId } = params;
+  console.log("layout params", communityId);
 
   const [showDrawer, setShowDrawer] = useState(false);
   const [isMember, setIsMember] = useState(false);
@@ -59,9 +60,9 @@ export default function CommunitiesLayout() {
     <>
       <Stack
         screenOptions={() => ({
-          title: "",
+          headerTitle: "",
           headerRight: () => (
-            <>
+            <Box className="flex flex-row items-center">
               <TouchableOpacity
                 onPressOut={() => setShowDrawer(true)}
                 className="mr-5"
@@ -69,13 +70,24 @@ export default function CommunitiesLayout() {
                 <Fontisto name="share-a" size={24} color="black" />
               </TouchableOpacity>
               <TouchableOpacity
-                onPressOut={() => {
-                  communityApi.joinCommunity({
-                    communityId: Array.isArray(communityId)
-                      ? communityId[0]
-                      : "",
-                    userId: session?.uid ?? "",
-                  });
+                onPressOut={async () => {
+                  if (!isMember) {
+                    await communityApi.joinCommunity({
+                      communityId: Array.isArray(communityId)
+                        ? communityId[0]
+                        : "",
+                      userId: session?.uid ?? "",
+                    });
+                    setIsMember(true);
+                  } else {
+                    await communityApi.leaveCommunity({
+                      communityId: Array.isArray(communityId)
+                        ? communityId[0]
+                        : "",
+                      userId: session?.uid ?? "",
+                    });
+                    setIsMember(false);
+                  }
                 }}
                 className="mr-5 border border-gray-900 px-3 rounded-2xl"
               >
@@ -83,9 +95,8 @@ export default function CommunitiesLayout() {
                   {isMember ? "Joined" : "Join"}
                 </Text>
               </TouchableOpacity>
-            </>
+            </Box>
           ),
-          headerLargeTitle: false, 
         })}
       >
         <Stack.Screen name="about" />
@@ -116,7 +127,6 @@ export default function CommunitiesLayout() {
           </DrawerBody>
         </DrawerContent>
       </Drawer>
-      <StatusBar />
     </>
   );
 }

@@ -20,6 +20,13 @@ import {
     CommunityPaidContributionToJSON,
     CommunityPaidContributionToJSONTyped,
 } from './CommunityPaidContribution';
+import type { CommunityGoals } from './CommunityGoals';
+import {
+    CommunityGoalsFromJSON,
+    CommunityGoalsFromJSONTyped,
+    CommunityGoalsToJSON,
+    CommunityGoalsToJSONTyped,
+} from './CommunityGoals';
 import type { CommunitySurvey } from './CommunitySurvey';
 import {
     CommunitySurveyFromJSON,
@@ -190,6 +197,12 @@ export interface Community {
      * @memberof Community
      */
     communityFundingDestination?: string;
+    /**
+     * 
+     * @type {CommunityGoals}
+     * @memberof Community
+     */
+    goals?: CommunityGoals;
 }
 
 
@@ -254,6 +267,7 @@ export function CommunityFromJSONTyped(json: any, ignoreDiscriminator: boolean):
         'firstVisit': json['firstVisit'] == null ? undefined : json['firstVisit'],
         'communityPaidContributions': json['communityPaidContributions'] == null ? undefined : ((json['communityPaidContributions'] as Array<any>).map(CommunityPaidContributionFromJSON)),
         'communityFundingDestination': json['communityFundingDestination'] == null ? undefined : json['communityFundingDestination'],
+        'goals': json['goals'] == null ? undefined : CommunityGoalsFromJSON(json['goals']),
     };
 }
 
@@ -294,6 +308,7 @@ export function CommunityToJSONTyped(value?: Community | null, ignoreDiscriminat
         'firstVisit': value['firstVisit'],
         'communityPaidContributions': value['communityPaidContributions'] == null ? undefined : ((value['communityPaidContributions'] as Array<any>).map(CommunityPaidContributionToJSON)),
         'communityFundingDestination': value['communityFundingDestination'],
+        'goals': CommunityGoalsToJSON(value['goals']),
     };
 }
 

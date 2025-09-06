@@ -21,6 +21,7 @@ models/Blog1.ts
 models/Category.ts
 models/Comment.ts
 models/Community.ts
+models/CommunityGoals.ts
 models/CommunityMembership.ts
 models/CommunityOnboardingQuestion.ts
 models/CommunityPaidContribution.ts
@@ -38,6 +39,7 @@ models/Event.ts
 models/EventPrivacy.ts
 models/EventSlot.ts
 models/EventSponsor.ts
+models/EventSponsorImage.ts
 models/EventType.ts
 models/GetTopScoreUsers200ResponseInner.ts
 models/Host.ts

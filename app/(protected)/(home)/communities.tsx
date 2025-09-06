@@ -35,7 +35,6 @@ export default function CommunitiesScreen() {
 
   return (
     <ParallaxScrollView>
-     
       <Box className="bg-[#E6F8F1] flex-1">
         {loading && (
           <Center className="flex-1">

@@ -22,6 +22,7 @@ import {
   NotificationNotificationTypeEnum,
 } from "@/_sdk";
 import Toast from "react-native-toast-message";
+import { SafeAreaView } from "react-native";
 
 export default function ReportScreen() {
   const { id: postId } = useLocalSearchParams<{ id?: string }>();
@@ -50,25 +51,31 @@ export default function ReportScreen() {
       setSubmitting(true);
       const message = `Report received\n\nPost ID: ${postId}\nReported by: ${reporterName}\n\nReason:\n${reason}`;
 
-      //   await sendNotificationEmail(
-      //     NotificationNotificationTypeEnum.CommunityUpdate,
-      //     "",
-      //     "Content Report",
-      //     "",
-      //     message,
-      //     NotificationEntityTypeEnum.Post,
-      //     ["sonylomo1@gmail.com"],
-      //     session?.uid,
-      //   );
-
-      await sendNotification(
-        session?.uid,
+      await sendNotificationEmail(
+        NotificationNotificationTypeEnum.Reported,
+        "",
+        "Content Report",
         "",
         message,
-        NotificationNotificationTypeEnum.Reported,
-        NotificationEntityTypeEnum.Post
+        NotificationEntityTypeEnum.Post,
+        [],
+        session?.uid
       );
 
+      // await sendNotification(
+      //   session?.uid,
+      //   "",
+      //   message,
+      //   NotificationNotificationTypeEnum.Reported,
+      //   NotificationEntityTypeEnum.Post
+      // );
+      console.log("called notification email", {
+        type: NotificationNotificationTypeEnum.Reported,
+        userId: session?.uid,
+        message,
+        entityType: NotificationEntityTypeEnum.Post,
+        recipients: ["sonylomo1@gmail.com"],
+      });
       router.back();
     } catch (error) {
       console.error("Failed to send report:", error);
@@ -78,41 +85,43 @@ export default function ReportScreen() {
   };
 
   return (
-    <ParallaxScrollView>
-      <Box className="px-4 py-6 flex-1">
-        <VStack space="lg">
-          <Heading size="lg">Report content</Heading>
-          <Text size="sm" className="text-gray-600">
-            Please describe why you're reporting this content. We'll review it
-            shortly.
-          </Text>
+    <SafeAreaView>
+      <ParallaxScrollView>
+        <Box className="px-4 py-6 flex-1">
+          <VStack space="lg">
+            <Heading size="lg">Report content</Heading>
+            <Text size="sm" className="text-gray-600">
+              Please describe why you're reporting this content. We'll review it
+              shortly.
+            </Text>
 
-          <FormControl isRequired>
-            <FormControlLabel>
-              <FormControlLabelText>Reason</FormControlLabelText>
-            </FormControlLabel>
-            <Textarea size="lg" className="min-h-32">
-              <TextareaInput
-                value={reason}
-                onChangeText={setReason}
-                placeholder="Provide details..."
-                multiline
-                textAlignVertical="top"
-              />
-            </Textarea>
-          </FormControl>
+            <FormControl isRequired>
+              <FormControlLabel>
+                <FormControlLabelText>Reason</FormControlLabelText>
+              </FormControlLabel>
+              <Textarea size="lg" className="min-h-32">
+                <TextareaInput
+                  value={reason}
+                  onChangeText={setReason}
+                  placeholder="Provide details..."
+                  multiline
+                  textAlignVertical="top"
+                />
+              </Textarea>
+            </FormControl>
 
-          <Button
-            className="mt-12"
-            size="lg"
-            action="primary"
-            isDisabled={submitting || !reason.trim()}
-            onPress={handleSubmit}
-          >
-            <ButtonText>{submitting ? "Submitting..." : "Submit"}</ButtonText>
-          </Button>
-        </VStack>
-      </Box>
-    </ParallaxScrollView>
+            <Button
+              className="mt-12"
+              size="lg"
+              action="primary"
+              isDisabled={submitting || !reason.trim()}
+              onPress={handleSubmit}
+            >
+              <ButtonText>{submitting ? "Submitting..." : "Submit"}</ButtonText>
+            </Button>
+          </VStack>
+        </Box>
+      </ParallaxScrollView>
+    </SafeAreaView>
   );
 }

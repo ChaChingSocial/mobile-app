@@ -13,6 +13,14 @@
  */
 
 import { mapValues } from '../runtime';
+import type { EventSponsorImage } from './EventSponsorImage';
+import {
+    EventSponsorImageFromJSON,
+    EventSponsorImageFromJSONTyped,
+    EventSponsorImageToJSON,
+    EventSponsorImageToJSONTyped,
+} from './EventSponsorImage';
+
 /**
  * 
  * @export
@@ -39,10 +47,10 @@ export interface EventSponsor {
     description?: string;
     /**
      * 
-     * @type {string}
+     * @type {EventSponsorImage}
      * @memberof EventSponsor
      */
-    image?: string;
+    image?: EventSponsorImage;
     /**
      * 
      * @type {string}
@@ -71,7 +79,7 @@ export function EventSponsorFromJSONTyped(json: any, ignoreDiscriminator: boolea
         'eventSlotId': json['eventSlotId'] == null ? undefined : json['eventSlotId'],
         'title': json['title'] == null ? undefined : json['title'],
         'description': json['description'] == null ? undefined : json['description'],
-        'image': json['image'] == null ? undefined : json['image'],
+        'image': json['image'] == null ? undefined : EventSponsorImageFromJSON(json['image']),
         'link': json['link'] == null ? undefined : json['link'],
     };
 }
@@ -90,7 +98,7 @@ export function EventSponsorToJSONTyped(value?: EventSponsor | null, ignoreDiscr
         'eventSlotId': value['eventSlotId'],
         'title': value['title'],
         'description': value['description'],
-        'image': value['image'],
+        'image': EventSponsorImageToJSON(value['image']),
         'link': value['link'],
     };
 }

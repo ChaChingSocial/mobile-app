@@ -80,6 +80,10 @@ export interface DonateEventRequest {
     donation: Donation;
 }
 
+export interface GetEventSlotTicketEmailsRequest {
+    eventSlotId: string;
+}
+
 export interface GetEventSlotTicketsRequest {
     eventSlotId: string;
 }
@@ -484,6 +488,39 @@ export class EventApi extends runtime.BaseAPI {
      */
     async donateEvent(requestParameters: DonateEventRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<boolean> {
         const response = await this.donateEventRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Get all emails of ticket holders for an event slot
+     */
+    async getEventSlotTicketEmailsRaw(requestParameters: GetEventSlotTicketEmailsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<string>>> {
+        if (requestParameters['eventSlotId'] == null) {
+            throw new runtime.RequiredError(
+                'eventSlotId',
+                'Required parameter "eventSlotId" was null or undefined when calling getEventSlotTicketEmails().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        const response = await this.request({
+            path: `/events/get-event-slot-ticket-emails/{event-slot-id}`.replace(`{${"event-slot-id"}}`, encodeURIComponent(String(requestParameters['eventSlotId']))),
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse<any>(response);
+    }
+
+    /**
+     * Get all emails of ticket holders for an event slot
+     */
+    async getEventSlotTicketEmails(requestParameters: GetEventSlotTicketEmailsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<string>> {
+        const response = await this.getEventSlotTicketEmailsRaw(requestParameters, initOverrides);
         return await response.value();
     }
 
