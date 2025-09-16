@@ -74,7 +74,10 @@ export default function SideBar({
         <DrawerContent className="pt-16">
           <DrawerHeader>
             <VStack space="md">
-              <TouchableOpacity onPressOut={() => {}}>
+              <TouchableOpacity onPressOut={() => {
+                router.push(`/(protected)/profile?id=${session?.uid}`);
+                onOpenChange(false);
+              }}>
                 <Avatar size="md">
                   <AvatarFallbackText>
                     {session?.displayName}
@@ -107,22 +110,20 @@ export default function SideBar({
           <DrawerBody>
             <Box className="flex flex-1 justify-between h-full">
               <Divider className="my-0.5" />
-              {/* <VStack space="lg" className="mt-14 ml-2">
+              <VStack space="lg" className="mt-14 ml-2">
                 <Pressable
                   className="flex flex-row gap-3 items-center"
                   onPress={() => {
-                    Linking.openURL(
-                      `https://www.chaching.social/profile/${session?.displayName}?userId=${session?.uid}&isFinfluencer=${isFinfluencer}`
-                    );
+                    router.push(`/(protected)/profile?id=${session?.uid}`);
+                    onOpenChange(false);
                   }}
                 >
                   <FontAwesome5 name="user" size={20} color="black" />
                   <Text size="xl" bold>
                     Profile
-                    <EvilIcons name="external-link" size={12} color="black" />
                   </Text>
                 </Pressable>
-                <Pressable
+                {/* <Pressable
                   className="flex flex-row gap-3 items-center"
                   onPress={() => {
                     Linking.openURL("https://www.chaching.social/settings");
@@ -135,8 +136,8 @@ export default function SideBar({
                     Settings
                     <EvilIcons name="external-link" size={12} color="black" />
                   </Text>
-                </Pressable>
-              </VStack> */}
+                </Pressable> */}
+              </VStack>
             </Box>
           </DrawerBody>
           <DrawerFooter className="border-t border-background-200 pt-6">

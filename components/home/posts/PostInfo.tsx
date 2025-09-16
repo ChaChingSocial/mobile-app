@@ -9,6 +9,7 @@ import { checkIfFinFluencer } from "@/lib/api/user";
 import { useSession } from "@/lib/providers/AuthContext";
 import { formatPostDate } from "@/lib/utils/dates";
 import { Post as PostType } from "@/types/post";
+import { useRouter } from "expo-router";
 import { Timestamp } from "firebase/firestore";
 import { useEffect, useState } from "react";
 import { Linking, TouchableOpacity } from "react-native";
@@ -20,6 +21,7 @@ export const PostInfo = ({
   post: PostType;
   createdAt: Timestamp;
 }) => {
+  const router = useRouter();
   const { session: user } = useSession();
   const { posterName, posterUserId, posterPic } = post;
 
@@ -41,11 +43,7 @@ export const PostInfo = ({
   return (
     <Box className="flex flex-row items-center justify-between w-full px-4">
       <TouchableOpacity
-        onPress={() =>
-          Linking.openURL(
-            `https://www.chaching.social/profile/${posterName}?userId=${posterUserId}`
-          )
-        }
+        onPress={() => router.push(`/(protected)/profile?id=${posterUserId}`)}
         className="flex items-left justify-start mt-4"
       >
         <Avatar

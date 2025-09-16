@@ -63,7 +63,9 @@ export default function AccountDeletion() {
                   }}
                   className="flex-1 bg-transparent border border-black"
                 >
-                  <ButtonText className="text-black">Cancel</ButtonText>
+                  <ButtonText className="text-typography-black">
+                    Cancel
+                  </ButtonText>
                 </Button>
               </VStack>
             </Box>

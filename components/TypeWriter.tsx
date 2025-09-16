@@ -61,12 +61,16 @@ const TypeWriter: React.FC<TypewriterProps> = ({
 
   return (
     <View className="flex flex-row">
-      <Text className={textStyle ? textStyle : "text-black text-lg"}>
+      <Text className={textStyle ? textStyle : "text-typography-black text-lg"}>
         {textArray[stringIndex].substring(0, textIndex)}
       </Text>
       {/* The Animated view enlosing the cursor*/}
       <Animated.View style={{ opacity: opacityValue }}>
-        <Text className={cursorStyle ? cursorStyle : "text-black text-lg"}>
+        <Text
+          className={
+            cursorStyle ? cursorStyle : "text-typography-black text-lg"
+          }
+        >
           ▎
         </Text>
       </Animated.View>

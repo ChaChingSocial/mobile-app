@@ -1,5 +1,9 @@
 import { DrawerProvider } from "@/lib/providers/DrawerContext";
-import { getAuth, onAuthStateChanged, FirebaseAuthTypes } from "@react-native-firebase/auth";
+import {
+  getAuth,
+  onAuthStateChanged,
+  FirebaseAuthTypes,
+} from "@react-native-firebase/auth";
 import { Stack } from "expo-router";
 import { useEffect, useState } from "react";
 
@@ -10,7 +14,7 @@ export default function ProtectedLayout() {
   // Handle user state changes
   function handleAuthStateChanged(user: FirebaseAuthTypes.User | null) {
     setUser(user);
-    
+
     if (initializing) setInitializing(false);
   }
 
@@ -71,6 +75,13 @@ export default function ProtectedLayout() {
           options={{
             title: "Blog",
             headerShown: false,
+          }}
+        />
+        <Stack.Screen
+          name="profile"
+          options={{
+            title: "Profile",
+            headerShown: true,
           }}
         />
       </Stack>
