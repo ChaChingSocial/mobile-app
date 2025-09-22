@@ -32,6 +32,8 @@ export default function Profile() {
   const [posts, setPosts] = useState<Post[]>([]);
   const [userInfo, setUserInfo] = useState<User | null>(null);
 
+  console.log("UserInfo from params:", userInfo);
+
   const fetchUserInfo = async () => {
     try {
       const res = await userApi.getUserById({ userId: UserId });

@@ -1,20 +1,20 @@
 import { Button, ButtonText } from "@/components/ui/button";
-import { Center } from "@/components/ui/center";
 import { FormControl } from "@/components/ui/form-control";
 import { Heading } from "@/components/ui/heading";
 import { Input, InputField, InputSlot } from "@/components/ui/input";
 import { Text } from "@/components/ui/text";
 import { VStack } from "@/components/ui/vstack";
-import { userApi } from "@/config/backend";
 import { useStorageState } from "@/hooks/useStorageState";
-import { loginWithEmail } from "@/lib/api/auth";
+import { loginWithEmail, registerWithEmail } from "@/lib/api/auth";
 import { useSession } from "@/lib/providers/AuthContext";
-import { useUserStore } from "@/lib/store/user";
 import { FontAwesome5 } from "@expo/vector-icons";
-import { useRouter } from "expo-router";
 import { useState } from "react";
+import { Center } from "@/components/ui/center";
+import { useRouter } from "expo-router";
+import { useUserStore } from "@/lib/store/user";
+import { userApi } from "@/config/backend";
 
-export default function LoginFormScreen() {
+export default function RegisterFormScreen() {
   const [_, setSession] = useStorageState("session");
   const { session, signIn } = useSession();
   const { setUser } = useUserStore.getState();
@@ -30,9 +30,7 @@ export default function LoginFormScreen() {
     try {
       console.log("email", email);
       console.log("password", password);
-
-      const user = await loginWithEmail(email, password);
-      // const res = await signInWithEmailAndPassword(auth, email, password);
+      const user = await registerWithEmail(email, password);
       console.log("SeSSSIon INOF NEXT", session);
       console.log("res Login", user);
 
@@ -44,7 +42,7 @@ export default function LoginFormScreen() {
           displayName: res.username ?? "",
           profilePic: res.profilePic ?? "",
         });
-        console.log("session in loginWithEmail", session);
+        console.log("session in register with email", session);
         console.log("user get user but ni ID", res);
       });
 
@@ -52,7 +50,7 @@ export default function LoginFormScreen() {
     } catch (error) {
       console.log("error", error);
       setError(
-        `Error during login: ${(error as Error).message || "Unknown error"}`
+        `Error during register: ${(error as Error).message || "Unknown error"}`
       );
     }
   };
@@ -67,21 +65,29 @@ export default function LoginFormScreen() {
     <Center className="flex-1 bg-white">
       <FormControl className="p-4 mx-6 flex-1 justify-between items-center">
         <VStack space="xl">
-          <Heading className="text-center">Log in</Heading>
+          <Heading className="text-center">Sign Up</Heading>
 
-          <Input size="xl" className="min-w-[250px] rounded-full pl-2">
+          <Input
+            size="xl"
+            className="min-w-[250px] text-typography-black rounded-full pl-2"
+          >
             <InputField
               type="text"
               onChangeText={setEmail}
               placeholder="jane.doe@hotmail.com"
+              placeholderTextColor="#181718"
             />
           </Input>
 
-          <Input size="xl" className="text-center rounded-full w-full pl-2">
+          <Input
+            size="xl"
+            className="text-center text-typography-black rounded-full w-full pl-2"
+          >
             <InputField
               type={showPassword ? "text" : "password"}
               onChangeText={setPassword}
               placeholder="password"
+              placeholderTextColor="#181718"
             />
             <InputSlot className="pr-3" onPress={handleState}>
               <FontAwesome5 name={showPassword ? "eye" : "eye-slash"} />
@@ -103,7 +109,7 @@ export default function LoginFormScreen() {
           className="w-full bg-[#40c057] rounded-full"
           onPress={handleLogin}
         >
-          <ButtonText className="flex-1 text-center">Log in</ButtonText>
+          <ButtonText className="flex-1 text-center">Sign Up</ButtonText>
         </Button>
 
         {error && <Text className="text-red-500 mt-2">{error}</Text>}

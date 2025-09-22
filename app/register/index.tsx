@@ -37,7 +37,7 @@ export default function RegisterScreen() {
   const [error, setError] = useState<string | null>(null);
   const [googleResponse, setGoogleResponse] = useState<any>(null);
   const [googleLoading, setGoogleLoading] = useState(false);
-  const [emailOptIn, setEmailOptIn] = useState(false);
+  const [emailOptIn, setEmailOptIn] = useState(true);
 
   const handleGoogleSignIn = async () => {
     try {
@@ -53,7 +53,6 @@ export default function RegisterScreen() {
         console.log("Google Signed In Response:", response.data);
 
         try {
-    
           const res = await userApi.getUserByEmail({
             email: user.email,
           });
@@ -80,8 +79,6 @@ export default function RegisterScreen() {
           return; // Exit early on error
         }
 
-
-  
         // Create a Google credential with the token
         const googleCredential = GoogleAuthProvider.credential(idToken);
 
@@ -143,7 +140,7 @@ export default function RegisterScreen() {
         />
 
         <Heading className="text-2xl font-bold mb-6 text-center">
-          Sign up to ChaChing Social
+          Sign up
         </Heading>
         <Button
           className="w-full flex-row items-center justify-between border rounded-full bg-white h-12"
@@ -154,27 +151,27 @@ export default function RegisterScreen() {
             source={require("@/assets/images/google-icon.png")}
             className="h-6 w-6"
           />
-          <ButtonText className="text-typography-900 text-lg items-center font-bold w-full text-center">
+          <ButtonText className="text-lg items-center font-bold w-full text-center">
             Continue with Google
           </ButtonText>
         </Button>
 
         <Button
           className="w-full flex-row items-center border rounded-full bg-white h-12"
-          onPress={() => router.push("/login/login-form")}
+          onPress={() => router.push("/register/register-form")}
         >
           <FontAwesome5 name="user" size={20} color="#333" className="ml-6" />
-          <ButtonText className="text-typography-900 text-lg items-center font-bold w-full text-center">
+          <ButtonText className="text-lg items-center font-bold w-full text-center">
             Use email or username
           </ButtonText>
         </Button>
 
-        <Box className="absolute bottom-0">
+        <Box className="absolute bottom-10">
           {/* Legal Text */}
           <Text className="text-center mt-4">
             By continuing, you agree to our{" "}
             <Text
-              className="underline"
+              className="underline text-blue-600"
               onPress={() =>
                 Linking.openURL("https://www.chaching.social/terms-of-service")
               }
@@ -183,7 +180,7 @@ export default function RegisterScreen() {
             </Text>{" "}
             and acknowledge that you understand the{" "}
             <Text
-              className="underline"
+              className="underline text-blue-600"
               onPress={() =>
                 Linking.openURL("https://www.chaching.social/privacy-policy")
               }
@@ -205,8 +202,10 @@ export default function RegisterScreen() {
             <CheckboxIndicator>
               <CheckboxIcon as={CheckIcon} />
             </CheckboxIndicator>
-            <CheckboxLabel className="">
-              I agree to receive emails updates on Chaching Social.
+            <CheckboxLabel>
+              <Text className="text-sm italic">
+                I agree to receive emails updates on Chaching Social.
+              </Text>
             </CheckboxLabel>
           </Checkbox>
         </Box>
@@ -219,9 +218,12 @@ export default function RegisterScreen() {
       <Divider className="w-full mx-2 my-4" />
 
       <VStack className="mb-8 items-center">
-        <Text className="text-typography-900 text-base">
+        <Text className="text-lg">
           Already have an account?{" "}
-          <Text className="underline" onPress={() => router.replace("/login")}>
+          <Text
+            className="underline text-lg text-green-600"
+            onPress={() => router.replace("/login")}
+          >
             Log in
           </Text>
         </Text>

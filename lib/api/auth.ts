@@ -1,28 +1,34 @@
-import { userApi } from "@/config/backend";
 import { auth } from "@/config/firebase";
 import {
+  createUserWithEmailAndPassword,
   sendPasswordResetEmail,
   signInWithEmailAndPassword,
 } from "firebase/auth";
-import { useUserStore } from "../store/user";
-import { useSession } from "../providers/AuthContext";
 
 export async function loginWithEmail(
   email: string,
   password: string,
-  setSession: (session: any) => void
 ) {
   const userCredential = await signInWithEmailAndPassword(
     auth,
     email,
     password
   );
-  console.log("login With Email", userCredential);
+  const { user } = userCredential;
+  // const tokenResult = await user.getIdTokenResult();
+
+  return user;
+}
+
+export async function registerWithEmail(email: string, password: string) {
+  const userCredential = await createUserWithEmailAndPassword(
+    auth,
+    email,
+    password
+  );
   const { user } = userCredential;
   const tokenResult = await user.getIdTokenResult();
-  console.log("token", user, tokenResult);
-  // const { token } = tokenResult;
-  // Update user store
+  console.log("register token", user, tokenResult);
 
   return user;
 }

@@ -1,20 +1,12 @@
 import { Box } from "@/components/ui/box";
 import { Button, ButtonText } from "@/components/ui/button";
 import { Center } from "@/components/ui/center";
-import {
-  Checkbox,
-  CheckboxIcon,
-  CheckboxIndicator,
-  CheckboxLabel,
-} from "@/components/ui/checkbox";
 import { Divider } from "@/components/ui/divider";
 import { Heading } from "@/components/ui/heading";
-import { CheckIcon } from "@/components/ui/icon";
 import { Text } from "@/components/ui/text";
 import { VStack } from "@/components/ui/vstack";
 import { userApi } from "@/config/backend";
 import { useStorageState } from "@/hooks/useStorageState";
-import { useSession } from "@/lib/providers/AuthContext";
 import { FontAwesome5 } from "@expo/vector-icons";
 import {
   GoogleAuthProvider,
@@ -34,14 +26,13 @@ import { Image, Linking } from "react-native";
 export default function LoginScreen() {
   const [_, setSession] = useStorageState("session");
   const router = useRouter();
-  const { session } = useSession();
 
   const [error, setError] = useState<string | null>(null);
   const [googleResponse, setGoogleResponse] = useState<any>(null);
   const [googleLoading, setGoogleLoading] = useState(false);
-  const [emailOptIn, setEmailOptIn] = useState(false);
+  const [emailOptIn, setEmailOptIn] = useState(true);
 
-  const handleGoogleSignIn = async () => {
+  const handleGoogleLogin = async () => {
     try {
       setGoogleLoading(true);
       await GoogleSignin.hasPlayServices({
@@ -52,11 +43,9 @@ export default function LoginScreen() {
       if (isSuccessResponse(response)) {
         setGoogleResponse(response.data);
         const { user, idToken } = response.data;
-        console.log("Google logged In Response:", response.data);
-        console.log("user google logged in", user.email);
-        console.log("Starting getUserByEmail with email:", user.email);
+        console.log("Google Signed In Response:", response.data);
+
         try {
-    
           const res = await userApi.getUserByEmail({
             email: user.email,
           });
@@ -144,18 +133,18 @@ export default function LoginScreen() {
         />
 
         <Heading className="text-2xl font-bold mb-6 text-center">
-          Log in to ChaChing Social
+          Log in
         </Heading>
         <Button
           className="w-full flex-row items-center justify-between border rounded-full bg-white h-12"
-          onPress={handleGoogleSignIn}
+          onPress={handleGoogleLogin}
           disabled={googleLoading}
         >
           <Image
             source={require("@/assets/images/google-icon.png")}
             className="h-6 w-6"
           />
-          <ButtonText className="text-typography-900 text-lg items-center font-bold w-full text-center">
+          <ButtonText className="text-lg items-center font-bold w-full text-center">
             Continue with Google
           </ButtonText>
         </Button>
@@ -165,17 +154,17 @@ export default function LoginScreen() {
           onPress={() => router.push("/login/login-form")}
         >
           <FontAwesome5 name="user" size={20} color="#333" className="ml-6" />
-          <ButtonText className="text-typography-900 text-lg items-center font-bold w-full text-center">
+          <ButtonText className="text-lg items-center font-bold w-full text-center">
             Use email or username
           </ButtonText>
         </Button>
 
-        <Box className="absolute bottom-0">
+        <Box className="absolute bottom-10">
           {/* Legal Text */}
           <Text className="text-center mt-4">
             By continuing, you agree to our{" "}
             <Text
-              className="underline hover:no-underline hover:cursor-pointer hover:text-blue-500"
+              className="underline text-blue-600"
               onPress={() =>
                 Linking.openURL("https://www.chaching.social/terms-of-service")
               }
@@ -184,7 +173,7 @@ export default function LoginScreen() {
             </Text>{" "}
             and acknowledge that you understand the{" "}
             <Text
-              className="underline hover:no-underline hover:cursor-pointer hover:text-blue-500"
+              className="underline text-blue-600"
               onPress={() =>
                 Linking.openURL("https://www.chaching.social/privacy-policy")
               }
@@ -194,7 +183,7 @@ export default function LoginScreen() {
             .
           </Text>
           {/* Checkbox */}
-          <Checkbox
+          {/* <Checkbox
             value="email-opt-in"
             size="md"
             isInvalid={false}
@@ -206,10 +195,12 @@ export default function LoginScreen() {
             <CheckboxIndicator>
               <CheckboxIcon as={CheckIcon} />
             </CheckboxIndicator>
-            <CheckboxLabel className="">
-              I agree to receive emails updates on Chaching Social.
+            <CheckboxLabel>
+              <Text className="text-sm italic">
+                I agree to receive emails updates on Chaching Social.
+              </Text>
             </CheckboxLabel>
-          </Checkbox>
+          </Checkbox> */}
         </Box>
         {/* Error Message */}
         {error && (
@@ -220,10 +211,10 @@ export default function LoginScreen() {
       <Divider className="w-full mx-2 my-4" />
 
       <VStack className="mb-8 items-center">
-        <Text className="text-typography-900 text-base">
-          Don't have an account?{" "}
+        <Text className="text-lg">
+          Already have an account?{" "}
           <Text
-            className="underline"
+            className="underline text-lg text-green-600"
             onPress={() => router.replace("/register")}
           >
             Sign up
