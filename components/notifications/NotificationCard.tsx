@@ -9,6 +9,7 @@ import { useRouter } from "expo-router";
 import React from "react";
 import { TouchableOpacity, View } from "react-native";
 import { Text } from "../ui/text";
+import RenderHTML from "react-native-render-html";
 
 type NotificationCardProps = {
   notification: Notification;
@@ -40,7 +41,7 @@ export function NotificationCard({
         return "bg-yellow-100 border-yellow-200 text-yellow-700";
 
       case "OINKED":
-        return "bg-pink-100 border-pink-200 text-pink-700";
+        return "bg-pink-400 border-pink-200 text-pink-700";
 
       case "TAGGED":
       case "COMMENTED":
@@ -123,20 +124,20 @@ export function NotificationCard({
   };
 
   const handlePress = () => {
-    if (notification.notificationLink) {
-      router.push(notification?.notificationLink as any);
+    if (notification.communityId) {
+      router.push(`/communities/${notification.communityId}`);
     }
   };
 
   return (
     <TouchableOpacity
       onPress={handlePress}
-      className={`w-full p-3 mt-3 rounded-lg flex-row items-center ${getNotificationColor(
+      className={`w-full p-3 mt-3 rounded-lg flex-row items-start ${getNotificationColor(
         notification.notificationType
       )}`}
     >
       <View
-        className={`w-8 h-8 rounded-full flex items-center justify-center border ${
+        className={`w-10 h-10 mt-3 rounded-full flex items-center justify-center border ${
           notification.notificationType === "PRODUCT_SHIPPED" ||
           notification.notificationType === "PRODUCT_DELIVERED" ||
           notification.notificationType === "FOLLOWED" ||
@@ -171,7 +172,10 @@ export function NotificationCard({
 
       <View className="ml-3 flex-1">
         <Text className="text-sm">
-          {notification.notificationMessage || "New notification"}
+          <RenderHTML
+            contentWidth={100}
+            source={{ html: notification.notificationMessage?.slice(0, 200).concat("...") }}
+          />
         </Text>
         {showDate && notification.createdAt && (
           <Text className="text-xs text-gray-500 mt-1">

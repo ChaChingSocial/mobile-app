@@ -10,7 +10,7 @@ import TabBarBackground from "@/components/ui/TabBarBackground";
 import { Colors } from "@/lib/constants/Colors";
 import { useSession } from "@/lib/providers/AuthContext";
 import { DrawerContext } from "@/lib/providers/DrawerContext";
-import { FontAwesome, Ionicons } from "@expo/vector-icons";
+import { FontAwesome, FontAwesome5, Ionicons } from "@expo/vector-icons";
 import { notificationApi } from "@/config/backend";
 import { Text } from "@/components/ui/text";
 import { Box } from "@/components/ui/box";
@@ -139,11 +139,11 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="about"
+        name="profile"
         options={{
-          title: "About",
+          title: "Profile",
           tabBarIcon: ({ color }) => (
-            <FontAwesome size={22} name="info-circle" color={color} />
+            <FontAwesome5 name="user" size={22} color={color} />
           ),
         }}
       />

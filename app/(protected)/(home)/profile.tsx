@@ -33,6 +33,7 @@ export default function Profile() {
   const [userInfo, setUserInfo] = useState<User | null>(null);
 
   console.log("UserInfo from params:", userInfo);
+  console.log("followers", followers)
 
   const fetchUserInfo = async () => {
     try {

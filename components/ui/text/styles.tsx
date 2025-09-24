@@ -6,7 +6,7 @@ const baseStyle = isWeb
   : '';
 
 export const textStyle = tva({
-  base: `text-typography-black font-body ${baseStyle}`,
+  base: `text-typography-700 font-body ${baseStyle}`,
 
   variants: {
     isTruncated: {

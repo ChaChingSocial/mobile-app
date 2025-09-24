@@ -100,7 +100,15 @@ export default function CommunitiesLayout() {
         })}
       >
         <Stack.Screen name="about" />
-        <Stack.Screen name="[slug]" />
+
+        <Stack.Screen
+          name="[slug]"
+          options={{
+            headerShown: true,
+            headerBackVisible: true,
+            headerBackTitle: "Back",
+          }}
+        />
       </Stack>
       <Drawer
         isOpen={showDrawer}

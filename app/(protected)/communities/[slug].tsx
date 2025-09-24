@@ -29,7 +29,7 @@ export default function SingleCommunity() {
       const res = await getSingleCommunityBySlug(
         Array.isArray(slug) ? slug[0] : slug
       );
-      console.log("slug comm", res[0]);
+      // console.log("slug comm", res[0]);
 
       if (res) {
         setCommunityData(res);

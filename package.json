@@ -5,13 +5,15 @@
   "scripts": {
     "start": "expo start",
     "reset-project": "node ./scripts/reset-project.js",
-    "android": "DARK_MODE=media expo run:android",
-    "ios": "DARK_MODE=media expo run:ios",
-    "web": "DARK_MODE=media expo start --web",
+    "android": "LIGHT_MODE=media expo run:android",
+    "ios": "LIGHT_MODE=media expo run:ios",
+    "web": "LIGHT_MODE=media expo start --web",
     "test": "jest --watchAll",
     "lint": "expo lint",
     "postinstall": "patch-package",
-    "generate-sdk": "docker run --rm -v ${PWD}:/local openapitools/openapi-generator-cli generate -i /local/openapi-v1.0.yaml -g typescript-fetch -o /local/_sdk"
+    "generate-sdk": "docker run --rm -v ${PWD}:/local openapitools/openapi-generator-cli generate -i /local/openapi-v1.0.yaml -g typescript-fetch -o /local/_sdk",
+    "build-android": "eas build --platform android --profile development",
+    "build-ios": "eas build --platform ios --profile development"
   },
   "jest": {
     "preset": "jest-expo"

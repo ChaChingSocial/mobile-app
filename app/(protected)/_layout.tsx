@@ -78,9 +78,9 @@ export default function ProtectedLayout() {
           }}
         />
         <Stack.Screen
-          name="profile"
+          name="about"
           options={{
-            title: "Profile",
+            title: "About",
             headerShown: true,
           }}
         />

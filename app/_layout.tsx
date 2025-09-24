@@ -24,15 +24,19 @@ function RootLayoutNav() {
   }, []);
 
   // if the user is not logged in and the pathname starts with /(protected) redirect to /login
-  if (session === null && !pathname.startsWith("/login") && !pathname.startsWith("/register")) {
+  if (
+    session === null &&
+    !pathname.startsWith("/login") &&
+    !pathname.startsWith("/register")
+  ) {
     return <Redirect href="/login" />;
   }
 
   console.log("session layout", session, pathname);
 
   return (
-    <GluestackUIProvider mode="light">
-      <GestureHandlerRootView style={{ flex: 1, color: "black" }}>
+    <GluestackUIProvider>
+      <GestureHandlerRootView style={{ flex: 1 }}>
         <Stack>
           <StatusBar style="auto" backgroundColor="transparent" />
           <Stack.Screen

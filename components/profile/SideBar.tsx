@@ -7,24 +7,24 @@ import {
   DrawerHeader,
 } from "@/components/ui/drawer";
 import { Heading } from "@/components/ui/heading";
-import { EvilIcons, FontAwesome, FontAwesome5 } from "@expo/vector-icons";
-import { Linking, Pressable, TouchableOpacity } from "react-native";
+import { FontAwesome, FontAwesome5 } from "@expo/vector-icons";
+import { Pressable, TouchableOpacity } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Avatar, AvatarFallbackText, AvatarImage } from "../ui/avatar";
 
-import { Link, useRouter } from "expo-router";
-import { Box } from "../ui/box";
-import { Divider } from "../ui/divider";
-import { HStack } from "../ui/hstack";
-import { Text } from "../ui/text";
-import { VStack } from "../ui/vstack";
-import { useSession } from "@/lib/providers/AuthContext";
-import { useEffect, useState } from "react";
 import {
   checkIfFinFluencer,
   fetchFollowers,
   fetchFollowing,
 } from "@/lib/api/user";
+import { useSession } from "@/lib/providers/AuthContext";
+import { useRouter } from "expo-router";
+import { useEffect, useState } from "react";
+import { Box } from "../ui/box";
+import { Divider } from "../ui/divider";
+import { HStack } from "../ui/hstack";
+import { Text } from "../ui/text";
+import { VStack } from "../ui/vstack";
 
 export default function SideBar({
   open,
@@ -74,10 +74,12 @@ export default function SideBar({
         <DrawerContent className="pt-16">
           <DrawerHeader>
             <VStack space="md">
-              <TouchableOpacity onPressOut={() => {
-                router.push(`/(protected)/profile?id=${session?.uid}`);
-                onOpenChange(false);
-              }}>
+              <TouchableOpacity
+                onPressOut={() => {
+                  router.push(`/(protected)/(home)/profile?id=${session?.uid}`);
+                  onOpenChange(false);
+                }}
+              >
                 <Avatar size="md">
                   <AvatarFallbackText>
                     {session?.displayName}
@@ -114,13 +116,28 @@ export default function SideBar({
                 <Pressable
                   className="flex flex-row gap-3 items-center"
                   onPress={() => {
-                    router.push(`/(protected)/profile?id=${session?.uid}`);
+                    router.push(
+                      `/(protected)/(home)/profile?id=${session?.uid}`
+                    );
                     onOpenChange(false);
                   }}
                 >
                   <FontAwesome5 name="user" size={20} color="black" />
                   <Text size="xl" bold>
                     Profile
+                  </Text>
+                </Pressable>
+                <Pressable
+                  className="flex flex-row gap-3 items-center"
+                  onPress={() => {
+                    router.push(`/(protected)/about`);
+                    onOpenChange(false);
+                  }}
+                >
+                  <FontAwesome size={24} name="info-circle" color="black" />
+
+                  <Text size="xl" bold>
+                    About
                   </Text>
                 </Pressable>
                 {/* <Pressable
@@ -131,6 +148,7 @@ export default function SideBar({
                   }}
                 >
                   <FontAwesome5 name="cog" size={20} color="black" />
+            <FontAwesome size={22} name="info-circle" color={color} />
 
                   <Text size="xl" bold>
                     Settings

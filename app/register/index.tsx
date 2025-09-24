@@ -151,7 +151,7 @@ export default function RegisterScreen() {
             source={require("@/assets/images/google-icon.png")}
             className="h-6 w-6"
           />
-          <ButtonText className="text-lg items-center font-bold w-full text-center">
+          <ButtonText className="text-lg items-center font-bold w-full text-center text-typography-black">
             Continue with Google
           </ButtonText>
         </Button>
@@ -161,7 +161,7 @@ export default function RegisterScreen() {
           onPress={() => router.push("/register/register-form")}
         >
           <FontAwesome5 name="user" size={20} color="#333" className="ml-6" />
-          <ButtonText className="text-lg items-center font-bold w-full text-center">
+          <ButtonText className="text-lg items-center font-bold w-full text-center text-typography-black">
             Use email or username
           </ButtonText>
         </Button>
@@ -203,7 +203,7 @@ export default function RegisterScreen() {
               <CheckboxIcon as={CheckIcon} />
             </CheckboxIndicator>
             <CheckboxLabel>
-              <Text className="text-sm italic">
+              <Text className="text-sm italic text-gray-600">
                 I agree to receive emails updates on Chaching Social.
               </Text>
             </CheckboxLabel>
