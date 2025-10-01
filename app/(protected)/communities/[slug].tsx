@@ -68,7 +68,7 @@ export default function SingleCommunity() {
   //   : "Unknown date";
 
   return (
-    <SafeAreaView>
+    // <SafeAreaView>
       <ScrollView className="bg-white">
         {communityData.image && (
           <View className="w-full h-60 overflow-hidden">
@@ -129,6 +129,6 @@ export default function SingleCommunity() {
           isUserCommunityAdmin={session?.uid === communityData.adminUserId}
         />
       </ScrollView>
-    </SafeAreaView>
+    // </SafeAreaView>
   );
 }

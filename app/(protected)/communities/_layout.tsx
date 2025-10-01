@@ -14,13 +14,14 @@ import { communityApi } from "@/config/backend";
 import { useSession } from "@/lib/providers/AuthContext";
 import { FontAwesome, Fontisto } from "@expo/vector-icons";
 import * as Clipboard from "expo-clipboard";
-import { Stack, useLocalSearchParams } from "expo-router";
+import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import { TouchableOpacity } from "react-native";
 
 export default function CommunitiesLayout() {
   const { session } = useSession();
   const params = useLocalSearchParams();
+  const router = useRouter();
   const { slug, communityId } = params;
   console.log("layout params", communityId);
 
@@ -97,6 +98,17 @@ export default function CommunitiesLayout() {
               </TouchableOpacity>
             </Box>
           ),
+          headerLeft: () => (
+            <TouchableOpacity
+              onPressOut={() => router.back()}
+              className="mr-5 flex flex-row items-center gap-2"
+            >
+              <Fontisto name="arrow-left" size={16} color="black" />
+              <Text className="text-gray-900">Back</Text>
+            </TouchableOpacity>
+          ),
+          headerBackVisible: true,
+          headerBackTitle: "Back",
         })}
       >
         <Stack.Screen name="about" />
