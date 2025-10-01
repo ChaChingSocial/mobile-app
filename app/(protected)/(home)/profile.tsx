@@ -1,4 +1,5 @@
-import { Post, User } from "@/_sdk";
+import { User } from "@/_sdk";
+import type { Post } from "@/types/post";
 import NewsfeedList from "@/components/home/NewsfeedList";
 import {
   Avatar,
@@ -11,7 +12,7 @@ import { HStack } from "@/components/ui/hstack";
 import { Text } from "@/components/ui/text";
 import { VStack } from "@/components/ui/vstack";
 import { userApi } from "@/config/backend";
-import { useSubscribeToPostsByUserId } from "@/hooks/useSubscribeToPosts";
+import { getPostsByUser } from "@/lib/api/newsfeed";
 import {
   checkIfFinFluencer,
   fetchFollowers,
@@ -21,6 +22,8 @@ import { useSession } from "@/lib/providers/AuthContext";
 import { useLocalSearchParams } from "expo-router";
 import { useEffect, useState } from "react";
 import { ScrollView } from "react-native-gesture-handler";
+import { Image, RefreshControl, TouchableOpacity } from "react-native";
+import { DocumentSnapshot } from "firebase/firestore";
 
 export default function Profile() {
   const { id: UserId } = useLocalSearchParams();
@@ -31,6 +34,9 @@ export default function Profile() {
   const [following, setFollowing] = useState(0);
   const [posts, setPosts] = useState<Post[]>([]);
   const [userInfo, setUserInfo] = useState<User | null>(null);
+  const [lastDoc, setLastDoc] = useState<DocumentSnapshot | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
 
   console.log("UserInfo from params:", userInfo);
   console.log("followers", followers)
@@ -63,7 +69,19 @@ export default function Profile() {
   useEffect(() => {
     if (UserId) {
       fetchUserInfo();
-      useSubscribeToPostsByUserId(UserId, setPosts);
+      (async () => {
+        setLoading(true);
+        const { posts: initial, lastDoc: initialLastDoc } = await getPostsByUser(
+          Array.isArray(UserId) ? UserId[0] : UserId
+        );
+        const normalized = (initial as Post[]).map((p: any) => ({
+          ...p,
+          featured: true,
+        }));
+        setPosts(normalized as Post[]);
+        setLastDoc(initialLastDoc);
+        setLoading(false);
+      })();
     }
   }, [UserId]);
 
@@ -72,8 +90,40 @@ export default function Profile() {
     fetchFinfluencerStatus();
   }, [UserId]);
 
+  const fetchMorePosts = async () => {
+    if (loading || !lastDoc || !UserId) return;
+    setLoading(true);
+    const { posts: more, lastDoc: newLastDoc } = await getPostsByUser(
+      Array.isArray(UserId) ? UserId[0] : UserId,
+      lastDoc
+    );
+    if ((more as Post[]).length === 0) {
+      setLastDoc(null);
+    } else {
+      const normalized = (more as Post[]).map((p: any) => ({ ...p, featured: true }));
+      setPosts((prev) => [...prev, ...normalized]);
+      setLastDoc(newLastDoc);
+    }
+    setLoading(false);
+  };
+
+  const onRefresh = async () => {
+    if (!UserId) return;
+    setRefreshing(true);
+    const { posts: fresh, lastDoc: freshLastDoc } = await getPostsByUser(
+      Array.isArray(UserId) ? UserId[0] : UserId
+    );
+    const normalized = (fresh as Post[]).map((p: any) => ({ ...p, featured: true }));
+    setPosts(normalized as Post[]);
+    setLastDoc(freshLastDoc);
+    setRefreshing(false);
+  };
+
   return (
-    <ScrollView className="bg-[#E6F8F1] flex-1">
+    <ScrollView
+      className="bg-[#E6F8F1] flex-1"
+      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+    >
       <VStack space="md" className="px-4 pt-6 justify-center items-center">
         <Avatar
           size="2xl"
@@ -125,6 +175,24 @@ export default function Profile() {
         communityPage={false}
         //   isUserCommunityAdmin={UserId === communityData.adminUserId}
       />
+
+      {loading && (
+        <Image
+          source={require("@/assets/images/pig-loading.gif")}
+          alt="Loading..."
+          resizeMode="contain"
+          className="w-full"
+        />
+      )}
+      {lastDoc && (
+        <TouchableOpacity
+          className="bg-[#00bf63] rounded-lg p-2 w-36 mx-auto my-6"
+          onPress={fetchMorePosts}
+          disabled={loading}
+        >
+          <Text bold className="text-center text-white">Load More</Text>
+        </TouchableOpacity>
+      )}
     </ScrollView>
   );
 }
