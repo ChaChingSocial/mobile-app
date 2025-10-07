@@ -702,6 +702,52 @@ export async function getFeaturedPosts(lastDoc = null) {
   }
 }
 
+export async function getPostsByUser(
+  userId: string,
+  lastDoc: DocumentSnapshot | null = null
+) {
+  try {
+    let q = query(
+      collection(db, "posts"),
+      where("posterUserId", "==", userId),
+      orderBy("createdAt", "desc"),
+      limit(25)
+    );
+
+    if (lastDoc) {
+      if (!(lastDoc instanceof DocumentSnapshot) || !lastDoc.exists) {
+        throw new Error("Invalid lastDoc - not a valid DocumentSnapshot");
+      }
+      if (!lastDoc.data().createdAt) {
+        throw new Error("lastDoc missing createdAt field");
+      }
+      q = query(q, startAfter(lastDoc), limit(25));
+    }
+
+    const querySnapshot = await getDocs(q);
+    const posts = querySnapshot.docs.map((doc) => ({
+      id: doc.id,
+      ...doc.data(),
+      createdAt: doc.data().createdAt.toMillis(),
+    }));
+
+    const newLastDoc =
+      querySnapshot.docs.length >= 10
+        ? querySnapshot.docs[querySnapshot.docs.length - 1]
+        : null;
+
+    if (posts.length === 0) {
+      return { posts: [], lastDoc: null };
+    }
+
+    posts.sort((a, b) => b.createdAt - a.createdAt);
+    return { posts, lastDoc: newLastDoc };
+  } catch (error) {
+    console.error("Error fetching user's posts:", error);
+    return { posts: [], lastDoc: null };
+  }
+}
+
 export function subscribeToPosts(onPostsChange: (posts: Post[]) => void) {
   const q = query(collection(db, "posts"), orderBy("createdAt", "desc"));
 
