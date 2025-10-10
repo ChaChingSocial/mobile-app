@@ -98,15 +98,6 @@ export default function CommunitiesLayout() {
               </TouchableOpacity>
             </Box>
           ),
-          headerLeft: () => (
-            <TouchableOpacity
-              onPressOut={() => router.back()}
-              className="mr-5 flex flex-row items-center gap-2"
-            >
-              <Fontisto name="arrow-left" size={16} color="black" />
-              <Text className="text-gray-900">Back</Text>
-            </TouchableOpacity>
-          ),
           headerBackVisible: true,
           headerBackTitle: "Back",
         })}
