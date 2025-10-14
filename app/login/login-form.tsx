@@ -51,9 +51,22 @@ export default function LoginFormScreen() {
       signIn();
     } catch (error) {
       console.log("error", error);
-      setError(
-        `Error during login: ${(error as Error).message || "Unknown error"}`
-      );
+      const code = (error as any)?.code || "";
+      let uiMessage = "Unable to log in. Please try again.";
+
+      if (code === "auth/invalid-credential" || code === "auth/wrong-password") {
+        uiMessage = "Incorrect email or password.";
+      } else if (code === "auth/invalid-email") {
+        uiMessage = "Please enter a valid email address.";
+      } else if (code === "auth/user-disabled") {
+        uiMessage = "This account has been disabled.";
+      } else if (code === "auth/user-not-found") {
+        uiMessage = "No account found with that email.";
+      } else if (code === "auth/too-many-requests") {
+        uiMessage = "Too many attempts. Please try again later.";
+      }
+
+      setError(uiMessage);
     }
   };
 
