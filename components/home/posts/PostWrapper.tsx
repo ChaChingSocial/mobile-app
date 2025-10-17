@@ -32,9 +32,12 @@ type PostWrapperProps = {
   onEdit: (editing: boolean) => void;
   editing: boolean;
   type: "post" | "comment";
-  createdAt: Timestamp;
+  createdAt: Timestamp | Date;
   userId: string;
-  onViewComments: (showComments: boolean) => void;
+  onViewComments?: (showComments: boolean) => void;
+  authorName?: string;
+  authorId?: string;
+  authorPic?: string;
 };
 
 export function PostWrapper({
@@ -50,6 +53,9 @@ export function PostWrapper({
   createdAt,
   userId,
   onViewComments,
+  authorName,
+  authorId,
+  authorPic,
 }: PostWrapperProps) {
   const { session } = useSession();
   const currentUserId = session?.uid;
@@ -127,7 +133,7 @@ export function PostWrapper({
   };
 
   const viewComments = () => {
-    onViewComments(!showComments);
+    if (onViewComments) onViewComments(!showComments);
     setShowComments(!showComments); // Toggle comments visibility
   };
 
@@ -152,13 +158,18 @@ export function PostWrapper({
 
   return (
     <Box
-      className={`border-l-4 border-green-500 relative align-middle rounded-lg bg-white ${
-        type === "comment" ? "ml-3 border-tertiary-0" : "ml-0"
-      }`}
-    >
-      <PostInfo post={post} createdAt={createdAt} />
+      className="relative align-middle rounded-lg bg-white">
+      <PostInfo
+        post={post}
+        createdAt={createdAt}
+        authorName={authorName}
+        authorId={authorId}
+        authorPic={authorPic}
+      />
 
-      <Box className="mt-4">{children}</Box>
+        <Box className={`${type === "comment" ? "border-purple-950 border-l-2 pl-4 ml-6" : ""}`}>
+          {children}
+      </Box>
 
       {type !== "comment" && (
         <Box className="mt-4 flex flex-row gap-5 mx-2 mb-2">

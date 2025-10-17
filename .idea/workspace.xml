@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="AutoImportSettings">
+    <option name="autoReloadType" value="ALL" />
+  </component>
+  <component name="ChangeListManager">
+    <list default="true" id="fd0dd57f-f28d-4123-909e-256c8ae3c9ef" name="Changes" comment="">
+      <change afterPath="$PROJECT_DIR$/.env" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/(protected)/(home)/_layout.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/(protected)/(home)/_layout.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/register/index.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/register/index.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/assets/images/adaptive-icon.png" beforeDir="false" afterPath="$PROJECT_DIR$/assets/images/adaptive-icon.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/assets/images/favicon.png" beforeDir="false" afterPath="$PROJECT_DIR$/assets/images/favicon.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/assets/images/icon.png" beforeDir="false" afterPath="$PROJECT_DIR$/assets/images/icon.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/assets/images/logo.png" beforeDir="false" afterPath="$PROJECT_DIR$/assets/images/logo.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/assets/images/pig-loading.gif" beforeDir="false" afterPath="$PROJECT_DIR$/assets/images/pig-loading.gif" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/assets/images/splash-icon.png" beforeDir="false" afterPath="$PROJECT_DIR$/assets/images/splash-icon.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/components/home/PostComponent.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/components/home/PostComponent.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/components/home/posts/Comment.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/components/home/posts/Comment.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/components/home/posts/PostComments.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/components/home/posts/PostComments.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/components/home/posts/PostInfo.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/components/home/posts/PostInfo.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/components/home/posts/PostWrapper.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/components/home/posts/PostWrapper.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ios/chachingmobileapp/Images.xcassets/AppIcon.appiconset/App-Icon-1024x1024@1x.png" beforeDir="false" afterPath="$PROJECT_DIR$/ios/chachingmobileapp/Images.xcassets/AppIcon.appiconset/App-Icon-1024x1024@1x.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ios/chachingmobileapp/Images.xcassets/SplashScreenLogo.imageset/image.png" beforeDir="false" afterPath="$PROJECT_DIR$/ios/chachingmobileapp/Images.xcassets/SplashScreenLogo.imageset/image.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ios/chachingmobileapp/Images.xcassets/SplashScreenLogo.imageset/image@2x.png" beforeDir="false" afterPath="$PROJECT_DIR$/ios/chachingmobileapp/Images.xcassets/SplashScreenLogo.imageset/image@2x.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ios/chachingmobileapp/Images.xcassets/SplashScreenLogo.imageset/image@3x.png" beforeDir="false" afterPath="$PROJECT_DIR$/ios/chachingmobileapp/Images.xcassets/SplashScreenLogo.imageset/image@3x.png" afterDir="false" />
+    </list>
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="GOROOT" url="file://$USER_HOME$/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.23.7.darwin-arm64" />
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+  </component>
+  <component name="GitHubPullRequestSearchHistory">{
+  &quot;lastFilter&quot;: {
+    &quot;state&quot;: &quot;OPEN&quot;,
+    &quot;assignee&quot;: &quot;moza88&quot;
+  }
+}</component>
+  <component name="GithubPullRequestsUISettings">{
+  &quot;selectedUrlAndAccountId&quot;: {
+    &quot;url&quot;: &quot;https://github.com/ChaChingSocial/mobile-app.git&quot;,
+    &quot;accountId&quot;: &quot;5d32c5a5-cd7e-4e57-94f7-aa330b32e7f2&quot;
+  }
+}</component>
+  <component name="KubernetesApiPersistence">{}</component>
+  <component name="KubernetesApiProvider">{
+  &quot;isMigrated&quot;: true
+}</component>
+  <component name="ProjectColorInfo">{
+  &quot;associatedIndex&quot;: 5
+}</component>
+  <component name="ProjectId" id="2wJtwDlRgMX7aQyBb36xDBH8FSA" />
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "ModuleVcsDetector.initialDetectionPerformed": "true",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252": "true",
+    "RunOnceActivity.git.unshallow": "true",
+    "RunOnceActivity.go.formatter.settings.were.checked": "true",
+    "RunOnceActivity.go.migrated.go.modules.settings": "true",
+    "RunOnceActivity.go.modules.go.list.on.any.changes.was.set": "true",
+    "git-widget-placeholder": "main",
+    "go.import.settings.migrated": "true",
+    "go.sdk.automatically.set": "true",
+    "junie.onboarding.icon.badge.shown": "true",
+    "last_opened_file_path": "/Users/mabeloza/GolandProjects/chaching-mobile-app/assets/images",
+    "node.js.detected.package.eslint": "true",
+    "node.js.selected.package.eslint": "(autodetect)",
+    "nodejs_package_manager_path": "npm",
+    "settings.editor.selected.configurable": "org.jetbrains.plugins.github.ui.GithubSettingsConfigurable",
+    "to.speed.mode.migration.done": "true",
+    "ts.external.directory.path": "/Users/mabeloza/GolandProjects/chaching-mobile-app/node_modules/typescript/lib",
+    "vue.rearranger.settings.migration": "true"
+  }
+}]]></component>
+  <component name="RecentsManager">
+    <key name="CopyFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$/assets/images" />
+      <recent name="$PROJECT_DIR$/ios/chachingmobileapp/Images.xcassets/SplashScreenLogo.imageset" />
+    </key>
+    <key name="MoveFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$/android" />
+    </key>
+  </component>
+  <component name="SharedIndexes">
+    <attachedChunks>
+      <set>
+        <option value="bundled-gosdk-f466f9b0953e-3d2cccfc42a2-org.jetbrains.plugins.go.sharedIndexes.bundled-GO-252.26199.158" />
+        <option value="bundled-js-predefined-d6986cc7102b-9c94529fcfe0-JavaScript-GO-252.26199.158" />
+      </set>
+    </attachedChunks>
+  </component>
+  <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="fd0dd57f-f28d-4123-909e-256c8ae3c9ef" name="Changes" comment="" />
+      <created>1745845900675</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1745845900675</updated>
+    </task>
+    <servers />
+  </component>
+  <component name="TypeScriptGeneratedFilesManager">
+    <option name="version" value="3" />
+  </component>
+  <component name="VgoProject">
+    <settings-migrated>true</settings-migrated>
+  </component>
+</project>

@@ -251,7 +251,7 @@ export function PostComponent({ post }: { post: PostType }) {
           </Pressable>
         </Box>
       )}
-      <Card className="m-2 p-4 rounded-lg bg-[#f3e8ff] border border-[#6b21a8] ">
+      <Card className="m-2 p-4 rounded-lg">
         <PostWrapper
           post={post}
           onLike={handleLike}

@@ -44,7 +44,7 @@ export default function TabLayout() {
             <TouchableOpacity onPressOut={() => navigation.navigate("index")}>
               <Image
                 source={require("@/assets/images/logo.png")}
-                style={{ height: 40, resizeMode: "contain", width: 140 }}
+                style={{ height: 40, resizeMode: "contain", width: 140, marginBottom: 10 }}
               />
             </TouchableOpacity>
           ),
@@ -67,7 +67,7 @@ export default function TabLayout() {
                         : totalUnreadNotifications}
                     </Text>
                   </Box>
-                )} 
+                )}
               </Box>
             </TouchableOpacity>
           ),
@@ -77,7 +77,7 @@ export default function TabLayout() {
               onPressOut={() => setOpen(!open)}
               className="ml-5"
             >
-              <Avatar size="md">
+              <Avatar size="sm">
                 <AvatarFallbackText>{session?.displayName}</AvatarFallbackText>
                 <AvatarImage
                   source={{
