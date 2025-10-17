@@ -28,6 +28,7 @@ import { DocumentSnapshot } from "firebase/firestore";
 export default function Profile() {
   const { id: UserId } = useLocalSearchParams();
   const { session } = useSession();
+  const currentUserId = (Array.isArray(UserId) ? UserId[0] : UserId) || session?.uid || "";
 
   const [isFinfluencer, setIsFinfluencer] = useState(false);
   const [followers, setFollowers] = useState(0);
@@ -43,7 +44,8 @@ export default function Profile() {
 
   const fetchUserInfo = async () => {
     try {
-      const res = await userApi.getUserById({ userId: UserId });
+      if (!currentUserId) return;
+      const res = await userApi.getUserById({ userId: currentUserId });
       setUserInfo(res);
     } catch (error) {
       console.error("Error fetching user info:", error);
@@ -51,28 +53,28 @@ export default function Profile() {
   };
 
   const fetchFinfluencerStatus = async () => {
-    if (UserId) {
-      const res = await checkIfFinFluencer(UserId);
+    if (currentUserId) {
+      const res = await checkIfFinFluencer(currentUserId);
       setIsFinfluencer(res);
     }
   };
 
   const fetchFollowersAndFollowing = async () => {
-    if (UserId) {
-      const followersRes = await fetchFollowers(UserId);
-      const followingRes = await fetchFollowing(UserId);
+    if (currentUserId) {
+      const followersRes = await fetchFollowers(currentUserId);
+      const followingRes = await fetchFollowing(currentUserId);
       setFollowers(followersRes.size);
       setFollowing(followingRes.size);
     }
   };
 
   useEffect(() => {
-    if (UserId) {
+    if (currentUserId) {
       fetchUserInfo();
       (async () => {
         setLoading(true);
         const { posts: initial, lastDoc: initialLastDoc } = await getPostsByUser(
-          Array.isArray(UserId) ? UserId[0] : UserId
+          currentUserId
         );
         const normalized = (initial as Post[]).map((p: any) => ({
           ...p,
@@ -83,18 +85,18 @@ export default function Profile() {
         setLoading(false);
       })();
     }
-  }, [UserId]);
+  }, [currentUserId]);
 
   useEffect(() => {
     fetchFollowersAndFollowing();
     fetchFinfluencerStatus();
-  }, [UserId]);
+  }, [currentUserId]);
 
   const fetchMorePosts = async () => {
-    if (loading || !lastDoc || !UserId) return;
+    if (loading || !lastDoc || !currentUserId) return;
     setLoading(true);
     const { posts: more, lastDoc: newLastDoc } = await getPostsByUser(
-      Array.isArray(UserId) ? UserId[0] : UserId,
+      currentUserId,
       lastDoc
     );
     if ((more as Post[]).length === 0) {
@@ -108,10 +110,10 @@ export default function Profile() {
   };
 
   const onRefresh = async () => {
-    if (!UserId) return;
+    if (!currentUserId) return;
     setRefreshing(true);
     const { posts: fresh, lastDoc: freshLastDoc } = await getPostsByUser(
-      Array.isArray(UserId) ? UserId[0] : UserId
+      currentUserId
     );
     const normalized = (fresh as Post[]).map((p: any) => ({ ...p, featured: true }));
     setPosts(normalized as Post[]);
