@@ -16,7 +16,7 @@ import { FontAwesome, Fontisto } from "@expo/vector-icons";
 import * as Clipboard from "expo-clipboard";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect, useState } from "react";
-import { TouchableOpacity } from "react-native";
+import { TouchableOpacity, Platform } from "react-native";
 
 export default function CommunitiesLayout() {
   const { session } = useSession();
@@ -98,6 +98,14 @@ export default function CommunitiesLayout() {
               </TouchableOpacity>
             </Box>
           ),
+          headerLeft: Platform.OS === "ios" ? () => (
+            <TouchableOpacity
+              onPressOut={() => router.back()}
+              className="mr-5 flex flex-row items-center gap-2"
+            >
+              <Fontisto name="arrow-left" size={16} color="black" />
+            </TouchableOpacity>
+          ) : undefined,
           headerBackVisible: true,
           headerBackTitle: "Back",
         })}
