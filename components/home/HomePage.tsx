@@ -23,8 +23,9 @@ import * as ImagePicker from "expo-image-picker";
 import * as MediaLibrary from "expo-media-library";
 import { useRouter } from "expo-router";
 import { useContext, useEffect, useRef, useState } from "react";
-import { Alert, Animated, Easing, TouchableOpacity, View } from "react-native";
+import { Alert, Animated, Easing, TouchableOpacity, View, Platform } from "react-native";
 import { ScrollView } from "react-native-gesture-handler";
+import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
 
 type PostOption = {
   title: string;
@@ -38,6 +39,8 @@ export default function HomePage() {
   const router = useRouter();
 
   const [showOptions, setShowOptions] = useState(false);
+  const tabBarHeight = useBottomTabBarHeight();
+  const fabBottom = Platform.OS === "ios" ? tabBarHeight + 16 : 28;
 
   const setCreatedPostImage = usePostStore(
     (state) => state.setCreatedPostImage
@@ -221,7 +224,7 @@ export default function HomePage() {
       <Animated.View
         style={{
           position: "absolute",
-          bottom: 28,
+          bottom: fabBottom,
           right: 12,
           zIndex: 50,
           transform: [{ rotate: rotation }, { scale }],
