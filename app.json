@@ -21,7 +21,7 @@
     "android": {
       "googleServicesFile": "./google-services.json",
       "adaptiveIcon": {
-        "foregroundImage": "./assets/images/logo.png",
+        "foregroundImage": "./assets/images/logo-inverted.png",
         "backgroundColor": "#ffffff"
       },
       "package": "com.sonylomo.chachingmobileapp"

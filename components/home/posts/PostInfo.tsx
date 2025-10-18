@@ -12,18 +12,27 @@ import { Post as PostType } from "@/types/post";
 import { useRouter } from "expo-router";
 import { Timestamp } from "firebase/firestore";
 import { useEffect, useState } from "react";
-import { Linking, TouchableOpacity } from "react-native";
+import { TouchableOpacity } from "react-native";
 
 export const PostInfo = ({
   post,
   createdAt,
+  authorName,
+  authorId,
+  authorPic,
 }: {
   post: PostType;
-  createdAt: Timestamp;
+  createdAt: Timestamp | Date;
+  authorName?: string;
+  authorId?: string;
+  authorPic?: string;
 }) => {
   const router = useRouter();
   const { session: user } = useSession();
-  const { posterName, posterUserId, posterPic } = post;
+
+  const displayName = authorName ?? post.posterName;
+  const displayUserId = authorId ?? post.posterUserId;
+  const displayPic = authorPic ?? post.posterPic;
 
   const [isFinfluencer, setIsFinfluencer] = useState(false);
 
@@ -43,7 +52,7 @@ export const PostInfo = ({
   return (
     <Box className="flex flex-row items-center justify-between w-full px-4">
       <TouchableOpacity
-        onPress={() => router.push(`/(protected)/profile?id=${posterUserId}`)}
+        onPress={() => router.push(`/(protected)/profile?id=${displayUserId}`)}
         className="flex items-left justify-start mt-4"
       >
         <Avatar
@@ -52,18 +61,18 @@ export const PostInfo = ({
             isFinfluencer ? "border-amber-500" : "border-purple-800"
           }`}
         >
-          <AvatarFallbackText>{posterName}</AvatarFallbackText>
+          <AvatarFallbackText>{displayName}</AvatarFallbackText>
           <AvatarImage
             source={{
-              uri: posterPic || "",
+              uri: displayPic || "",
             }}
           />
         </Avatar>
         <Text size="sm" className="text-center mt-2 font-semibold">
-          @{posterName}
+          @{displayName}
         </Text>
       </TouchableOpacity>
-      <Text size="xs">{formatPostDate(post.createdAt)}</Text>
+      <Text size="xs">{formatPostDate(createdAt)}</Text>
     </Box>
   );
 };

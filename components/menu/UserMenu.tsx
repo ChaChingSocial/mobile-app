@@ -36,6 +36,7 @@ const UserMenu = ({ onLogoutSuccess, onLoginClick }: UserMenuProps) => {
   };
 
   const getUserScore = () => {
+    if (user == null) return;
     scoreApi.getScore({ userId: user.id }).then((points) => {
       setScore(points);
     });
