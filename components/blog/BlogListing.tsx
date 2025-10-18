@@ -6,7 +6,6 @@ import { useSession } from "@/lib/providers/AuthContext";
 import { Blog } from "@/types/blog";
 import { useEffect, useState } from "react";
 import { Linking, TouchableOpacity } from "react-native";
-import { Button, ButtonText } from "../ui/button";
 import { BlogArticleCard } from "./BlogCard";
 import { Input, InputField, InputIcon, InputSlot } from "@/components/ui/input";
 import { SearchIcon } from "@/components/ui/icon";
@@ -16,6 +15,7 @@ import ParallaxScrollView from "@/components/ParallaxScrollView";
 import { Center } from "@/components/ui/center";
 import { Spinner } from "@/components/ui/spinner";
 import { Fab, FabIcon, FabLabel } from "@/components/ui/fab";
+import { BlogDetailModal } from "./BlogDetailModal";
 
 export default function BlogListing() {
   const { session: user } = useSession();
@@ -27,6 +27,8 @@ export default function BlogListing() {
   const [searchText, setSearchText] = useState("");
   const [timeoutToClear, setTimeoutToClear] = useState<ReturnType<typeof setTimeout>>();
   const [loading, setLoading] = useState(true);
+  const [selectedBlog, setSelectedBlog] = useState<Blog | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   useEffect(() => {
     fetchBlogs();
@@ -105,6 +107,16 @@ export default function BlogListing() {
     300
   );
 
+  const handleBlogSelect = (blog: Blog) => {
+    setSelectedBlog(blog);
+    setIsModalOpen(true);
+  };
+
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+    setSelectedBlog(null);
+  };
+
   return (
     <Box className="flex-1 bg-[#077f5f]">
       {/* Floating search box - Sticky to top */}
@@ -170,19 +182,30 @@ export default function BlogListing() {
               <Text size="md">Please Wait...</Text>
             </Center>
           )}
-          <Box className="gap-5 flex p-4  mt-16 mb-24">
+          <Box className="gap-5 flex p-4 mt-16 mb-24">
             {filteredBlogs.length === 0 && allPublishedBlogs.length === 0 ? (
               <Text>Loading Posts...</Text>
             ) : filteredBlogs.length === 0 ? (
               <Text>No blogs found matching your search.</Text>
             ) : (
               filteredBlogs.map((blog, idx) => (
-                <BlogArticleCard key={idx} blog={blog} />
+                <BlogArticleCard
+                  key={idx}
+                  blog={blog}
+                  onPress={() => handleBlogSelect(blog)}
+                />
               ))
             )}
           </Box>
         </Box>
       </ParallaxScrollView>
+
+      {/* Blog Detail Modal */}
+      <BlogDetailModal
+        isOpen={isModalOpen}
+        onClose={handleCloseModal}
+        blog={selectedBlog}
+      />
     </Box>
   );
 }

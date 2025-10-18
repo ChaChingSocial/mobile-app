@@ -10,14 +10,30 @@ import { useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import { Image, Pressable } from "react-native";
 import { Divider } from "../ui/divider";
+import {Badge, BadgeIcon, BadgeText} from "@/components/ui/badge";
 
-export function BlogArticleCard({ blog }: { blog: Blog }) {
+export function BlogArticleCard({ blog, onPress }: { blog: Blog; onPress?: () => void }) {
   const router = useRouter();
 
   const [authorName, setAuthorName] = useState<string | null>(null);
   const [communityName, setCommunityName] = useState<string | null>(null);
   const [communityPhoto, setCommunityPhoto] = useState<string | null>(null);
 
+  // Calculate reading time
+  const calculateReadingTime = (content: string): number => {
+    // Strip HTML tags from content
+    const strippedContent = content.replace(/<[^>]+>/g, " ");
+    // Count words (split by whitespace and filter empty strings)
+    const wordCount = strippedContent
+      .trim()
+      .split(/\s+/)
+      .filter((word) => word.length > 0).length;
+    // Calculate reading time (238 words per minute)
+    const readingTimeMinutes = Math.ceil(wordCount / 238);
+    return readingTimeMinutes;
+  };
+
+  const readingTime = calculateReadingTime(blog.content);
 
   useEffect(() => {
     if (blog) {
@@ -44,10 +60,14 @@ export function BlogArticleCard({ blog }: { blog: Blog }) {
   }, [blog.communityId]);
 
   const handleCardClick = () => {
-    router.push({
-      pathname: "/blog/[slug]",
-      params: { slug: blog.slug, blog: JSON.stringify(blog) },
-    });
+    if (onPress) {
+      onPress();
+    } else {
+      router.push({
+        pathname: "/blog/[slug]",
+        params: { slug: blog.slug, blog: JSON.stringify(blog) },
+      });
+    }
   };
 
   return (
@@ -66,6 +86,11 @@ export function BlogArticleCard({ blog }: { blog: Blog }) {
           <VStack space="xs" className="px-4">
             <Text className="font-bold text-lg">{blog.title}</Text>
             <Text className="text-gray-500 text-sm">{blog.subtitle}</Text>
+            <Badge className="self-start mt-2 bg-green-200 border-0">
+                <BadgeText className="text-green-900">
+                    {readingTime} min read
+                </BadgeText>
+            </Badge>
           </VStack>
 
           <HStack space="sm" className="px-4 py-2">
@@ -73,18 +98,21 @@ export function BlogArticleCard({ blog }: { blog: Blog }) {
               source={{ uri: blog?.authorProfilePic ?? "" }}
               className="w-10 h-10 rounded-full border-2 border-purple-900"
             />
-            <VStack>
+            <VStack className="flex-1">
               <Text className="font-medium">{authorName}</Text>
-              <Text className="text-gray-500 text-xs">
-                {new Date(Date.parse(blog.createdAt)).toLocaleDateString(
-                  "en-US",
-                  {
-                    month: "2-digit",
-                    day: "2-digit",
-                    year: "2-digit",
-                  }
-                )}
-              </Text>
+              <HStack space="xs" className="items-center">
+                <Text className="text-gray-500 text-xs">
+                  {new Date(Date.parse(blog.createdAt)).toLocaleDateString(
+                    "en-US",
+                    {
+                      month: "2-digit",
+                      day: "2-digit",
+                      year: "2-digit",
+                    }
+                  )}
+                </Text>
+                <Text className="text-gray-400 text-xs">•</Text>
+              </HStack>
             </VStack>
           </HStack>
         </VStack>
