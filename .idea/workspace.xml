@@ -5,9 +5,15 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="fd0dd57f-f28d-4123-909e-256c8ae3c9ef" name="Changes" comment="">
+      <change afterPath="$PROJECT_DIR$/assets/images/logo-inverted.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.env" beforeDir="false" afterPath="$PROJECT_DIR$/.env" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/components/home/PostComponent.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/components/home/PostComponent.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app.json" beforeDir="false" afterPath="$PROJECT_DIR$/app.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/components/home/MainNewsFeed.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/components/home/MainNewsFeed.tsx" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/components/home/posts/EventPost.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/components/home/posts/EventPost.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/config/backend.ts" beforeDir="false" afterPath="$PROJECT_DIR$/config/backend.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/package.json" beforeDir="false" afterPath="$PROJECT_DIR$/package.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/yarn.lock" beforeDir="false" afterPath="$PROJECT_DIR$/yarn.lock" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -51,7 +57,7 @@
     "RunOnceActivity.go.formatter.settings.were.checked": "true",
     "RunOnceActivity.go.migrated.go.modules.settings": "true",
     "RunOnceActivity.go.modules.go.list.on.any.changes.was.set": "true",
-    "git-widget-placeholder": "feat/nested-comments",
+    "git-widget-placeholder": "feat/event-v2-post",
     "go.import.settings.migrated": "true",
     "go.sdk.automatically.set": "true",
     "junie.onboarding.icon.badge.shown": "true",

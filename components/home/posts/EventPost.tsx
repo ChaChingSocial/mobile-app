@@ -35,6 +35,7 @@ import { Badge } from "@/components/ui/badge";
 import SelectComponent from "@/components/common/SelectInput";
 import { CheckIcon } from "@/components/ui/icon";
 import HtmlRenderText from "@/components/common/HtmlRenderText";
+import TicketViewerModal from "@/components/events/TicketViewerModal";
 import PostTags from "../post-editor/PostTag";
 import {
   Modal,
@@ -47,6 +48,7 @@ import {
 } from "@/components/ui/modal";
 import { EventApi } from "@/_sdk/apis";
 import type { Ticket, EventSlot } from "@/_sdk/models";
+import GetTicketModal from "@/components/events/GetTicketModal";
 
 interface EventPostProps {
   post: PostType;
@@ -600,9 +602,6 @@ export const EventPost = ({
                     {!!sp?.description && (
                       <Text className="text-center text-[11px] text-gray-600 mt-1" numberOfLines={3}>{sp.description}</Text>
                     )}
-                    {hasUrl && (
-                      <Text className="text-center text-blue-500 underline text-xs mt-2">Visit site</Text>
-                    )}
                   </CardComponent>
                 );
               })}
@@ -668,35 +667,17 @@ export const EventPost = ({
       </View>
 
       {/* Get Ticket Modal */}
-      <Modal isOpen={ticketModalOpened} onClose={() => setTicketModalOpened(false)}>
-        <ModalBackdrop />
-        <ModalContent>
-          <ModalHeader>
-            <Text className="text-lg font-semibold">Get Tickets</Text>
-            <ModalCloseButton />
-          </ModalHeader>
-          <ModalBody>
-            {Array.isArray(selectedSlot?.ticketOptions) && selectedSlot!.ticketOptions!.length > 0 ? (
-              <View className="gap-3">
-                {selectedSlot!.ticketOptions!.map((opt: any, idx: number) => (
-                  <View key={idx} className="flex-row items-center justify-between">
-                    <Text className="font-medium">{opt.title || `Ticket ${idx + 1}`}</Text>
-                    <Text className="text-gray-600">${Number(opt.price || 0).toFixed(2)}</Text>
-                  </View>
-                ))}
-                <Text className="text-[12px] text-gray-500 mt-2">Paid checkout not implemented on mobile yet.</Text>
-              </View>
-            ) : (
-              <Text>No ticket options available.</Text>
-            )}
-          </ModalBody>
-          <ModalFooter>
-            <Button onPress={() => setTicketModalOpened(false)} variant="outline">
-              <Text>Close</Text>
-            </Button>
-          </ModalFooter>
-        </ModalContent>
-      </Modal>
+      {selectedSlot && (
+        <GetTicketModal
+          eventSlot={selectedSlot}
+          opened={ticketModalOpened}
+          onClose={() => setTicketModalOpened(false)}
+          onTicketIssued={(newTickets) => {
+            setTickets((prev) => [...prev, ...newTickets]);
+            setHasValidTickets(true);
+          }}
+        />
+      )}
 
       {/* Ticket Viewer Modal */}
       <Modal isOpen={ticketViewOpened} onClose={() => setTicketViewOpened(false)}>

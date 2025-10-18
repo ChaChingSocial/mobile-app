@@ -33,7 +33,7 @@ export function MainNewsfeed() {
         <NewsfeedList posts={posts} communityPage={false} />
         {loading && (
           <Image
-            source={require("@/assets/images/logo.png")}
+            source={require("@/assets/images/logo-inverted.png")}
             alt="Loading..."
             resizeMode="contain"
             className="w-full"
