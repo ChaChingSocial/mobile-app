@@ -172,7 +172,7 @@ export default function NewImagePost() {
             </HStack>
           ) : (
             <Text className="text-gray-900 my-2.5 font-bold w-fit">
-              Select a community
+                🐷Select a community
             </Text>
           )}
           <Ionicons name="chevron-expand-outline" size={24} color="black" />

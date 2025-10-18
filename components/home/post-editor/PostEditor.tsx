@@ -25,9 +25,13 @@ const PostEditor = ({ message, setContent, editorType }: PostEditorProps) => {
   const [newPostContent, setNewPostContent] = useState(message ?? "");
   const [keyboardHeight, setKeyboardHeight] = useState(0);
 
-  useEffect(() => {
-    setNewPostContent(message ?? "");
-  }, [message]);
+    useEffect(() => {
+        setNewPostContent(message ?? "");
+        // Also clear the RichEditor content
+        if (richText.current && message === "") {
+            richText.current.setContentHTML("");
+        }
+    }, [message]);
 
   useEffect(() => {
     const showSubscription = Keyboard.addListener("keyboardDidShow", (e) => {

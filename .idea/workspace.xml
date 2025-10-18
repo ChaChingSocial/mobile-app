@@ -5,28 +5,15 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="fd0dd57f-f28d-4123-909e-256c8ae3c9ef" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/assets/images/oink-birthday.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/assets/images/oink.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/components/home/OinkInfo.tsx" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/lib/store/score.ts" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/(protected)/(home)/_layout.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/(protected)/(home)/_layout.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/(protected)/(home)/blog/index.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/(protected)/(home)/blog/index.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/(protected)/(home)/communities.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/(protected)/(home)/communities.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/(protected)/(home)/profile.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/(protected)/(home)/profile.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/(protected)/about.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/(protected)/about.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/(protected)/search-community.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/(protected)/search-community.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/components/communities/AllCommunitiesPreview.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/components/communities/AllCommunitiesPreview.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/components/home/HomePage.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/components/home/HomePage.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/components/home/MainNewsFeed.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/components/home/MainNewsFeed.tsx" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/components/home/PostComponent.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/components/home/PostComponent.tsx" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/components/home/post-editor/PostEditor.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/components/home/post-editor/PostEditor.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/components/home/posts/Comment.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/components/home/posts/Comment.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/components/home/posts/PicturePost.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/components/home/posts/PicturePost.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/components/home/posts/PostWrapper.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/components/home/posts/PostWrapper.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/components/menu/UserMenu.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/components/menu/UserMenu.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/components/ui/gluestack-ui-provider/config.ts" beforeDir="false" afterPath="$PROJECT_DIR$/components/ui/gluestack-ui-provider/config.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/constants/Colors.ts" beforeDir="false" afterPath="$PROJECT_DIR$/lib/constants/Colors.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/components/home/posts/PostComments.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/components/home/posts/PostComments.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/components/new-post/NewImagePost.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/components/new-post/NewImagePost.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/components/new-post/NewPodcastPost.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/components/new-post/NewPodcastPost.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/components/new-post/NewPost.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/components/new-post/NewPost.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/components/new-post/NewVideoLinkPost.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/components/new-post/NewVideoLinkPost.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/api/newsfeed.ts" beforeDir="false" afterPath="$PROJECT_DIR$/lib/api/newsfeed.ts" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />

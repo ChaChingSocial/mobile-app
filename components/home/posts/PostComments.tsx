@@ -90,7 +90,7 @@ export const PostComments = ({
           )}
           {canViewComments &&
             showComments &&
-            sortedComments.slice(1).map((comment, index) => (
+            sortedComments.map((comment, index) => (
               <Box key={index} className="mt-6 mb-6">
                 <Comment comment={comment} post={post} />
               </Box>

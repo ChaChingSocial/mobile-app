@@ -532,15 +532,18 @@ export async function commentOnPost(
 
     if (postSnap.exists()) {
       const postData = postSnap.data();
-      const newCommentWithId: Comment = {
-        ...newComment,
-        id: `${postId}_comment_${postData.comments?.length + 1 || 1}`,
-        userId: newComment.userId || "",
-        message: newComment.message,
-        timestamp: new Date(),
-        likes: [],
-        comments: [],
-      };
+        const newCommentWithId: Comment = {
+            id: `${postId}_comment_${(postData.comments?.length || 0) + 1}`,
+            userId: newComment.userId,
+            userName: newComment.userName,
+            userPic: newComment.userPic,
+            message: newComment.message,
+            timestamp: new Date(),
+            likes: [],
+            comments: [],
+            postReference: newComment.postReference,
+            communityId: newComment.communityId,
+        };
 
       console.log("Updating post with comments:", newCommentWithId);
 

@@ -18,6 +18,7 @@ import { useEffect, useState } from "react";
 import { Pressable, TextInput, TouchableOpacity, View } from "react-native";
 import { Button, ButtonText } from "../ui/button";
 import { Card } from "../ui/card";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 import { useRouter } from "expo-router";
 import { Image } from "react-native";
@@ -42,14 +43,14 @@ export function PostComponent({ post }: { post: PostType }) {
   const [userOinkedPost, setUserOinkedPost] = useState(false);
   const [writeComment, setWriteComment] = useState(false);
   const [enableComments, setEnableComments] = useState(true);
-  const [commentText, setCommentText] = useState("");
-  const [comment, setComment] = useState("");
+  const draftKey = post?.id ? `draft:comment:${post.id}` : undefined;
   const [editing, setEditing] = useState(false);
   const [showAllComments, setShowAllComments] = useState(false);
   const [communityName, setCommunityName] = useState<string | null>(null);
   const [communitySlug, setCommunitySlug] = useState<string | null>(null);
   const [oinkInfoModalVisible, setOinkInfoModalVisible] = useState(false);
   const currentUserScore = useScoreStore((state) => state.currentUserScore);
+  const [commentContent, setCommentContent] = useState("");
 
   useEffect(() => {
     if (post) {
@@ -64,6 +65,18 @@ export function PostComponent({ post }: { post: PostType }) {
       setEnableComments(post.advert.commentable);
     }
   }, [post]);
+
+  // Load any saved draft for this post
+  useEffect(() => {
+    (async () => {
+      if (!draftKey) return;
+      const saved = await AsyncStorage.getItem(draftKey);
+      if (saved && saved.length > 0) {
+        setCommentContent(saved);
+        setWriteComment(true);
+      }
+    })();
+  }, [draftKey]);
 
   useEffect(() => {
     const fetchCommunityData = async () => {
@@ -222,21 +235,33 @@ export function PostComponent({ post }: { post: PostType }) {
     }
   };
 
-  const handlePostingComment = () => {
-    const newComment = {
+  const handlePostingComment = async () => {
+    if (!commentContent || commentContent.trim().length === 0) return;
+
+    // If not logged in, save draft and route to login
+    if (!currentUserId) {
+      if (draftKey) await AsyncStorage.setItem(draftKey, commentContent ?? "");
+      router.push("/login");
+      return;
+    }
+
+    const newCommentObj = {
       userId: currentUserId,
       userName: session?.displayName,
       userPic: session?.profilePic,
-      message: { message: comment, mentions: [] },
+      message: { message: commentContent, mentions: [] },
       timestamp: new Date(),
       likes: [],
       comments: [],
       postReference: post.id,
       communityId: post.newsfeedId,
     };
-    commentOnPost(post.id, newComment, post.posterUserId).then(() => {
+    commentOnPost(post.id, newCommentObj, post.posterUserId).then(async (saved) => {
       setWriteComment(false);
-      post.comments.push(newComment);
+      if (!post.comments) post.comments = [];
+      post.comments.push(saved ?? newCommentObj);
+      if (draftKey) await AsyncStorage.removeItem(draftKey);
+      setCommentContent(""); // Clear editor after posting
     });
   };
 
@@ -284,13 +309,13 @@ export function PostComponent({ post }: { post: PostType }) {
           {renderPostContent()}
         </PostWrapper>
 
-        {writeComment && currentUserId ? (
+        {/*{writeComment && (*/}
           <View className="bg-[#a5e5cb] rounded-md rounded-md p-4 ml-4 mb-4">
               <View className="flex flex-row items-center gap-2">
                   <View className="flex-1">
                       <PostEditor
-                          message=""
-                          setContent={(content) => setComment(content)}
+                          message={commentContent}
+                          setContent={setCommentContent}
                           editorType="comment"
                       />
                   </View>
@@ -301,7 +326,6 @@ export function PostComponent({ post }: { post: PostType }) {
                       <Ionicons name="send" size={20} color="white" />
                   </TouchableOpacity>
               </View>
-
               {/*<View className="flex flex-row justify-end mt-2 gap-2">*/}
             {/*  <Button*/}
             {/*    // mode="outlined"*/}
@@ -320,21 +344,20 @@ export function PostComponent({ post }: { post: PostType }) {
             {/*</View>*/}
 
           </View>
-        ) : (
-          enableComments &&
-          currentUserId && (
-            <TouchableOpacity onPress={() => setWriteComment(true)}>
-              <TextInput
-                placeholder="Comment..."
-                value={commentText}
-                onChangeText={setCommentText}
-                className="bg-[#f5f3ff] rounded-lg p-3 mt-2 ml-8 border-2 border-primary-50"
-                editable={false}
-                onTouchStart={() => setWriteComment(true)}
-              />
-            </TouchableOpacity>
-          )
-        )}
+        {/*// ) : (*/}
+        {/*//   enableComments && (*/}
+        {/*//     <TouchableOpacity onPress={() => setWriteComment(true)}>*/}
+        {/*//       <TextInput*/}
+        {/*//         placeholder="Comment..."*/}
+        {/*//         value={commentText}*/}
+        {/*//         onChangeText={setCommentText}*/}
+        {/*//         className="bg-[#f5f3ff] rounded-lg p-3 mt-2 ml-8 border-2 border-primary-50"*/}
+        {/*//         editable={false}*/}
+        {/*//         onTouchStart={() => setWriteComment(true)}*/}
+        {/*//       />*/}
+        {/*//     </TouchableOpacity>*/}
+        {/*//   )*/}
+        {/*// )}*/}
 
         {enableComments && post.comments && (
           <PostComments post={post} showAllComments={showAllComments} />
