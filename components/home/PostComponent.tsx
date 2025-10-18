@@ -169,7 +169,7 @@ export function PostComponent({ post }: { post: PostType }) {
 
   const renderPostContent = () => {
     switch (post.category) {
-      case "event":
+      case "eventV2":
         return (
           <EventPost
             post={post}

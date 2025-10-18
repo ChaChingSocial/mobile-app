@@ -5,11 +5,9 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="fd0dd57f-f28d-4123-909e-256c8ae3c9ef" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/.gitignore" beforeDir="false" afterPath="$PROJECT_DIR$/.gitignore" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/components/blog/BlogCard.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/components/blog/BlogCard.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/components/home/posts/Comment.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/components/home/posts/Comment.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/api/newsfeed.ts" beforeDir="false" afterPath="$PROJECT_DIR$/lib/api/newsfeed.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/components/home/PostComponent.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/components/home/PostComponent.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/components/home/posts/EventPost.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/components/home/posts/EventPost.tsx" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />

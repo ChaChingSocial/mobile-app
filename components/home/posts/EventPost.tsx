@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   View,
   Text,
@@ -31,11 +31,22 @@ import {
   CheckboxIndicator,
   CheckboxLabel,
 } from "@/components/ui/checkbox";
-import { Badge, BadgeText } from "@/components/ui/badge";
+import { Badge } from "@/components/ui/badge";
 import SelectComponent from "@/components/common/SelectInput";
 import { CheckIcon } from "@/components/ui/icon";
 import HtmlRenderText from "@/components/common/HtmlRenderText";
 import PostTags from "../post-editor/PostTag";
+import {
+  Modal,
+  ModalBackdrop,
+  ModalBody,
+  ModalContent,
+  ModalFooter,
+  ModalHeader,
+  ModalCloseButton,
+} from "@/components/ui/modal";
+import { EventApi } from "@/_sdk/apis";
+import type { Ticket, EventSlot } from "@/_sdk/models";
 
 interface EventPostProps {
   post: PostType;
@@ -51,6 +62,122 @@ export const EventPost = ({
   const { session: currentUser } = useSession();
   const userId = currentUser?.uid;
 
+  // ---------- Event V2 (mobile) ----------
+  const eventV2: any = (post as any).eventV2 || (post as any).event || null;
+  const eventSlots: EventSlot[] = (eventV2?.eventSlots || []) as EventSlot[];
+  const hasImage = !!(eventV2?.images && eventV2.images.length > 0);
+
+  const [selectedSlotIndex, setSelectedSlotIndex] = useState<number | null>(
+    eventSlots.length > 0 ? 0 : null
+  );
+  const selectedSlot: EventSlot | null =
+    selectedSlotIndex != null && eventSlots[selectedSlotIndex]
+      ? eventSlots[selectedSlotIndex]
+      : null;
+
+  const [ticketModalOpened, setTicketModalOpened] = useState(false);
+  const [ticketViewOpened, setTicketViewOpened] = useState(false);
+  const [authPromptOpen, setAuthPromptOpen] = useState(false);
+  const [tickets, setTickets] = useState<Ticket[]>([]);
+  const [allTickets, setAllTickets] = useState<Ticket[]>([]);
+  const [hasValidTickets, setHasValidTickets] = useState(false);
+  const [readMore, setReadMore] = useState(false);
+  const [showReadMore, setShowReadMore] = useState(false);
+  const descRef = useRef<Text>(null);
+
+  const descriptionHtml = (selectedSlot?.description as any) || eventV2?.description || "";
+
+  useEffect(() => {
+    // naive read-more toggle: if description string is long
+    const plain = String(descriptionHtml || "").replace(/<[^>]+>/g, "");
+    setShowReadMore(plain.length > 220);
+  }, [descriptionHtml]);
+
+  // tickets for selected slot
+  useEffect(() => {
+    const api = new EventApi();
+    async function fetchTickets() {
+      try {
+        if (selectedSlot?.id) {
+          const t = await api.getEventSlotTickets({ eventSlotId: selectedSlot.id });
+          setAllTickets(t || []);
+        } else {
+          setAllTickets([]);
+        }
+      } catch (e) {
+        setAllTickets([]);
+      }
+    }
+    fetchTickets();
+  }, [selectedSlot?.id]);
+
+  useEffect(() => {
+    const api = new EventApi();
+    async function fetchUserTickets() {
+      if (!selectedSlot?.id || !userId) {
+        setTickets([]);
+        setHasValidTickets(false);
+        return;
+      }
+      try {
+        const t = await api.getUserEventSlotTickets({
+          eventSlotId: selectedSlot.id,
+          userId,
+        });
+        const valid = (t || []).filter((tk) => tk.id && tk.id.trim() !== "");
+        setTickets(valid);
+        setHasValidTickets(valid.length > 0);
+      } catch (e) {
+        setTickets([]);
+        setHasValidTickets(false);
+      }
+    }
+    fetchUserTickets();
+  }, [selectedSlot?.id, userId]);
+
+  const getDateFromAny = (ts: any): Date => {
+    if (!ts) return new Date();
+    if (ts instanceof Date) return ts;
+    if (typeof ts === "object" && "seconds" in ts) return new Date((ts as any).seconds * 1000);
+    if (typeof ts === "string" || typeof ts === "number") return new Date(ts as any);
+    return new Date();
+  };
+
+  const startDate = selectedSlot?.startTimeDate
+    ? getDateFromAny(selectedSlot.startTimeDate)
+    : eventV2?.startTimeDate
+    ? getDateFromAny(eventV2.startTimeDate)
+    : new Date();
+  const endDate = selectedSlot?.endTimeDate
+    ? getDateFromAny(selectedSlot.endTimeDate)
+    : eventV2?.endTimeDate
+    ? getDateFromAny(eventV2.endTimeDate)
+    : new Date();
+
+  const month = dayjs(startDate).isValid() ? dayjs(startDate).format("MMM") : "";
+  const day = dayjs(startDate).isValid() ? dayjs(startDate).format("DD") : "";
+  const displayStartTime = dayjs(startDate).isValid() ? dayjs(startDate).format("h:mm A") : "";
+  const displayEndTime = dayjs(endDate).isValid() ? dayjs(endDate).format("h:mm A") : "";
+  const calendarStartDate = dayjs(startDate).isValid()
+    ? dayjs(startDate).format("ddd, MM-DD-YY")
+    : "";
+  const calendarEndDate = dayjs(endDate).isValid() ? dayjs(endDate).format("ddd, MM-DD-YY") : "";
+
+  const handleSelectSlot = (idx: number) => {
+    setSelectedSlotIndex(idx);
+  };
+
+  const handleGetTickets = () => {
+    if (!currentUser) {
+      setAuthPromptOpen(true);
+      return;
+    }
+    setTicketModalOpened(true);
+  };
+
+  const handleViewTicket = () => setTicketViewOpened(true);
+
+  // ---------- Legacy edit (kept) ----------
   const userData = {
     localId: userId,
     email: currentUser?.email,
@@ -58,67 +185,75 @@ export const EventPost = ({
     photoUrl: currentUser?.profilePic,
   };
 
-  // Memoize firebase dates
   const firebaseStartTimeDate = useMemo(() => {
-    return post.event?.startTimeDate
+    return (post as any).event?.startTimeDate
       ? new Timestamp(
-          post.event.startTimeDate.seconds,
-          post.event.startTimeDate.nanoseconds
+          (post as any).event.startTimeDate.seconds,
+          (post as any).event.startTimeDate.nanoseconds
         )
       : null;
-  }, [post.event?.startTimeDate]);
+  }, [(post as any).event?.startTimeDate]);
 
   const firebaseEndTimeDate = useMemo(() => {
-    return post.event?.endTimeDate
+    return (post as any).event?.endTimeDate
       ? new Timestamp(
-          post.event.endTimeDate.seconds,
-          post.event.endTimeDate.nanoseconds
+          (post as any).event.endTimeDate.seconds,
+          (post as any).event.endTimeDate.nanoseconds
         )
       : null;
-  }, [post.event?.endTimeDate]);
+  }, [(post as any).event?.endTimeDate]);
 
-  // State for edited event details
   const [editedStartTimeDate, setEditedStartTimeDate] = useState(
-    firebaseStartTimeDate
-      ? new Date(firebaseStartTimeDate.seconds * 1000)
-      : new Date()
+    firebaseStartTimeDate ? new Date(firebaseStartTimeDate.seconds * 1000) : new Date()
   );
   const [editedEndTimeDate, setEditedEndTimeDate] = useState(
-    firebaseEndTimeDate
-      ? new Date(firebaseEndTimeDate.seconds * 1000)
-      : new Date()
+    firebaseEndTimeDate ? new Date(firebaseEndTimeDate.seconds * 1000) : new Date()
   );
-  const [editedTitle, setEditedTitle] = useState(post.event?.title || "");
+  const [editedTitle, setEditedTitle] = useState((post as any).event?.title || "");
   const [editedDescription, setEditedDescription] = useState(
-    post.event?.description || ""
+    (post as any).event?.description || ""
   );
   const [editedTimezone, setEditedTimezone] = useState(
-    post.event?.timezone || "UTC"
+    (post as any).event?.timezone || "UTC"
   );
-  const [editedPrice, setEditedPrice] = useState(post.event?.price || 0);
+  const [editedPrice, setEditedPrice] = useState((post as any).event?.price || 0);
   const [editedPrivacy, setEditedPrivacy] = useState(
-    post.event?.privacy || "PUBLIC"
+    (post as any).event?.privacy || "PUBLIC"
   );
   const [editedEventType, setEditedEventType] = useState(
-    post.event?.eventType || "LIVE_STREAM"
+    (post as any).event?.eventType || "LIVE_STREAM"
   );
   const [editedRecorded, setEditedRecorded] = useState<boolean>(
-    post.event?.recorded || false
+    (post as any).event?.recorded || false
   );
   const [editedCommentsEnabled, setEditedCommentsEnabled] = useState<boolean>(
-    post.event?.commentsEnabled || true
+    (post as any).event?.commentsEnabled || true
   );
   const [editedLinks, setEditedLinks] = useState({
-    link1: post.event?.link1 || "",
-    link2: post.event?.link2 || "",
-    link3: post.event?.link3 || "",
+    link1: (post as any).event?.link1 || "",
+    link2: (post as any).event?.link2 || "",
+    link3: (post as any).event?.link3 || "",
   });
   const [editedLumaWidget, setEditedLumaWidget] = useState(
-    post.event?.lumaWidget || ""
+    (post as any).event?.lumaWidget || ""
   );
   const [rsvpStatus, setRsvpStatus] = useState(false);
 
-  // Format dates for display
+  useEffect(() => {
+    if ((post as any).event?.startTimeDate) {
+      setEditedStartTimeDate(new Date((post as any).event.startTimeDate.seconds * 1000));
+    }
+    if ((post as any).event?.endTimeDate) {
+      setEditedEndTimeDate(new Date((post as any).event.endTimeDate.seconds * 1000));
+    }
+  }, [(post as any).event?.startTimeDate, (post as any).event?.endTimeDate]);
+
+  useEffect(() => {
+    if (userId && post.id) {
+      checkUserRSVP(post.id, userId).then((rsvp) => setRsvpStatus(rsvp));
+    }
+  }, [userId, post.id]);
+
   const formattedStartDate = dayjs(editedStartTimeDate).isValid()
     ? dayjs(editedStartTimeDate).format("YYYY-MM-DD")
     : "Invalid Date";
@@ -131,21 +266,6 @@ export const EventPost = ({
   const formattedEndTime = dayjs(editedEndTimeDate).isValid()
     ? dayjs(editedEndTimeDate).format("HH:mm")
     : "Invalid Time";
-
-  useEffect(() => {
-    if (post.event?.startTimeDate) {
-      setEditedStartTimeDate(new Date(post.event.startTimeDate.seconds * 1000));
-    }
-    if (post.event?.endTimeDate) {
-      setEditedEndTimeDate(new Date(post.event.endTimeDate.seconds * 1000));
-    }
-  }, [post.event?.startTimeDate, post.event?.endTimeDate]);
-
-  useEffect(() => {
-    if (userId && post.id) {
-      checkUserRSVP(post.id, userId).then((rsvp) => setRsvpStatus(rsvp));
-    }
-  }, [userId, post.id]);
 
   const handleSave = () => {
     if (post.id) {
@@ -181,44 +301,14 @@ export const EventPost = ({
           photoUrl: string;
         }
       );
-    } else {
-      console.error("User ID is undefined. Cannot update RSVP.");
     }
   };
 
-  const renderRsvpAvatars = () => {
-    const rsvps = post.event?.rsvps || [];
-    return (
-      <View className="flex-row items-center -space-x-2">
-        <AvatarGroup>
-          {rsvps.slice(0, 3).map(
-            (user, index) =>
-              user && (
-                <Avatar size="sm" key={index}>
-                  <AvatarFallbackText>{user.displayName}</AvatarFallbackText>
-                  <AvatarImage source={{ uri: user.photoUrl }} />
-                </Avatar>
-              )
-          )}
-          {rsvps.length > 3 && (
-            <Avatar size="sm">
-              <AvatarFallbackText>
-                {"+ " + (rsvps.length - 3)}
-              </AvatarFallbackText>
-            </Avatar>
-          )}
-        </AvatarGroup>
-      </View>
-    );
-  };
-
-  const handleLinkPress = (url: string) => {
-    Linking.openURL(url);
-  };
+  const handleLinkPress = (url: string) => Linking.openURL(url);
 
   if (editing) {
     return (
-      <ScrollView className="p-2">
+      <ScrollView className="p-2">{/* keep legacy editor */}
         <TextInput
           className="border border-gray-300 rounded p-3 mb-4 bg-white"
           placeholder="Title"
@@ -256,27 +346,20 @@ export const EventPost = ({
           className="border border-gray-300 rounded p-3 mb-4 bg-white"
           placeholder="Link 1"
           value={editedLinks.link1}
-          onChangeText={(val) =>
-            setEditedLinks((prev) => ({ ...prev, link1: val }))
-          }
+          onChangeText={(val) => setEditedLinks((prev) => ({ ...prev, link1: val }))}
         />
         <TextInput
           className="border border-gray-300 rounded p-3 mb-4 bg-white"
           placeholder="Link 2"
           value={editedLinks.link2}
-          onChangeText={(val) =>
-            setEditedLinks((prev) => ({ ...prev, link2: val }))
-          }
+          onChangeText={(val) => setEditedLinks((prev) => ({ ...prev, link2: val }))}
         />
         <TextInput
           className="border border-gray-300 rounded p-3 mb-4 bg-white"
           placeholder="Link 3"
           value={editedLinks.link3}
-          onChangeText={(val) =>
-            setEditedLinks((prev) => ({ ...prev, link3: val }))
-          }
+          onChangeText={(val) => setEditedLinks((prev) => ({ ...prev, link3: val }))}
         />
-
         <SelectComponent
           options={[
             { label: "Public", value: "PUBLIC" },
@@ -291,7 +374,6 @@ export const EventPost = ({
           inputClassName="text-sm"
           iconClassName="mr-3"
         />
-
         <SelectComponent
           options={[
             { label: "Live Stream", value: "LIVE_STREAM" },
@@ -338,11 +420,7 @@ export const EventPost = ({
           <Button onPress={handleSave} className="flex-1">
             <Text className="text-white font-medium">Save</Text>
           </Button>
-          <Button
-            onPress={handleCancel}
-            variant="outline"
-            className="flex-1 bg-transparent border border-gray-300"
-          >
+          <Button onPress={handleCancel} variant="outline" className="flex-1 bg-transparent border border-gray-300">
             <Text className="font-medium">Cancel</Text>
           </Button>
         </View>
@@ -350,152 +428,324 @@ export const EventPost = ({
     );
   }
 
+  // ---------- Render Event V2 look ----------
   return (
     <View className="p-2 my-2">
-      {post.title && (
-        <Text className="text-2xl font-semibold text-gray-800 mb-4">
-          {post.title}
-        </Text>
+      {!!eventV2?.title && (
+        <Text className="text-2xl font-semibold text-gray-800 mb-2">{eventV2.title}</Text>
       )}
 
-      <View className="flex-col md:flex-row flex-wrap">
-        <View className="w-full mb-4">
-          {post.event &&
-            post.event.eventType !== "PRE_RECORDED" &&
-            post.event.images &&
-            post.event.images.length > 0 &&
-            post.event.images[0] && (
-              <Image
-                source={{ uri: post.event.images[0] }}
-                className="w-full h-48 rounded-lg"
-                resizeMode="cover"
-              />
-            )}
+      {eventSlots.length > 1 && (
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          className="mb-2"
+        >
+          {eventSlots.map((slot, idx) => (
+            <TouchableOpacity
+              key={slot.id || idx}
+              onPress={() => handleSelectSlot(idx)}
+              className={`mr-3 p-3 rounded-lg border ${
+                selectedSlotIndex === idx ? "border-violet-500" : "border-gray-200"
+              } bg-white`}
+              activeOpacity={0.8}
+            >
+              <Text className="text-xs text-gray-500">{dayjs(getDateFromAny(slot.startTimeDate)).format("MMM DD")}</Text>
+              <Text className="font-semibold" numberOfLines={1}>{slot.title || "Event Slot"}</Text>
+              <Text className="text-xs text-gray-600" numberOfLines={1}>
+                {dayjs(getDateFromAny(slot.startTimeDate)).format("h:mm A")} - {dayjs(getDateFromAny(slot.endTimeDate)).format("h:mm A")}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </ScrollView>
+      )}
 
-          {post.event && post.event.video && (
-            <View className="w-full h-48 bg-gray-100 justify-center items-center rounded-lg">
-              <Text>Video player would appear here</Text>
+      <View className="w-full flex-col gap-3">
+        {hasImage && (
+          <Image
+            source={{ uri: (eventV2.images?.[0] as any) || "" }}
+            className="w-full h-48 rounded-lg"
+            resizeMode="cover"
+          />
+        )}
+
+        {!!selectedSlot && (
+          <View className="flex-row items-stretch border border-gray-300 rounded-lg bg-gray-100 w-full overflow-hidden min-h-[60px]">
+            <View className="items-center justify-center bg-gray-800 w-16 rounded-l-lg">
+              <Text className="text-[10px] text-gray-300 uppercase">{month}</Text>
+              <Text className="text-lg text-white font-semibold">{day}</Text>
             </View>
-          )}
-        </View>
-
-        <View className="w-full">
-          <View className="p-2">
-            {!post.event?.lumaWidget && (
-              <>
-                <Text className="text-sm font-semibold text-pink-500 uppercase mb-1">
-                  {formattedStartDate} - {formattedEndDate}
-                </Text>
-                <Text className="text-sm text-gray-500 mb-3">
-                  {formattedStartTime} - {formattedEndTime}{" "}
-                  {post.event?.timezone}
-                </Text>
-              </>
-            )}
-
-            <Text className="text-gray-500 my-2">
-              {post.event?.description && (
-                <HtmlRenderText source={post.event?.description} />
-              )}
-            </Text>
-
-            {post.event?.eventType === "IN_PERSON" &&
-              post.event.address &&
-              post.event.address.address && (
-                <TouchableOpacity
-                  onPress={() =>
-                    Linking.openURL(
-                      `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
-                        post.event?.address?.address || ""
-                      )}`
-                    )
-                  }
-                >
-                  <Text className="text-sm text-blue-500 underline mt-2">
-                    {post.event.address.address}
-                  </Text>
-                </TouchableOpacity>
-              )}
-
-            <View className="mt-0">
-              {post.event?.link1 && (
-                <TouchableOpacity
-                  className="flex-row items-center mb-2"
-                  onPress={() =>
-                    post.event?.link1 && handleLinkPress(post.event.link1)
-                  }
-                >
-                  <FontAwesome5 name="link" size={16} color="#3b82f6" />
-                  <Text className="text-sm text-blue-500 underline ml-2">
-                    {post.event.link1}
-                  </Text>
-                </TouchableOpacity>
-              )}
-              {post.event?.link2 && (
-                <TouchableOpacity
-                  className="flex-row items-center mb-2"
-                  onPress={() =>
-                    post.event?.link2 && handleLinkPress(post.event.link2)
-                  }
-                >
-                  <FontAwesome5 name="link" size={16} color="#3b82f6" />
-                  <Text className="text-sm text-blue-500 underline ml-2">
-                    {post.event.link2}
-                  </Text>
-                </TouchableOpacity>
-              )}
-              {post.event?.link3 && (
-                <TouchableOpacity
-                  className="flex-row items-center mb-2"
-                  onPress={() =>
-                    post.event?.link3 && handleLinkPress(post.event.link3)
-                  }
-                >
-                  <FontAwesome5 name="link" size={16} color="#3b82f6" />
-                  <Text className="text-sm text-blue-500 underline ml-2">
-                    {post.event.link3}
-                  </Text>
-                </TouchableOpacity>
-              )}
+            <View className="flex-1 justify-center px-3 py-2">
+              <Text className="text-sm text-black">
+                {calendarStartDate === calendarEndDate ? calendarStartDate : `${calendarStartDate} - ${calendarEndDate}`}
+              </Text>
+              <Text className="text-xs text-gray-600">
+                {displayStartTime} - {displayEndTime} {eventV2?.timezone || ""}
+              </Text>
             </View>
           </View>
+        )}
 
-          {post.event?.lumaWidget === "" && (
-            <View className="p-2 flex-col gap-4">
-              <View className="flex-row justify-between items-center">
-                <Text className="font-bold text-base">Attendees:</Text>
-                {renderRsvpAvatars()}
-              </View>
-
-              <Button
-                onPress={handleRsvpToggle}
-                variant={rsvpStatus ? "solid" : "outline"}
-                className={`w-32 flex-row items-center justify-center ${
-                  rsvpStatus ? "bg-green-500" : "border-violet-500"
-                }`}
-              >
-                <Text
-                  className={`font-medium ${
-                    rsvpStatus ? "text-white" : "text-violet-500"
-                  }`}
-                >
-                  {rsvpStatus ? "RSVP'ed" : "RSVP"}
-                </Text>
-                {rsvpStatus && (
-                  <FontAwesome5
-                    name="check"
-                    size={16}
-                    color="white"
-                    className="ml-2"
-                  />
-                )}
-              </Button>
+        {/* meeting link */}
+        {(selectedSlot as any)?.meetingLink || eventV2?.meetingLink ? (
+          <TouchableOpacity
+            className="flex-row items-center border border-gray-300 rounded-lg bg-gray-100 min-h-[60px]"
+            onPress={() => {
+              const url = (selectedSlot as any)?.meetingLink || eventV2?.meetingLink;
+              if (url) Linking.openURL(url);
+            }}
+            activeOpacity={0.8}
+          >
+            <View className="items-center justify-center bg-gray-800 w-16 rounded-l-lg min-h-[60px]">
+              <FontAwesome5 name="link" size={20} color="#fff" />
             </View>
+            <Text className="flex-1 text-blue-600 underline px-2" numberOfLines={1}>
+              {(selectedSlot as any)?.meetingLink || eventV2?.meetingLink}
+            </Text>
+          </TouchableOpacity>
+        ) : null}
+
+        {/* address */}
+        {!!selectedSlot?.address && (
+          <TouchableOpacity
+            className="flex-row items-center border border-gray-300 rounded-lg bg-gray-100 min-h-[60px]"
+            onPress={() => {
+              const addr = (selectedSlot?.address as any)?.address || (selectedSlot?.address as any) || "";
+              if (addr) {
+                Linking.openURL(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(addr)}`);
+              }
+            }}
+            activeOpacity={0.8}
+          >
+            <View className="items-center justify-center bg-gray-800 w-16 rounded-l-lg min-h-[60px]">
+              <FontAwesome5 name="map-pin" size={18} color="#fff" />
+            </View>
+            <Text className="flex-1 text-blue-600 underline px-2" numberOfLines={2}>
+              {(selectedSlot?.address as any)?.address || (selectedSlot?.address as any)}
+            </Text>
+          </TouchableOpacity>
+        )}
+
+        {/* action buttons */}
+        <View className="flex-row flex-wrap gap-3 mt-2">
+          <Button onPress={handleGetTickets} className="px-4 py-3">
+            <Text className="text-white font-medium">Get Ticket</Text>
+          </Button>
+          {(post as any).event?.moderators?.includes(userId || "") && (
+            <Button variant="solid" className="px-4 py-3 bg-gray-800">
+              <Text className="text-white font-medium">Scan Tickets</Text>
+            </Button>
+          )}
+          {hasValidTickets && (
+            <Button variant="solid" className="px-4 py-3 bg-gray-700" onPress={handleViewTicket}>
+              <Text className="text-white font-medium">View Ticket</Text>
+            </Button>
           )}
         </View>
+
+        {/* description */}
+        {!!descriptionHtml && (
+          <View className="bg-white rounded-md p-2">
+            <View>
+              {!readMore ? (
+                <Text numberOfLines={6} className="text-gray-700">
+                  {/* Render stripped HTML preview */}
+                  {String(descriptionHtml).replace(/<[^>]+>/g, "")}
+                </Text>
+              ) : (
+                <HtmlRenderText source={String(descriptionHtml)} />
+              )}
+            </View>
+            {showReadMore && (
+              <TouchableOpacity onPress={() => setReadMore((p) => !p)}>
+                <Text className="text-blue-600 underline mt-2">{readMore ? "Read Less" : "Read more"}</Text>
+              </TouchableOpacity>
+            )}
+          </View>
+        )}
+
+        {/* links */}
+        {Array.isArray(eventV2?.links) && eventV2.links.length > 0 && (
+          <View className="mt-2">
+            {eventV2.links.map((ln: string, i: number) => (
+              <TouchableOpacity key={i} className="flex-row items-center mb-2" onPress={() => Linking.openURL(ln)}>
+                <FontAwesome5 name="link" size={16} color="#3b82f6" />
+                <Text className="text-sm text-blue-600 underline ml-2" numberOfLines={1}>{ln}</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        )}
+
+        {/* sponsors */}
+        {Array.isArray(eventV2?.sponsors) && eventV2.sponsors.length > 0 && (
+          <View className="mt-4">
+            <Text className="text-base font-semibold text-gray-800 mb-2">Event Sponsors & Partners</Text>
+            <View className="flex-row flex-wrap gap-3">
+              {eventV2.sponsors.map((sp: any, idx: number) => {
+                const hasUrl = !!sp?.link;
+                const CardComponent = hasUrl ? TouchableOpacity : View;
+                return (
+                  <CardComponent
+                    key={idx}
+                    className="w-[48%] bg-white rounded-md border border-gray-200 p-3"
+                    {...(hasUrl && { onPress: () => Linking.openURL(sp.link) })}
+                    activeOpacity={hasUrl ? 0.8 : 1}
+                  >
+                    {!!sp?.image && (
+                      <Image source={{ uri: typeof sp.image === "string" ? sp.image : sp.image?.uri }} className="w-full h-16 rounded" resizeMode="contain" />
+                    )}
+                    {!!sp?.title && (
+                      <Text className="text-center font-semibold text-xs mt-2">{sp.title}</Text>
+                    )}
+                    {!!sp?.description && (
+                      <Text className="text-center text-[11px] text-gray-600 mt-1" numberOfLines={3}>{sp.description}</Text>
+                    )}
+                    {hasUrl && (
+                      <Text className="text-center text-blue-500 underline text-xs mt-2">Visit site</Text>
+                    )}
+                  </CardComponent>
+                );
+              })}
+            </View>
+          </View>
+        )}
+
+        {/* hosts */}
+        {Array.isArray(selectedSlot?.hosts) && selectedSlot!.hosts!.length > 0 && (
+          <View className="px-1 mt-3">
+            <View className="flex-row items-center gap-2">
+              <Text className="font-bold text-base mr-2">Hosts:</Text>
+              <AvatarGroup>
+                {selectedSlot!.hosts!.slice(0, 4).map((h: any, idx: number) => (
+                  <Avatar size="sm" key={idx}>
+                    <AvatarFallbackText>{h?.username || "Host"}</AvatarFallbackText>
+                    {h?.profilePic ? <AvatarImage source={{ uri: h.profilePic }} /> : null}
+                  </Avatar>
+                ))}
+                {selectedSlot!.hosts!.length > 4 && (
+                  <Avatar size="sm">
+                    <AvatarFallbackText>{`+${selectedSlot!.hosts!.length - 4}`}</AvatarFallbackText>
+                  </Avatar>
+                )}
+              </AvatarGroup>
+            </View>
+          </View>
+        )}
+
+        {/* attendees */}
+        {allTickets.length > 0 && (
+          <View className="px-1 mt-3">
+            <View className="flex-row items-center gap-2">
+              <Text className="font-bold text-base mr-2">Attendees:</Text>
+              <AvatarGroup>
+                {allTickets.slice(0, 6).map((t, idx) => (
+                  <Avatar size="sm" key={t.id || idx}>
+                    <AvatarFallbackText>{t.username || t.email || "Attendee"}</AvatarFallbackText>
+                    {t.profilePic ? <AvatarImage source={{ uri: t.profilePic }} /> : null}
+                  </Avatar>
+                ))}
+                {allTickets.length > 6 && (
+                  <Avatar size="sm">
+                    <AvatarFallbackText>{`+${allTickets.length - 6}`}</AvatarFallbackText>
+                  </Avatar>
+                )}
+              </AvatarGroup>
+            </View>
+          </View>
+        )}
+
+        {/* tags */}
+        {post.tags && post.tags.length > 0 && <PostTags tags={post.tags} />}
+
+        {/* going badge */}
+        {hasValidTickets && (
+          <View className="absolute right-4 top-4">
+            <Badge variant="solid" action="success">
+              <Text className="text-white">You're Going</Text>
+            </Badge>
+          </View>
+        )}
       </View>
 
-      {post.tags && post.tags.length > 0 && <PostTags tags={post.tags} />}
+      {/* Get Ticket Modal */}
+      <Modal isOpen={ticketModalOpened} onClose={() => setTicketModalOpened(false)}>
+        <ModalBackdrop />
+        <ModalContent>
+          <ModalHeader>
+            <Text className="text-lg font-semibold">Get Tickets</Text>
+            <ModalCloseButton />
+          </ModalHeader>
+          <ModalBody>
+            {Array.isArray(selectedSlot?.ticketOptions) && selectedSlot!.ticketOptions!.length > 0 ? (
+              <View className="gap-3">
+                {selectedSlot!.ticketOptions!.map((opt: any, idx: number) => (
+                  <View key={idx} className="flex-row items-center justify-between">
+                    <Text className="font-medium">{opt.title || `Ticket ${idx + 1}`}</Text>
+                    <Text className="text-gray-600">${Number(opt.price || 0).toFixed(2)}</Text>
+                  </View>
+                ))}
+                <Text className="text-[12px] text-gray-500 mt-2">Paid checkout not implemented on mobile yet.</Text>
+              </View>
+            ) : (
+              <Text>No ticket options available.</Text>
+            )}
+          </ModalBody>
+          <ModalFooter>
+            <Button onPress={() => setTicketModalOpened(false)} variant="outline">
+              <Text>Close</Text>
+            </Button>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
+
+      {/* Ticket Viewer Modal */}
+      <Modal isOpen={ticketViewOpened} onClose={() => setTicketViewOpened(false)}>
+        <ModalBackdrop />
+        <ModalContent>
+          <ModalHeader>
+            <Text className="text-lg font-semibold">Your Tickets</Text>
+            <ModalCloseButton />
+          </ModalHeader>
+          <ModalBody>
+            {tickets.length === 0 ? (
+              <Text className="text-gray-600">No tickets yet.</Text>
+            ) : (
+              tickets.map((t) => (
+                <View key={t.id} className="mb-3 p-3 border border-gray-200 rounded-md bg-white">
+                  <Text className="font-semibold">Ticket ID: {t.id}</Text>
+                  {!!t.ticketStatus && (
+                    <Text className="text-xs text-gray-600">Status: {t.ticketStatus}</Text>
+                  )}
+                </View>
+              ))
+            )}
+          </ModalBody>
+          <ModalFooter>
+            <Button onPress={() => setTicketViewOpened(false)}>
+              <Text className="text-white">Close</Text>
+            </Button>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
+
+      {/* Auth prompt */}
+      <Modal isOpen={authPromptOpen} onClose={() => setAuthPromptOpen(false)}>
+        <ModalBackdrop />
+        <ModalContent>
+          <ModalHeader>
+            <Text className="text-lg font-semibold">Sign in required</Text>
+            <ModalCloseButton />
+          </ModalHeader>
+          <ModalBody>
+            <Text className="text-gray-700">Please log in to get tickets.</Text>
+          </ModalBody>
+          <ModalFooter>
+            <Button onPress={() => setAuthPromptOpen(false)} variant="outline">
+              <Text>Close</Text>
+            </Button>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
     </View>
   );
 };
