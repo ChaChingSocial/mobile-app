@@ -11,7 +11,7 @@ import { Heading } from "@/components/ui/heading";
 import { HStack } from "@/components/ui/hstack";
 import { Text } from "@/components/ui/text";
 import { VStack } from "@/components/ui/vstack";
-import { userApi } from "@/config/backend";
+import {scoreApi, userApi} from "@/config/backend";
 import { getPostsByUser } from "@/lib/api/newsfeed";
 import {
   checkIfFinFluencer,
@@ -19,11 +19,15 @@ import {
   fetchFollowing,
 } from "@/lib/api/user";
 import { useSession } from "@/lib/providers/AuthContext";
-import { useLocalSearchParams } from "expo-router";
+import {Link, useLocalSearchParams} from "expo-router";
 import { useEffect, useState } from "react";
 import { ScrollView } from "react-native-gesture-handler";
 import { Image, RefreshControl, TouchableOpacity } from "react-native";
 import { DocumentSnapshot } from "firebase/firestore";
+import { Badge, BadgeText, BadgeIcon } from '@/components/ui/badge';
+import {AntDesign} from "@expo/vector-icons";
+import * as Linking from "expo-linking";
+import {useScoreStore} from "@/lib/store/score";
 
 export default function Profile() {
   const { id: UserId } = useLocalSearchParams();
@@ -38,6 +42,9 @@ export default function Profile() {
   const [lastDoc, setLastDoc] = useState<DocumentSnapshot | null>(null);
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
+  const [showAllInterests, setShowAllInterests] = useState(false);
+  const currentUserScore = useScoreStore((state) => state.currentUserScore);
+  const setCurrentUserScore = useScoreStore((state) => state.setCurrentUserScore);
 
   console.log("UserInfo from params:", userInfo);
   console.log("followers", followers)
@@ -47,9 +54,14 @@ export default function Profile() {
       if (!currentUserId) return;
       const res = await userApi.getUserById({ userId: currentUserId });
       setUserInfo(res);
+      if (currentUserId && currentUserId === session?.uid) {
+          const scoreRes = await scoreApi.getScore({ userId: currentUserId });
+          setCurrentUserScore(scoreRes);
+      }
     } catch (error) {
       console.error("Error fetching user info:", error);
     }
+
   };
 
   const fetchFinfluencerStatus = async () => {
@@ -123,12 +135,15 @@ export default function Profile() {
 
   return (
     <ScrollView
-      className="bg-[#E6F8F1] flex-1"
+      className="bg-[#077f5f] flex-1"
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
     >
-      <VStack space="md" className="px-4 pt-6 justify-center items-center">
-        <Avatar
-          size="2xl"
+      <VStack space="md" className="pt-6 px-4 justify-center items-center">
+          <Heading size="xl" className="text-white text-center">
+              @{userInfo?.username || session?.displayName}
+          </Heading>
+          <Avatar
+          size="xl"
           className={`border-4 ${
             isFinfluencer ? "border-secondary-0" : "border-white"
           }`}
@@ -138,38 +153,115 @@ export default function Profile() {
           </AvatarFallbackText>
           <AvatarImage
             source={{
-              uri: userInfo?.profilePic || session?.profilePic,
+              uri: userInfo?.profilePic || session?.profilePic || undefined,
             }}
           />
         </Avatar>
 
-        <Box>
-          <Heading size="xl">
-            @{userInfo?.username || session?.displayName}
-          </Heading>
-          {session?.uid === userInfo?.id && (
+        <Box style={{ width: '100%', alignItems: 'center', justifyContent: 'center', display: 'flex' }}>
+          <HStack
+            space="md"
+            reversed={false}
+            className="justify-center items-center w-full"
+            style={{ width: '100%' }}
+          >
+            <Box className="flex flex-row gap-1 justify-center items-center">
+              <Text bold className="text-typography-white">
+                {following}
+              </Text>
+              <Text className="font-extralight text-white">Following</Text>
+            </Box>
+            <Box className="flex flex-row gap-1 justify-center items-center">
+              <Text bold className="text-white">
+                {followers}
+              </Text>
+              <Text className="font-extralight text-white">Followers</Text>
+            </Box>
+          </HStack>
+          <Box style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 16, marginVertical: 12, justifyContent: 'center', alignItems: 'center', width: '100%' }}>
+            {userInfo?.socials?.instagram && (
+              <TouchableOpacity
+                onPress={() => {
+                  Linking.openURL(userInfo.socials.instagram);
+                }}
+                style={{ alignSelf: 'center', justifyContent: 'center', marginHorizontal: 8 }}
+                accessibilityLabel="Instagram"
+              >
+                <AntDesign name="instagram" size={32} color="#fff" />
+              </TouchableOpacity>
+            )}
+            {userInfo?.socials?.linkedin && (
+                <TouchableOpacity
+                    onPress={() => {
+                        Linking.openURL(userInfo?.socials?.linkedin);
+                    }}
+                    style={{ alignSelf: 'center', justifyContent: 'center', marginHorizontal: 4 }}
+                    accessibilityLabel="LinkedIn"
+                >
+                    <AntDesign name="linkedin-square" size={24} color="#fff" />
+                </TouchableOpacity>
+            )}
+              {userInfo?.socials?.tiktok && (
+                  <TouchableOpacity
+                      onPress={() => {
+                          Linking.openURL(userInfo?.socials?.tiktok);
+                      }}
+                      style={{ alignSelf: 'center', justifyContent: 'center', marginHorizontal: 4 }}
+                      accessibilityLabel="TikTok"
+                  >
+                      <AntDesign name="tiktok" size={24} color="#fff" />
+                  </TouchableOpacity>
+              )}
+            {userInfo?.socials?.website && (
+                <TouchableOpacity
+                    onPress={() => {
+                        Linking.openURL(userInfo.socials.website);
+                    }}
+                    style={{ alignSelf: 'center', justifyContent: 'center', marginHorizontal: 4 }}
+                    accessibilityLabel="Website"
+                >
+                    <AntDesign name="earth" size={24} color="#fff" />
+                </TouchableOpacity>
+            )}
+          </Box>
+          <Box style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginVertical: 8, justifyContent: 'center', alignItems: 'center', width: '100%', alignSelf: 'center' }}>
+            {userInfo?.interests && userInfo.interests.length > 0 && (
+              <>
+                {(showAllInterests ? userInfo.interests : userInfo.interests.slice(0, 5)).map((interest, index) => (
+                  <Badge
+                    key={index}
+                    variant="solid"
+                    className="bg-[#a3e4d2]"
+                  >
+                    <BadgeText>{interest}</BadgeText>
+                  </Badge>
+                ))}
+              </>
+            )}
+
+            {userInfo?.interests && userInfo.interests.length > 5 && (
+              <TouchableOpacity
+                onPress={() => setShowAllInterests((prev) => !prev)}
+                style={{ alignSelf: 'center', marginLeft: 8 }}
+              >
+                <Badge variant="outline" className="bg-white bg-[#a3e4d2]">
+                  <BadgeText className="bg-[#a3e4d2]">
+                    {showAllInterests ? 'Show less' : `+${userInfo.interests.length - 5} more`}
+                  </BadgeText>
+                </Badge>
+              </TouchableOpacity>
+            )}
+          </Box>
+          {userInfo?.bio && (
             <Text
               size="md"
-              className="font-extralight text-typography-black text-center"
+              className="font-extralight text-typography-white text-center"
             >
-              {session?.email}
+              {userInfo?.bio}
             </Text>
           )}
         </Box>
-        <HStack space="md" reversed={false}>
-          <Box className="flex flex-row gap-1">
-            <Text bold className="text-typography-black">
-              {following}
-            </Text>
-            <Text className="font-extralight">Following</Text>
-          </Box>
-          <Box className="flex flex-row gap-1">
-            <Text bold className="text-black">
-              {followers}
-            </Text>
-            <Text className="font-extralight">Followers</Text>
-          </Box>
-        </HStack>
+
       </VStack>
 
       <NewsfeedList
@@ -180,7 +272,7 @@ export default function Profile() {
 
       {loading && (
         <Image
-          source={require("@/assets/images/pig-loading.gif")}
+          source={require("@/assets/images/logo.png")}
           alt="Loading..."
           resizeMode="contain"
           className="w-full"

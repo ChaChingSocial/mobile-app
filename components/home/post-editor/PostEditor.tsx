@@ -13,11 +13,21 @@ import {
   actions,
 } from "react-native-pell-rich-editor";
 
-const PostEditor = () => {
+type PostEditorProps = {
+  message: string;
+  setContent: (html: string) => void;
+  editorType?: "post" | "comment";
+};
+
+const PostEditor = ({ message, setContent, editorType }: PostEditorProps) => {
   const richText = useRef<RichEditor | null>(null);
 
-  const [newPostContent, setNewPostContent] = useState("");
+  const [newPostContent, setNewPostContent] = useState(message ?? "");
   const [keyboardHeight, setKeyboardHeight] = useState(0);
+
+  useEffect(() => {
+    setNewPostContent(message ?? "");
+  }, [message]);
 
   useEffect(() => {
     const showSubscription = Keyboard.addListener("keyboardDidShow", (e) => {
@@ -33,6 +43,11 @@ const PostEditor = () => {
     };
   }, []);
 
+  const handleChange = (text: string) => {
+    setNewPostContent(text);
+    setContent(text);
+  };
+
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === "ios" ? "padding" : "height"}
@@ -46,7 +61,7 @@ const PostEditor = () => {
         >
           <RichEditor
             ref={richText}
-            onChange={(text) => setNewPostContent(text)}
+            onChange={handleChange}
             placeholder="What's on your mind?"
             initialContentHTML={newPostContent}
             editorStyle={{
@@ -66,34 +81,36 @@ const PostEditor = () => {
           />
         </Box>
       </ScrollView>
-      <RichToolbar
-        editor={richText}
-        actions={[
-          actions.setBold,
-          actions.setItalic,
-          actions.setUnderline,
-          actions.insertBulletsList,
-          actions.insertOrderedList,
-          actions.insertLink,
-          // actions.insertImage,
-          // actions.insertVideo,
-        ]}
-        iconMap={{
-          [actions.heading1]: ({ tintColor }: { tintColor?: string }) => (
-            <Text style={[{ color: tintColor }]}>H1</Text>
-          ),
-          [actions.heading2]: ({ tintColor }: { tintColor?: string }) => (
-            <Text style={[{ color: tintColor }]}>H2</Text>
-          ),
-        }}
-        style={{
-          backgroundColor: "#fff",
-          borderColor: "#ddd",
-          borderTopWidth: 1,
-          marginLeft: -10,
-          marginRight: -10,
-        }}
-      />
+      {editorType !== "comment" && (
+          <RichToolbar
+              editor={richText}
+              actions={[
+                  actions.setBold,
+                  actions.setItalic,
+                  actions.setUnderline,
+                  actions.insertBulletsList,
+                  actions.insertOrderedList,
+                  actions.insertLink,
+                  // actions.insertImage,
+                  // actions.insertVideo,
+              ]}
+              iconMap={{
+                  [actions.heading1]: ({ tintColor }: { tintColor?: string }) => (
+                      <Text style={[{ color: tintColor }]}>H1</Text>
+                  ),
+                  [actions.heading2]: ({ tintColor }: { tintColor?: string }) => (
+                      <Text style={[{ color: tintColor }]}>H2</Text>
+                  ),
+              }}
+              style={{
+                  backgroundColor: "#fff",
+                  borderColor: "#ddd",
+                  borderTopWidth: 1,
+                  marginLeft: -10,
+                  marginRight: -10,
+              }}
+          />
+      )}
     </KeyboardAvoidingView>
   );
 };

@@ -38,7 +38,7 @@ export default function TabLayout() {
         return {
           headerShadowVisible: true,
           headerStyle: {
-            backgroundColor: "#fff",
+            backgroundColor: "#a3e4d2",
           },
           headerTitle: () => (
             <TouchableOpacity onPressOut={() => navigation.navigate("index")}>
@@ -89,15 +89,19 @@ export default function TabLayout() {
           ),
           headerTitleAlign: "center",
 
-          tabBarActiveTintColor: Colors["light"].tint,
+          tabBarActiveTintColor: Colors["dark"].tabIconSelected,
+          tabBarInactiveTintColor: Colors["dark"].muted,
           // tabBarButton: HapticTab,
-          tabBarBackground: TabBarBackground,
           tabBarStyle: Platform.select({
-            ios: {
-              // Use a transparent background on iOS to show the blur effect
-              position: "absolute",
-            },
-            default: {},
+              ios: {
+                  position: "absolute",
+                  backgroundColor: Colors["light"].tint, // set iOS tab bar color (keeps absolute positioning)
+              },
+              default: {
+                  backgroundColor: Colors["light"].tint, // Android / default tab bar color
+                  height: 60,
+                  elevation: 8, // Android shadow
+              },
           }),
         };
       }}
@@ -143,7 +147,7 @@ export default function TabLayout() {
         options={{
           title: "Profile",
           tabBarIcon: ({ color }) => (
-            <FontAwesome5 name="user" size={22} color={color} />
+            <FontAwesome5 name="user-alt" size={22} color={color} />
           ),
         }}
       />

@@ -153,7 +153,7 @@ export default function SearchCommunity() {
                     }
                   }}
                 >
-                  <HStack className="py-4 border-b border-gray-300 gap-4">
+                  <HStack className="py-4 px-4 border-b border-gray-300 gap-4">
                     <Avatar size="md">
                       <AvatarFallbackText>
                         {data.title?.charAt(0).toUpperCase()}
@@ -162,9 +162,10 @@ export default function SearchCommunity() {
                         source={{
                           uri: data.image || "",
                         }}
+                        className="object-contain"
                       />
                     </Avatar>
-                    <Box>
+                      <Box className="flex-1">
                       <Text className="font-bold text-lg text-wrap">
                         {data.title}
                       </Text>

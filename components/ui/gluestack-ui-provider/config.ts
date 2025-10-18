@@ -131,17 +131,17 @@ export const config = {
 
     /* Background */
     "--color-background-0": "255 255 255",
-    "--color-background-50": "246 246 246",
-    "--color-background-100": "242 241 241",
-    "--color-background-200": "220 219 219",
-    "--color-background-300": "213 212 212",
-    "--color-background-400": "162 163 163",
-    "--color-background-500": "142 142 142",
-    "--color-background-600": "116 116 116",
-    "--color-background-700": "83 82 82",
-    "--color-background-800": "65 64 64",
-    "--color-background-900": "39 38 37",
-    "--color-background-950": "18 18 18",
+    "--color-background-50": "250 250 250",
+    "--color-background-100": "245 245 245",
+    "--color-background-200": "235 235 235",
+    "--color-background-300": "225 225 225",
+    "--color-background-400": "200 200 200",
+    "--color-background-500": "170 170 170",
+    "--color-background-600": "135 135 135",
+    "--color-background-700": "100 100 100",
+    "--color-background-800": "70 70 70",
+    "--color-background-900": "45 45 45",
+    "--color-background-950": "22 22 22",
 
     /* Background Special */
     "--color-background-error": "254 241 241",

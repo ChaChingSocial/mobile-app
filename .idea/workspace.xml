@@ -5,24 +5,28 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="fd0dd57f-f28d-4123-909e-256c8ae3c9ef" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/.env" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/assets/images/oink-birthday.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/assets/images/oink.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/components/home/OinkInfo.tsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/lib/store/score.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/app/(protected)/(home)/_layout.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/(protected)/(home)/_layout.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/register/index.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/register/index.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/assets/images/adaptive-icon.png" beforeDir="false" afterPath="$PROJECT_DIR$/assets/images/adaptive-icon.png" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/assets/images/favicon.png" beforeDir="false" afterPath="$PROJECT_DIR$/assets/images/favicon.png" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/assets/images/icon.png" beforeDir="false" afterPath="$PROJECT_DIR$/assets/images/icon.png" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/assets/images/logo.png" beforeDir="false" afterPath="$PROJECT_DIR$/assets/images/logo.png" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/assets/images/pig-loading.gif" beforeDir="false" afterPath="$PROJECT_DIR$/assets/images/pig-loading.gif" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/assets/images/splash-icon.png" beforeDir="false" afterPath="$PROJECT_DIR$/assets/images/splash-icon.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/(protected)/(home)/blog/index.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/(protected)/(home)/blog/index.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/(protected)/(home)/communities.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/(protected)/(home)/communities.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/(protected)/(home)/profile.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/(protected)/(home)/profile.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/(protected)/about.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/(protected)/about.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/(protected)/search-community.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/(protected)/search-community.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/components/communities/AllCommunitiesPreview.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/components/communities/AllCommunitiesPreview.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/components/home/HomePage.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/components/home/HomePage.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/components/home/MainNewsFeed.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/components/home/MainNewsFeed.tsx" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/components/home/PostComponent.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/components/home/PostComponent.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/components/home/post-editor/PostEditor.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/components/home/post-editor/PostEditor.tsx" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/components/home/posts/Comment.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/components/home/posts/Comment.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/components/home/posts/PostComments.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/components/home/posts/PostComments.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/components/home/posts/PostInfo.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/components/home/posts/PostInfo.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/components/home/posts/PicturePost.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/components/home/posts/PicturePost.tsx" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/components/home/posts/PostWrapper.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/components/home/posts/PostWrapper.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ios/chachingmobileapp/Images.xcassets/AppIcon.appiconset/App-Icon-1024x1024@1x.png" beforeDir="false" afterPath="$PROJECT_DIR$/ios/chachingmobileapp/Images.xcassets/AppIcon.appiconset/App-Icon-1024x1024@1x.png" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ios/chachingmobileapp/Images.xcassets/SplashScreenLogo.imageset/image.png" beforeDir="false" afterPath="$PROJECT_DIR$/ios/chachingmobileapp/Images.xcassets/SplashScreenLogo.imageset/image.png" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ios/chachingmobileapp/Images.xcassets/SplashScreenLogo.imageset/image@2x.png" beforeDir="false" afterPath="$PROJECT_DIR$/ios/chachingmobileapp/Images.xcassets/SplashScreenLogo.imageset/image@2x.png" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ios/chachingmobileapp/Images.xcassets/SplashScreenLogo.imageset/image@3x.png" beforeDir="false" afterPath="$PROJECT_DIR$/ios/chachingmobileapp/Images.xcassets/SplashScreenLogo.imageset/image@3x.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/components/menu/UserMenu.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/components/menu/UserMenu.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/components/ui/gluestack-ui-provider/config.ts" beforeDir="false" afterPath="$PROJECT_DIR$/components/ui/gluestack-ui-provider/config.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/constants/Colors.ts" beforeDir="false" afterPath="$PROJECT_DIR$/lib/constants/Colors.ts" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -66,7 +70,7 @@
     "RunOnceActivity.go.formatter.settings.were.checked": "true",
     "RunOnceActivity.go.migrated.go.modules.settings": "true",
     "RunOnceActivity.go.modules.go.list.on.any.changes.was.set": "true",
-    "git-widget-placeholder": "main",
+    "git-widget-placeholder": "feat/nested-comments",
     "go.import.settings.migrated": "true",
     "go.sdk.automatically.set": "true",
     "junie.onboarding.icon.badge.shown": "true",

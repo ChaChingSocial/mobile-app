@@ -36,7 +36,11 @@ export function Comment({
     comment.likes.some((like) => like.userId === currentUserId)
   );
   const [editing, setEditing] = useState(false);
-  const [editedContent, setEditedContent] = useState(comment.message);
+  const [editedContent, setEditedContent] = useState(
+    typeof comment.message === "string"
+      ? comment.message
+      : comment.message?.message ?? ""
+  );
   const [commentLikes, setCommentLikes] = useState(comment.likes.length);
 
   const handleLike = async () => {
@@ -72,9 +76,16 @@ export function Comment({
 
   const handleSave = async () => {
     if (post.id) {
-      await updateComment(post.id, comment.id, editedContent);
+      await updateComment(post.id, comment.id, {
+        message: editedContent,
+        mentions: Array.isArray((comment as any)?.message?.mentions)
+          ? (comment as any).message.mentions
+          : [],
+      });
     }
-    comment.message = editedContent;
+    comment.message = typeof comment.message === "string"
+      ? editedContent
+      : { ...(comment.message as any), message: editedContent };
     setEditing(false);
   };
 
@@ -117,7 +128,7 @@ export function Comment({
       authorPic={comment.userPic}
     >
       {editing ? (
-        <View className="border-l-4 border-purple-700 rounded-md p-4 ml-4 shadow-sm mt-4">
+        <View className="border-l-4 rounded-md p-4 ml-4 shadow-sm mt-4">
           <PostEditor
             message={editedContent}
             setContent={setEditedContent}

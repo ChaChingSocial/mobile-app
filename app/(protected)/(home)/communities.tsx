@@ -35,14 +35,14 @@ export default function CommunitiesScreen() {
 
   return (
     <ParallaxScrollView>
-      <Box className="bg-[#E6F8F1] flex-1">
+      <Box className="bg-[#2FAE7F] flex-1">
         {loading && (
           <Center className="flex-1">
             <Spinner color="green" size="large" />
             <Text size="md">Please Wait...</Text>
           </Center>
         )}
-        <Box className="gap-5 flex mt-4 p-4">
+        <Box className="gap-5 flex mt-4 p-4 bg-[#2FAE7F]">
           {communityData?.length > 0 ? (
             communityData.map((community) => (
               <CommunityCard key={community.id} community={community.data} />

@@ -7,6 +7,7 @@ import { EventPost } from "./posts/EventPost";
 import GoalPost from "./posts/GoalPost";
 // import { PicturePost } from "@/components/NewsFeed/Post/PicturePost";
 // import { PresentationPost } from "@/components/NewsFeed/Post/PresentationPost";
+import { Ionicons } from '@expo/vector-icons';
 
 import { PointsGift } from "@/_sdk";
 import { communityApi, scoreApi } from "@/config/backend";
@@ -29,6 +30,8 @@ import { PostComments } from "./posts/PostComments";
 import { PostWrapper } from "./posts/PostWrapper";
 import { PresentationPost } from "./posts/PresentationPost";
 import { getSingleCommunityById } from "@/lib/api/communities";
+import {useScoreStore} from "@/lib/store/score";
+import OinkInfo from "@/components/home/OinkInfo";
 
 export function PostComponent({ post }: { post: PostType }) {
   const { session } = useSession();
@@ -45,6 +48,8 @@ export function PostComponent({ post }: { post: PostType }) {
   const [showAllComments, setShowAllComments] = useState(false);
   const [communityName, setCommunityName] = useState<string | null>(null);
   const [communitySlug, setCommunitySlug] = useState<string | null>(null);
+  const [oinkInfoModalVisible, setOinkInfoModalVisible] = useState(false);
+  const currentUserScore = useScoreStore((state) => state.currentUserScore);
 
   useEffect(() => {
     if (post) {
@@ -79,7 +84,6 @@ export function PostComponent({ post }: { post: PostType }) {
     };
 
     fetchCommunityData();
-    console.log("Community name:", communityName, post.newsfeedId);
 
   }, []);
 
@@ -96,22 +100,33 @@ export function PostComponent({ post }: { post: PostType }) {
   };
 
   const handleOink = () => {
-    const pointsGift: PointsGift = {
-      giverUserId: currentUserId ?? "",
-      receivingUserId: post.posterUserId,
-      score: 1,
-    };
 
-    scoreApi
-      .givePoints({ pointsGift })
-      .then((response) => {
-        console.log("Points given successfully:", response);
-      })
-      .catch((error) => {
-        console.error("Error giving points:", error);
-      });
-    // runPigs();
-    setUserOinkedPost(!userOinkedPost);
+    if (!post.id || !currentUserId) return;
+
+    if (currentUserScore === 0) {
+        console.log("Current user score:", currentUserScore);
+
+        setOinkInfoModalVisible(true);
+    } else {
+        const pointsGift: PointsGift = {
+            giverUserId: currentUserId ?? "",
+            receivingUserId: post.posterUserId,
+            score: 1,
+        };
+
+        console.log("pointsGift :", pointsGift);
+        scoreApi
+            .givePoints({ pointsGift })
+            .then((response) => {
+                console.log("Points given successfully:", response);
+            })
+            .catch((error) => {
+                console.error("Error giving points:", error);
+            });
+        // runPigs();
+        setUserOinkedPost(!userOinkedPost);
+    }
+
   };
 
   const postTypeTitle = (category: string) => {
@@ -226,6 +241,7 @@ export function PostComponent({ post }: { post: PostType }) {
   };
 
   return (
+      <>
     <Box className="mt-8">
       {communityName && (
         <Box className="relative -top-4 left-6 z-10">
@@ -269,28 +285,40 @@ export function PostComponent({ post }: { post: PostType }) {
         </PostWrapper>
 
         {writeComment && currentUserId ? (
-          <View className="border border-secondary-0 rounded-md p-4 ml-4 bg-[#f3e8ff] mb-4">
-            <PostEditor
-              message=""
-              setContent={(content) => setComment(content)}
-              editorType="post"
-            />
-            <View className="flex flex-row justify-end mt-2 gap-2">
-              <Button
-                // mode="outlined"
-                onPress={() => setWriteComment(false)}
-                className="ml-2"
-              >
-                <ButtonText>Cancel</ButtonText>
-              </Button>
-              <Button
-                // mode="contained"
-                onPress={handlePostingComment}
-                className="ml-2"
-              >
-                <ButtonText>Comment</ButtonText>
-              </Button>
-            </View>
+          <View className="bg-[#a5e5cb] rounded-md rounded-md p-4 ml-4 mb-4">
+              <View className="flex flex-row items-center gap-2">
+                  <View className="flex-1">
+                      <PostEditor
+                          message=""
+                          setContent={(content) => setComment(content)}
+                          editorType="comment"
+                      />
+                  </View>
+                  <TouchableOpacity
+                      onPress={handlePostingComment}
+                      className="bg-primary-500 rounded-full p-3"
+                  >
+                      <Ionicons name="send" size={20} color="white" />
+                  </TouchableOpacity>
+              </View>
+
+              {/*<View className="flex flex-row justify-end mt-2 gap-2">*/}
+            {/*  <Button*/}
+            {/*    // mode="outlined"*/}
+            {/*    onPress={() => setWriteComment(false)}*/}
+            {/*    className="ml-2"*/}
+            {/*  >*/}
+            {/*    <ButtonText>Cancel</ButtonText>*/}
+            {/*  </Button>*/}
+            {/*  <Button*/}
+            {/*    // mode="contained"*/}
+            {/*    onPress={handlePostingComment}*/}
+            {/*    className="ml-2"*/}
+            {/*  >*/}
+            {/*    <ButtonText>Comment</ButtonText>*/}
+            {/*  </Button>*/}
+            {/*</View>*/}
+
           </View>
         ) : (
           enableComments &&
@@ -312,6 +340,8 @@ export function PostComponent({ post }: { post: PostType }) {
           <PostComments post={post} showAllComments={showAllComments} />
         )}
       </Card>
+        <OinkInfo visible={oinkInfoModalVisible} onClose={() => setOinkInfoModalVisible(false)} />
     </Box>
+    </>
   );
 }

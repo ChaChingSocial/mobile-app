@@ -21,6 +21,7 @@ import { useEffect, useState } from "react";
 import { TouchableOpacity } from "react-native";
 import { PostInfo } from "./PostInfo";
 import { Icon } from "@/components/ui/icon";
+import { Image } from "react-native";
 
 type PostWrapperProps = {
   post: PostType;
@@ -196,13 +197,19 @@ export function PostWrapper({
                     onPress={onOink}
                     className="flex flex-row items-center"
                   >
-                    <MaterialCommunityIcons
-                      name={
-                        userOinkedPost ? "piggy-bank" : "piggy-bank-outline"
-                      }
-                      size={24}
-                      color="purple"
-                    />
+                      <Image
+                        source={userOinkedPost ? require("@/assets/images/oink.png") : require("@/assets/images/oink-birthday.png")}
+                        className="w-12 h-12"
+                      />
+
+                    {/*<MaterialCommunityIcons*/}
+                    {/*  name={*/}
+                    {/*    userOinkedPost ? "piggy-bank" : "piggy-bank-outline"*/}
+                    {/*  }*/}
+                    {/*  size={24}*/}
+                    {/*  color="purple"*/}
+                    {/*/>*/}
+
                   </TouchableOpacity>
                 );
               }}

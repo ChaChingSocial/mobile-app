@@ -112,7 +112,7 @@ export function PicturePost({ post }: { post: PostType }) {
               >
                 <Image
                   source={{ uri }}
-                  className="w-full h-full"
+                  className="w-full h-full rounded-md"
                   resizeMode="contain"
                   onError={(e) =>
                     console.log("Image error:", e.nativeEvent.error)
@@ -160,13 +160,15 @@ export function PicturePost({ post }: { post: PostType }) {
             {(post.pictures || []).map((picture, index) => {
               const uri = typeof picture === "string" ? picture : picture.url;
               return (
-                <Box key={index} className="flex-1">
+                <Box key={index} className="flex-1 my-2 py-2">
                   <Image
                     source={{ uri }}
                     style={{
                       width: "100%",
                       height: "100%",
                       resizeMode: "contain",
+                      borderRadius: 8,
+                      paddingBottom: 20,
                     }}
                   />
                 </Box>
