@@ -46,9 +46,6 @@ export default function Profile() {
   const currentUserScore = useScoreStore((state) => state.currentUserScore);
   const setCurrentUserScore = useScoreStore((state) => state.setCurrentUserScore);
 
-  console.log("UserInfo from params:", userInfo);
-  console.log("followers", followers)
-
   const fetchUserInfo = async () => {
     try {
       if (!currentUserId) return;
@@ -133,10 +130,21 @@ export default function Profile() {
     setRefreshing(false);
   };
 
+  const handleScroll = (event: any) => {
+    const { contentOffset, layoutMeasurement, contentSize } = event.nativeEvent;
+    const isCloseToBottom =
+      layoutMeasurement.height + contentOffset.y >= contentSize.height - 20;
+    if (isCloseToBottom) {
+      fetchMorePosts();
+    }
+  };
+
   return (
     <ScrollView
       className="bg-[#077f5f] flex-1"
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+      onScroll={handleScroll}
+      scrollEventThrottle={16}
     >
       <VStack space="md" className="pt-6 px-4 justify-center items-center">
           <Heading size="xl" className="text-white text-center">
@@ -178,80 +186,86 @@ export default function Profile() {
               <Text className="font-extralight text-white">Followers</Text>
             </Box>
           </HStack>
-          <Box style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 16, marginVertical: 12, justifyContent: 'center', alignItems: 'center', width: '100%' }}>
-            {userInfo?.socials?.instagram && (
-              <TouchableOpacity
-                onPress={() => {
-                  Linking.openURL(userInfo.socials.instagram);
-                }}
-                style={{ alignSelf: 'center', justifyContent: 'center', marginHorizontal: 8 }}
-                accessibilityLabel="Instagram"
-              >
-                <AntDesign name="instagram" size={32} color="#fff" />
-              </TouchableOpacity>
-            )}
-            {userInfo?.socials?.linkedin && (
-                <TouchableOpacity
-                    onPress={() => {
-                        Linking.openURL(userInfo?.socials?.linkedin);
-                    }}
-                    style={{ alignSelf: 'center', justifyContent: 'center', marginHorizontal: 4 }}
-                    accessibilityLabel="LinkedIn"
-                >
-                    <AntDesign name="linkedin-square" size={24} color="#fff" />
-                </TouchableOpacity>
-            )}
-              {userInfo?.socials?.tiktok && (
-                  <TouchableOpacity
-                      onPress={() => {
-                          Linking.openURL(userInfo?.socials?.tiktok);
-                      }}
-                      style={{ alignSelf: 'center', justifyContent: 'center', marginHorizontal: 4 }}
-                      accessibilityLabel="TikTok"
-                  >
-                      <AntDesign name="tiktok" size={24} color="#fff" />
-                  </TouchableOpacity>
+          {userInfo?.socials && (
+              <Box style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 16, marginVertical: 12, justifyContent: 'center', alignItems: 'center', width: '100%' }}>
+                  {userInfo?.socials?.instagram && (
+                      <TouchableOpacity
+                          onPress={() => {
+                              Linking.openURL(userInfo.socials.instagram);
+                          }}
+                          style={{ alignSelf: 'center', justifyContent: 'center', marginHorizontal: 8 }}
+                          accessibilityLabel="Instagram"
+                      >
+                          <AntDesign name="instagram" size={32} color="#fff" />
+                      </TouchableOpacity>
+                  )}
+                  {userInfo?.socials?.linkedin && (
+                      <TouchableOpacity
+                          onPress={() => {
+                              Linking.openURL(userInfo?.socials?.linkedin);
+                          }}
+                          style={{ alignSelf: 'center', justifyContent: 'center', marginHorizontal: 4 }}
+                          accessibilityLabel="LinkedIn"
+                      >
+                          <AntDesign name="linkedin-square" size={24} color="#fff" />
+                      </TouchableOpacity>
+                  )}
+                  {userInfo?.socials?.tiktok && (
+                      <TouchableOpacity
+                          onPress={() => {
+                              Linking.openURL(userInfo?.socials?.tiktok);
+                          }}
+                          style={{ alignSelf: 'center', justifyContent: 'center', marginHorizontal: 4 }}
+                          accessibilityLabel="TikTok"
+                      >
+                          <AntDesign name="tiktok" size={24} color="#fff" />
+                      </TouchableOpacity>
+                  )}
+                  {userInfo?.socials?.website && (
+                      <TouchableOpacity
+                          onPress={() => {
+                              Linking.openURL(userInfo.socials.website);
+                          }}
+                          style={{ alignSelf: 'center', justifyContent: 'center', marginHorizontal: 4 }}
+                          accessibilityLabel="Website"
+                      >
+                          <AntDesign name="earth" size={24} color="#fff" />
+                      </TouchableOpacity>
+                  )}
+              </Box>
+          )}
+
+          {userInfo?.interests && userInfo.interests.length > 0 && (
+            <Box style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginVertical: 8, justifyContent: 'center', alignItems: 'center', width: '100%', alignSelf: 'center' }}>
+              {userInfo?.interests && userInfo.interests.length > 0 && (
+                <>
+                  {(showAllInterests ? userInfo.interests : userInfo.interests.slice(0, 5)).map((interest, index) => (
+                    <Badge
+                      key={index}
+                      variant="solid"
+                      className="bg-[#a3e4d2]"
+                    >
+                      <BadgeText>{interest}</BadgeText>
+                    </Badge>
+                  ))}
+                </>
               )}
-            {userInfo?.socials?.website && (
+
+              {userInfo?.interests && userInfo.interests.length > 5 && (
                 <TouchableOpacity
-                    onPress={() => {
-                        Linking.openURL(userInfo.socials.website);
-                    }}
-                    style={{ alignSelf: 'center', justifyContent: 'center', marginHorizontal: 4 }}
-                    accessibilityLabel="Website"
+                  onPress={() => setShowAllInterests((prev) => !prev)}
+                  style={{ alignSelf: 'center', marginLeft: 8 }}
                 >
-                    <AntDesign name="earth" size={24} color="#fff" />
-                </TouchableOpacity>
-            )}
-          </Box>
-          <Box style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginVertical: 8, justifyContent: 'center', alignItems: 'center', width: '100%', alignSelf: 'center' }}>
-            {userInfo?.interests && userInfo.interests.length > 0 && (
-              <>
-                {(showAllInterests ? userInfo.interests : userInfo.interests.slice(0, 5)).map((interest, index) => (
-                  <Badge
-                    key={index}
-                    variant="solid"
-                    className="bg-[#a3e4d2]"
-                  >
-                    <BadgeText>{interest}</BadgeText>
+                  <Badge variant="outline" className="bg-white bg-[#a3e4d2]">
+                    <BadgeText className="bg-[#a3e4d2]">
+                      {showAllInterests ? 'Show less' : `+${userInfo.interests.length - 5} more`}
+                    </BadgeText>
                   </Badge>
-                ))}
-              </>
+                </TouchableOpacity>
+              )}
+            </Box>
             )}
 
-            {userInfo?.interests && userInfo.interests.length > 5 && (
-              <TouchableOpacity
-                onPress={() => setShowAllInterests((prev) => !prev)}
-                style={{ alignSelf: 'center', marginLeft: 8 }}
-              >
-                <Badge variant="outline" className="bg-white bg-[#a3e4d2]">
-                  <BadgeText className="bg-[#a3e4d2]">
-                    {showAllInterests ? 'Show less' : `+${userInfo.interests.length - 5} more`}
-                  </BadgeText>
-                </Badge>
-              </TouchableOpacity>
-            )}
-          </Box>
           {userInfo?.bio && (
             <Text
               size="md"
@@ -269,24 +283,6 @@ export default function Profile() {
         communityPage={false}
         //   isUserCommunityAdmin={UserId === communityData.adminUserId}
       />
-
-      {loading && (
-        <Image
-          source={require("@/assets/images/logo.png")}
-          alt="Loading..."
-          resizeMode="contain"
-          className="w-full"
-        />
-      )}
-      {lastDoc && (
-        <TouchableOpacity
-          className="bg-[#00bf63] rounded-lg p-2 w-36 mx-auto my-6"
-          onPress={fetchMorePosts}
-          disabled={loading}
-        >
-          <Text bold className="text-center text-white">Load More</Text>
-        </TouchableOpacity>
-      )}
     </ScrollView>
   );
 }

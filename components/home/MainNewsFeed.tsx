@@ -39,15 +39,6 @@ export function MainNewsfeed() {
             className="w-full"
           />
         )}
-        <TouchableOpacity
-          className="bg-[#00bf63] rounded-lg p-2 w-36 mx-auto my-6"
-          onPress={() => fetchMorePosts()}
-          disabled={loading}
-        >
-          <Text bold className="text-center text-white">
-            Load More
-          </Text>
-        </TouchableOpacity>
       </Box>
     </Box>
   );

@@ -514,6 +514,7 @@ export const EventPost = ({
             onPress={() => {
               const addr = (selectedSlot?.address as any)?.address || (selectedSlot?.address as any) || "";
               if (addr) {
+                  console.log('address', `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(addr)}`);
                 Linking.openURL(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(addr)}`);
               }
             }}

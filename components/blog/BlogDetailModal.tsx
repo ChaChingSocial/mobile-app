@@ -171,7 +171,7 @@ export function BlogDetailModal({
               {communityPhoto && communityPhoto.trim() !== "" && (
                 <Image
                   source={{ uri: communityPhoto }}
-                  style={{ width: "100%", height: 100, borderRadius: 16 }}
+                  style={{ width: "100%", height: 100, borderRadius: 8 }}
                   resizeMode="cover"
                 />
               )}
@@ -181,7 +181,7 @@ export function BlogDetailModal({
                 {blog.authorProfilePic && blog.authorProfilePic.trim() !== "" && (
                   <Image
                     source={{ uri: blog.authorProfilePic }}
-                    style={{ width: 40, height: 40, borderRadius: 16, borderWidth: 2, borderColor: "#581c87" }}
+                    style={{ width: 40, height: 40, borderRadius: 20, borderWidth: 2, borderColor: "#581c87" }}
                   />
                 )}
                 <VStack>
@@ -229,7 +229,7 @@ export function BlogDetailModal({
               {blog?.coverPhoto && (
                 <Image
                   source={{ uri: blog.coverPhoto }}
-                  style={{ width: "100%", height: 256, borderRadius: 16 }}
+                  style={{ width: "100%", height: 256, borderRadius: 8 }}
                   resizeMode="cover"
                 />
               )}
