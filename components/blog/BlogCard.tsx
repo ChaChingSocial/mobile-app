@@ -55,10 +55,11 @@ export function BlogArticleCard({ blog }: { blog: Blog }) {
       <Pressable onPress={handleCardClick}>
         <VStack space="sm">
           <Text className="text-green-800 font-bold mx-4">{communityName}</Text>
+
           <Image
             source={{ uri: blog.coverPhoto }}
             alt={blog.title}
-            className="w-full h-32"
+            className="w-full h-32 rounded-md px-4"
             resizeMode="cover"
           />
 

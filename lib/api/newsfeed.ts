@@ -532,18 +532,16 @@ export async function commentOnPost(
 
     if (postSnap.exists()) {
       const postData = postSnap.data();
-        const newCommentWithId: Comment = {
-            id: `${postId}_comment_${(postData.comments?.length || 0) + 1}`,
-            userId: newComment.userId,
-            userName: newComment.userName,
-            userPic: newComment.userPic,
-            message: newComment.message,
-            timestamp: new Date(),
-            likes: [],
-            comments: [],
-            postReference: newComment.postReference,
-            communityId: newComment.communityId,
-        };
+      const nextIndex = (postData.comments?.length || 0) + 1;
+      const newCommentWithId: Comment = {
+        ...newComment,
+        id: `${postId}_comment_${nextIndex}`,
+        userId: newComment.userId || "",
+        message: newComment.message,
+        timestamp: new Date(),
+        likes: [],
+        comments: [],
+      };
 
       console.log("Updating post with comments:", newCommentWithId);
 
@@ -566,6 +564,64 @@ export async function commentOnPost(
     }
   } catch (error) {
     console.error("Error adding comment:", error);
+  }
+}
+
+// Reply to a comment (nested comment)
+export async function commentOnComment(
+  postId: string,
+  parentCommentId: string,
+  newReply: {
+    userId: string;
+    userName: string;
+    userPic: string;
+    message: { message: string; mentions: string[] };
+    timestamp: Date;
+  },
+  parentAuthorId: string,
+  communityId: string
+) {
+  try {
+    const postDoc = doc(db, "posts", postId);
+    const postSnap = await getDoc(postDoc);
+
+    if (postSnap.exists()) {
+      const postData = postSnap.data();
+      const parent = findComment(postData.comments, parentCommentId);
+      if (!parent) {
+        console.error(`Parent comment ${parentCommentId} not found in post ${postId}`);
+        return;
+      }
+
+      const nextIdx = (parent.comments?.length || 0) + 1;
+      const replyWithId: Comment = {
+        id: `${parentCommentId}_reply_${nextIdx}`,
+        userId: newReply.userId || "",
+        userName: newReply.userName as any,
+        userPic: newReply.userPic as any,
+        message: newReply.message,
+        timestamp: new Date(),
+        likes: [],
+        comments: [],
+      } as any;
+
+      parent.comments = parent.comments ? [...parent.comments, replyWithId] : [replyWithId];
+
+      await updateDoc(postDoc, { comments: postData.comments });
+
+      await sendNotification(
+        parentAuthorId,
+        communityId,
+        newReply.userName,
+        "COMMENTED",
+        "POST"
+      );
+
+      console.log(`Reply added to comment ${parentCommentId} on post ${postId}`);
+      return replyWithId;
+    }
+  } catch (error) {
+    console.error("Error adding nested comment:", error);
   }
 }
 

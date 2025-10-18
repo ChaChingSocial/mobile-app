@@ -9,6 +9,7 @@ import {
   likeComment,
   unlikeComment,
   updateComment,
+  commentOnComment,
 } from "@/lib/api/newsfeed";
 import { Button } from "@/components/ui/button";
 import { useSession } from "@/lib/providers/AuthContext";
@@ -42,6 +43,8 @@ export function Comment({
       : comment.message?.message ?? ""
   );
   const [commentLikes, setCommentLikes] = useState(comment.likes.length);
+  const [replying, setReplying] = useState(false);
+  const [replyContent, setReplyContent] = useState("");
 
   const handleLike = async () => {
     if (
@@ -90,7 +93,11 @@ export function Comment({
   };
 
   const handleCancel = () => {
-    setEditedContent(comment.message);
+    setEditedContent(
+      typeof comment.message === "string"
+        ? comment.message
+        : comment.message?.message ?? ""
+    );
     setEditing(false);
   };
 
@@ -107,6 +114,31 @@ export function Comment({
       return (b.likes?.length || 0) - (a.likes?.length || 0);
     });
   }, [comment.comments]);
+
+  const handleReply = async () => {
+    if (!post.id || !comment.id || !currentUserId) return;
+
+    const newReply = {
+      userId: currentUserId,
+      userName: currentUserName ?? "",
+      userPic: session?.profilePic ?? "",
+      message: { message: replyContent, mentions: [] as string[] },
+      timestamp: new Date(),
+    };
+
+    const saved = await commentOnComment(
+      post.id,
+      comment.id,
+      newReply,
+      comment.userId,
+      post.newsfeedId!
+    );
+
+    if (!comment.comments) comment.comments = [];
+    comment.comments.push((saved as any) ?? (newReply as any));
+    setReplyContent("");
+    setReplying(false);
+  };
 
   const [showChildReplies, setShowChildReplies] = useState<boolean>(!!showReplies);
   useEffect(() => {
@@ -173,7 +205,7 @@ export function Comment({
         />
       )}
 
-      <View className="flex-row items-center mt-2 space-x-2">
+      <View className="flex-row items-center mt-2 space-x-4">
         <TouchableOpacity onPress={handleLike} activeOpacity={0.7}>
           <FontAwesome
             name={liked ? "heart" : "heart-o"}
@@ -184,7 +216,28 @@ export function Comment({
           />
         </TouchableOpacity>
         <Text className="text-gray-500">{commentLikes}</Text>
+        <TouchableOpacity onPress={() => setReplying((v) => !v)}>
+          <Text className="text-primary-700 mx-3">Reply</Text>
+        </TouchableOpacity>
       </View>
+
+      {replying && (
+        <View className="ml-6 mt-2 border border-secondary-0 rounded-md p-3 bg-[#f3e8ff]">
+          <PostEditor
+            message={replyContent}
+            setContent={setReplyContent}
+            editorType="comment"
+          />
+          <View className="flex-row justify-end mt-2 space-x-2">
+            <Button onPress={() => setReplying(false)} variant="outline" className="px-4 py-2 border border-purple-700 rounded bg-transparent">
+              <Text className="font-medium text-purple-700">Cancel</Text>
+            </Button>
+            <Button onPress={handleReply} className="px-4 py-2 bg-purple-700 rounded">
+              <Text className="text-white font-medium">Send</Text>
+            </Button>
+          </View>
+        </View>
+      )}
 
       {sortedReplies.length > 0 && !showChildReplies && (
         <TouchableOpacity onPress={() => setShowChildReplies(true)}>
