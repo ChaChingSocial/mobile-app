@@ -13,10 +13,11 @@ import { TouchableOpacity } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { HStack } from "@/components/ui/hstack";
+import { Fab, FabIcon } from "@/components/ui/fab";
 
 export default function CommunitiesScreen() {
-    const [communityData, setCommunityData] = useState<Community[]>([]);
-    const [filteredData, setFilteredData] = useState<Community[]>([]);
+    const [communityData, setCommunityData] = useState<any[]>([]);
+    const [filteredData, setFilteredData] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<unknown>(null);
     const [showSearchBox, setShowSearchBox] = useState(false);
@@ -79,9 +80,9 @@ export default function CommunitiesScreen() {
         }
 
         const filtered = communityData.filter(
-            ({ data }: { data: Community }) =>
+            ({ data }: { data: any }) =>
                 data.title.toLowerCase().includes(text.toLowerCase()) ||
-                data.tags?.some((tag) =>
+                data.tags?.some((tag: string) =>
                     tag.toLowerCase().includes(text.toLowerCase())
                 ) ||
                 (data.description &&
@@ -98,9 +99,9 @@ export default function CommunitiesScreen() {
 
     return (
         <Box className="flex-1 bg-[#077f5f]">
-            {/* Floating search box or search icon - Sticky to top */}
-            <Box className="absolute top-0 left-0 right-0 z-50 bg-[#2FAE7F] pt-2 pb-2">
-                {showSearchBox ? (
+            {/* Floating search box - Sticky to top */}
+            {showSearchBox && (
+                <Box className="absolute top-0 left-0 right-0 z-50 bg-[#2FAE7F] pt-2 pb-2">
                     <Box className="mx-4 bg-white rounded-lg shadow-lg p-2">
                         <HStack className="items-center gap-2">
                             <TouchableOpacity
@@ -127,14 +128,20 @@ export default function CommunitiesScreen() {
                             </Input>
                         </HStack>
                     </Box>
-                ) : (
-                    <Box className="mr-4 ml-auto bg-white rounded-full p-2 shadow-md" style={{ width: 48 }}>
-                        <TouchableOpacity onPressOut={() => setShowSearchBox(true)}>
-                            <Ionicons name="search-outline" size={24} color={"black"} />
-                        </TouchableOpacity>
-                    </Box>
-                )}
-            </Box>
+                </Box>
+            )}
+
+            {/* FAB for search */}
+            {!showSearchBox && (
+                <Fab
+                    size="md"
+                    placement="top right"
+                    onPress={() => setShowSearchBox(true)}
+                    className="bg-white shadow-lg"
+                >
+                    <FabIcon as={Ionicons} name="search-outline" size={24} className="text-black" />
+                </Fab>
+            )}
 
             <ParallaxScrollView>
                 <Box className="bg-[#2FAE7F] flex-1">
