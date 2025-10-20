@@ -67,7 +67,7 @@ export default function ProtectedLayout() {
           name="communities"
           options={{
             title: "Community",
-            headerShown: true,
+            headerShown: false,
           }}
         />
         <Stack.Screen
