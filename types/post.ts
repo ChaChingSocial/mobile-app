@@ -16,6 +16,7 @@ export type Post = {
   comments?: Comment[];
   pictures?: Picture[];
   documents?: Document[];
+  videos?: (string | { url: string })[];
   linkPreview?: LinkPreview | null;
   product?: Product | null;
   category: string;

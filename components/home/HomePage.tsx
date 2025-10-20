@@ -13,6 +13,7 @@ import { VStack } from "@/components/ui/vstack";
 import { useSession } from "@/lib/providers/AuthContext";
 import { DrawerContext } from "@/lib/providers/DrawerContext";
 import { usePostStore } from "@/lib/store/post";
+import useFeaturedPosts from "@/hooks/useSubscribeToPosts";
 import {
     Entypo,
     FontAwesome5,
@@ -52,6 +53,8 @@ export default function HomePage() {
   const rotationAnim = useRef(new Animated.Value(0)).current;
   const scaleAnim = useRef(new Animated.Value(1)).current;
   const opacityAnim = useRef(new Animated.Value(0)).current;
+
+  const { posts, fetchMorePosts, loading, hasMore } = useFeaturedPosts();
 
   const postOptions: PostOption[] = [
     {
@@ -210,11 +213,22 @@ export default function HomePage() {
     router.push(route);
   };
 
+  const handleScroll = (event: any) => {
+    const { contentOffset, layoutMeasurement, contentSize } = event.nativeEvent;
+    const isCloseToBottom =
+      layoutMeasurement.height + contentOffset.y >= contentSize.height - 20;
+    if (isCloseToBottom) {
+      fetchMorePosts();
+    }
+  };
+
   return (
     <Box className="flex-1 relative">
       <ScrollView
         contentInsetAdjustmentBehavior="automatic"
-        className="bg-[#E6F8F1] flex-1"
+        className="bg-[#077f5f] flex-1"
+        onScroll={handleScroll}
+        scrollEventThrottle={16}
         >
         <MainNewsfeed />
         <SideBar open={open} onOpenChange={setOpen} />
