@@ -11,7 +11,7 @@ import { Heading } from "@/components/ui/heading";
 import { HStack } from "@/components/ui/hstack";
 import { Text } from "@/components/ui/text";
 import { VStack } from "@/components/ui/vstack";
-import { userApi } from "@/config/backend";
+import {scoreApi, userApi} from "@/config/backend";
 import { getPostsByUser } from "@/lib/api/newsfeed";
 import {
   checkIfFinFluencer,
@@ -54,6 +54,10 @@ export default function Profile() {
       if (!currentUserId) return;
       const res = await userApi.getUserById({ userId: currentUserId });
       setUserInfo(res);
+      if (currentUserId && currentUserId === session?.uid) {
+          const scoreRes = await scoreApi.getScore({ userId: currentUserId });
+          setCurrentUserScore(scoreRes);
+      }
     } catch (error) {
       console.error("Error fetching user info:", error);
     }
@@ -268,7 +272,7 @@ export default function Profile() {
 
       {loading && (
         <Image
-          source={require("@/assets/images/pig-loading.gif")}
+          source={require("@/assets/images/logo-inverted.png")}
           alt="Loading..."
           resizeMode="contain"
           className="w-full"
