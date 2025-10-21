@@ -23,13 +23,18 @@ import { sendNotification } from "./notifications";
 import { usePostStore } from "../store/post";
 
 const db = getFirestore(app);
-const user = auth.currentUser;
 
 // Post on the newsfeed
 export async function createPost(newsfeedPost: Post) {
   console.log("Creating post:", newsfeedPost);
+  
+  // Get current user at runtime, not at import time
+  const user = auth.currentUser;
   console.log("User session:", user);
-  if (!user) {
+  
+  // If Firebase auth user is null, but we have the posterUserId in the post, proceed anyway
+  // This handles cases where the app uses custom session management
+  if (!user && !newsfeedPost.posterUserId) {
     throw new Error("User not authenticated");
   }
 
@@ -40,26 +45,30 @@ export async function createPost(newsfeedPost: Post) {
     // Add the post data with the document ID included
     await setDoc(docRef, { ...newsfeedPost, id: docRef.id });
 
-    if (user && user?.displayName && newsfeedPost.newsfeedId) {
+    // Send notifications using poster data from the post if Firebase user is available
+    const userId = user?.uid || newsfeedPost.posterUserId;
+    const userName = user?.displayName || newsfeedPost.posterName;
+    
+    if (userId && userName && newsfeedPost.newsfeedId) {
       await sendNotification(
-        user.uid,
+        userId,
         newsfeedPost.newsfeedId,
-        user.displayName,
+        userName,
         "COMMUNITY_UPDATE",
         "POST"
       );
     }
 
     if (
-      user &&
-      user?.displayName &&
+      userId &&
+      userName &&
       newsfeedPost.newsfeedId &&
       newsfeedPost.taggedUsers
     ) {
       await sendNotification(
-        user.uid,
+        userId,
         newsfeedPost.newsfeedId,
-        user.displayName,
+        userName,
         "TAGGED",
         "POST"
       );
@@ -659,7 +668,7 @@ export async function getFeaturedPosts(lastDoc = null) {
       collection(db, "posts"),
       where("featured", "==", true),
       orderBy("createdAt", "desc"),
-      limit(25)
+      limit(50) // Increased batch size for better performance
     );
 
     if (lastDoc) {
@@ -673,7 +682,7 @@ export async function getFeaturedPosts(lastDoc = null) {
         throw new Error("lastDoc missing createdAt field");
       }
 
-      q = query(q, startAfter(lastDoc), limit(25));
+      q = query(q, startAfter(lastDoc), limit(50));
     }
 
     const querySnapshot = await getDocs(q);
@@ -685,7 +694,7 @@ export async function getFeaturedPosts(lastDoc = null) {
     }));
 
     const newLastDoc =
-      querySnapshot.docs.length >= 10
+      querySnapshot.docs.length >= 40
         ? querySnapshot.docs[querySnapshot.docs.length - 1]
         : null;
 

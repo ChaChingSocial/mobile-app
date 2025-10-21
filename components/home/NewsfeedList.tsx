@@ -1,6 +1,6 @@
 import { usePostStore } from "@/lib/store/post";
 import { Post } from "@/types/post";
-import { useEffect, useRef } from "react";
+import React, { useEffect, useRef, useMemo } from "react";
 import { Box } from "../ui/box";
 import { PostComponent } from "./PostComponent";
 
@@ -10,13 +10,18 @@ interface NewsfeedListProps {
   isUserCommunityAdmin?: boolean;
 }
 
-export function NewsfeedList({
+export const NewsfeedList = React.memo<NewsfeedListProps>(function NewsfeedList({
   posts,
   communityPage,
   isUserCommunityAdmin,
-}: NewsfeedListProps) {
+}) {
   const { pinnedPosts, setPinnedPosts } = usePostStore();
   const prevPostsRef = useRef<Post[]>([]);
+
+  // Memoize featured posts to avoid recalculating on every render
+  const featuredPosts = useMemo(() => {
+    return posts.filter(item => item && item.featured);
+  }, [posts]);
 
   useEffect(() => {
     // Skip if posts haven't changed
@@ -29,17 +34,15 @@ export function NewsfeedList({
       .sort((a, b) => (a.pinPost?.order || 0) - (b.pinPost?.order || 0));
 
     setPinnedPosts(pinned);
-  }, [posts]);
+  }, [posts, setPinnedPosts]);
 
   return (
     <Box className="p-2">
-      {posts
-        .map(
-          (item, key) =>
-            item && item.featured && <PostComponent key={key} post={item} />
-        )}
+      {featuredPosts.map((item) => (
+        <PostComponent key={item.id || Math.random()} post={item} />
+      ))}
     </Box>
   );
-}
+});
 
 export default NewsfeedList;
