@@ -22,7 +22,6 @@ export default function SingleCommunity() {
 
   // const routes = navigate.getState()?.routes;
   // const prevRoute = routes[routes.length - 2];
-  console.log("slug comm previous route", prevRoute);
   const [communityData, setCommunityData] = useState<Community | null>(null);
   const [posts, setPosts] = useState<Post[]>([]);
 
