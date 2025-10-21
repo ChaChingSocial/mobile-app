@@ -825,7 +825,8 @@ export function subscribeToPostsByNewsfeedId(
   const q = query(
     collection(db, "posts"),
     where("newsfeedId", "==", newsfeedId),
-    orderBy("createdAt", "desc")
+    orderBy("createdAt", "desc"),
+    limit(25)
   );
 
   const unsubscribe = onSnapshot(
