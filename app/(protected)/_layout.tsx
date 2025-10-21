@@ -48,9 +48,9 @@ export default function ProtectedLayout() {
           options={{
             title: "",
             headerBackTitle: "Back",
-            headerShown: true,
-            headerLargeTitle: true,
-            headerShadowVisible: false,
+            headerShown: false,
+            // headerLargeTitle: true,
+            // headerShadowVisible: false,
           }}
         />
         <Stack.Screen
@@ -82,6 +82,7 @@ export default function ProtectedLayout() {
           options={{
             title: "About",
             headerShown: true,
+            headerBackTitle: "Back",
           }}
         />
       </Stack>

@@ -10,7 +10,7 @@ export default function AboutScreen() {
     <ParallaxScrollView classNames="p-10 bg-[#077f5f] rounded-lg">
       <AboutDescription />
       <ContactForm />
-      <PartnerProgramIntro />
+      {/*<PartnerProgramIntro />*/}
       <Faq />
       <AccountDeletion />
     </ParallaxScrollView>

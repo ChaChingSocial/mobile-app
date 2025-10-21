@@ -29,10 +29,10 @@ function ContactIcon({ icon, title, description, url }: ContactIconProps) {
       </Box>
 
       <Box>
-        <Text size="xs" className="text-white">
+        <Text size="xs">
           {title}
         </Text>
-        <Text bold className="text-white">
+        <Text bold>
           {description}
         </Text>
       </Box>

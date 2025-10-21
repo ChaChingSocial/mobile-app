@@ -22,7 +22,7 @@ export default function AccountDeletion() {
         onPress={() => {
           setShowDrawer(true);
         }}
-        className="mt-8 bg-transparent border border-red-600"
+        className="mt-8 bg-transparent border border-red-600 bg-white"
       >
         <ButtonText className="text-red-600">Delete Account</ButtonText>
       </Button>
