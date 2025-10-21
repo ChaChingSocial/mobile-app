@@ -19,11 +19,15 @@ import {
   fetchFollowing,
 } from "@/lib/api/user";
 import { useSession } from "@/lib/providers/AuthContext";
-import { useLocalSearchParams } from "expo-router";
+import {Link, useLocalSearchParams} from "expo-router";
 import { useEffect, useState } from "react";
 import { ScrollView } from "react-native-gesture-handler";
 import { Image, RefreshControl, TouchableOpacity } from "react-native";
 import { DocumentSnapshot } from "firebase/firestore";
+import { Badge, BadgeText, BadgeIcon } from '@/components/ui/badge';
+import {AntDesign} from "@expo/vector-icons";
+import * as Linking from "expo-linking";
+import {useScoreStore} from "@/lib/store/score";
 
 export default function Profile() {
   const { id: UserId } = useLocalSearchParams();
@@ -38,6 +42,9 @@ export default function Profile() {
   const [lastDoc, setLastDoc] = useState<DocumentSnapshot | null>(null);
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
+  const [showAllInterests, setShowAllInterests] = useState(false);
+  const currentUserScore = useScoreStore((state) => state.currentUserScore);
+  const setCurrentUserScore = useScoreStore((state) => state.setCurrentUserScore);
 
   console.log("UserInfo from params:", userInfo);
   console.log("followers", followers)
@@ -50,6 +57,7 @@ export default function Profile() {
     } catch (error) {
       console.error("Error fetching user info:", error);
     }
+
   };
 
   const fetchFinfluencerStatus = async () => {
