@@ -38,13 +38,13 @@ export default function TabLayout() {
         return {
           headerShadowVisible: true,
           headerStyle: {
-            backgroundColor: "#fff",
+            backgroundColor: "#a3e4d2",
           },
           headerTitle: () => (
             <TouchableOpacity onPressOut={() => navigation.navigate("index")}>
               <Image
                 source={require("@/assets/images/logo.png")}
-                style={{ height: 40, resizeMode: "contain", width: 140 }}
+                style={{ height: 40, resizeMode: "contain", width: 140, marginBottom: 10 }}
               />
             </TouchableOpacity>
           ),
@@ -67,7 +67,7 @@ export default function TabLayout() {
                         : totalUnreadNotifications}
                     </Text>
                   </Box>
-                )} 
+                )}
               </Box>
             </TouchableOpacity>
           ),
@@ -77,7 +77,7 @@ export default function TabLayout() {
               onPressOut={() => setOpen(!open)}
               className="ml-5"
             >
-              <Avatar size="md">
+              <Avatar size="sm">
                 <AvatarFallbackText>{session?.displayName}</AvatarFallbackText>
                 <AvatarImage
                   source={{
@@ -89,15 +89,19 @@ export default function TabLayout() {
           ),
           headerTitleAlign: "center",
 
-          tabBarActiveTintColor: Colors["light"].tint,
+          tabBarActiveTintColor: Colors["dark"].tabIconSelected,
+          tabBarInactiveTintColor: Colors["dark"].muted,
           // tabBarButton: HapticTab,
-          tabBarBackground: TabBarBackground,
           tabBarStyle: Platform.select({
-            ios: {
-              // Use a transparent background on iOS to show the blur effect
-              position: "absolute",
-            },
-            default: {},
+              ios: {
+                  position: "absolute",
+                  backgroundColor: Colors["light"].tint, // set iOS tab bar color (keeps absolute positioning)
+              },
+              default: {
+                  backgroundColor: Colors["light"].tint, // Android / default tab bar color
+                  height: 60,
+                  elevation: 8, // Android shadow
+              },
           }),
         };
       }}
@@ -118,24 +122,6 @@ export default function TabLayout() {
           tabBarIcon: ({ color }) => (
             <FontAwesome size={22} name="users" color={color} />
           ),
-          headerRight: () => (
-            <TouchableOpacity
-              onPressOut={() => router.push("/(protected)/search-community")}
-              className="mr-5"
-            >
-              <Ionicons name="search-outline" size={24} color={"black"} />
-            </TouchableOpacity>
-          ),
-          headerTitleAlign: "left",
-          headerTitle: "Communities",
-          headerLeft: () => (
-            <TouchableOpacity
-              onPressOut={() => setOpen(!open)}
-              className="ml-4 mr-2"
-            >
-              <Ionicons name="menu" size={24} color="black" />
-            </TouchableOpacity>
-          ),
         }}
       />
       <Tabs.Screen
@@ -143,7 +129,7 @@ export default function TabLayout() {
         options={{
           title: "Profile",
           tabBarIcon: ({ color }) => (
-            <FontAwesome5 name="user" size={22} color={color} />
+            <FontAwesome5 name="user-alt" size={22} color={color} />
           ),
         }}
       />
@@ -154,7 +140,6 @@ export default function TabLayout() {
           tabBarIcon: ({ color }) => (
             <FontAwesome size={22} name="book" color={color} />
           ),
-          headerTitle: "Blog",
         }}
       />
       <Tabs.Screen

@@ -10,6 +10,7 @@ import { useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import { Image, Pressable } from "react-native";
 import { Divider } from "../ui/divider";
+import {Badge, BadgeIcon, BadgeText} from "@/components/ui/badge";
 
 export function BlogArticleCard({ blog }: { blog: Blog }) {
   const router = useRouter();
@@ -55,10 +56,11 @@ export function BlogArticleCard({ blog }: { blog: Blog }) {
       <Pressable onPress={handleCardClick}>
         <VStack space="sm">
           <Text className="text-green-800 font-bold mx-4">{communityName}</Text>
+
           <Image
             source={{ uri: blog.coverPhoto }}
             alt={blog.title}
-            className="w-full h-32"
+            className="w-full h-32 rounded-md px-4"
             resizeMode="cover"
           />
 
@@ -72,18 +74,21 @@ export function BlogArticleCard({ blog }: { blog: Blog }) {
               source={{ uri: blog?.authorProfilePic ?? "" }}
               className="w-10 h-10 rounded-full border-2 border-purple-900"
             />
-            <VStack>
+            <VStack className="flex-1">
               <Text className="font-medium">{authorName}</Text>
-              <Text className="text-gray-500 text-xs">
-                {new Date(Date.parse(blog.createdAt)).toLocaleDateString(
-                  "en-US",
-                  {
-                    month: "2-digit",
-                    day: "2-digit",
-                    year: "2-digit",
-                  }
-                )}
-              </Text>
+              <HStack space="xs" className="items-center">
+                <Text className="text-gray-500 text-xs">
+                  {new Date(Date.parse(blog.createdAt)).toLocaleDateString(
+                    "en-US",
+                    {
+                      month: "2-digit",
+                      day: "2-digit",
+                      year: "2-digit",
+                    }
+                  )}
+                </Text>
+                <Text className="text-gray-400 text-xs">•</Text>
+              </HStack>
             </VStack>
           </HStack>
         </VStack>

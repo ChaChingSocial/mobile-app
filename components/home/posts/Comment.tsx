@@ -97,7 +97,7 @@ export function Comment({
       userId={comment.userId}
     >
       {editing ? (
-        <View className="border border-purple-700 rounded-md p-4 ml-4 bg-purple-50 shadow-sm mt-4">
+        <View className="border-l-4 rounded-md p-4 ml-4 shadow-sm mt-4">
           <PostEditor
             message={editedContent}
             setContent={setEditedContent}
@@ -136,7 +136,7 @@ export function Comment({
         />
       )}
 
-      <View className="flex-row items-center mt-2 space-x-2">
+      <View className="flex-row items-center mt-2 space-x-4">
         <TouchableOpacity onPress={handleLike} activeOpacity={0.7}>
           <FontAwesome
             name={liked ? "heart" : "heart-o"}

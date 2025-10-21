@@ -226,6 +226,7 @@ export function PostComponent({ post }: { post: PostType }) {
   };
 
   return (
+      <>
     <Box className="mt-8">
       {communityName && (
         <Box className="relative -top-4 left-6 z-10">
@@ -251,7 +252,7 @@ export function PostComponent({ post }: { post: PostType }) {
           </Pressable>
         </Box>
       )}
-      <Card className="m-2 p-4 rounded-lg bg-[#f3e8ff] border border-[#6b21a8] ">
+      <Card className="m-2 p-4 rounded-lg">
         <PostWrapper
           post={post}
           onLike={handleLike}
@@ -268,29 +269,40 @@ export function PostComponent({ post }: { post: PostType }) {
           {renderPostContent()}
         </PostWrapper>
 
-        {writeComment && currentUserId ? (
-          <View className="border border-secondary-0 rounded-md p-4 ml-4 bg-[#f3e8ff] mb-4">
-            <PostEditor
-              message=""
-              setContent={(content) => setComment(content)}
-              editorType="post"
-            />
-            <View className="flex flex-row justify-end mt-2 gap-2">
-              <Button
-                // mode="outlined"
-                onPress={() => setWriteComment(false)}
-                className="ml-2"
-              >
-                <ButtonText>Cancel</ButtonText>
-              </Button>
-              <Button
-                // mode="contained"
-                onPress={handlePostingComment}
-                className="ml-2"
-              >
-                <ButtonText>Comment</ButtonText>
-              </Button>
-            </View>
+        {/*{writeComment && (*/}
+          <View className="bg-[#a5e5cb] rounded-md rounded-md p-4 ml-4 mb-4">
+              <View className="flex flex-row items-center gap-2">
+                  <View className="flex-1">
+                      <PostEditor
+                          message={commentContent}
+                          setContent={setCommentContent}
+                          editorType="comment"
+                      />
+                  </View>
+                  <TouchableOpacity
+                      onPress={handlePostingComment}
+                      className="bg-primary-500 rounded-full p-3"
+                  >
+                      <Ionicons name="send" size={20} color="white" />
+                  </TouchableOpacity>
+              </View>
+              {/*<View className="flex flex-row justify-end mt-2 gap-2">*/}
+            {/*  <Button*/}
+            {/*    // mode="outlined"*/}
+            {/*    onPress={() => setWriteComment(false)}*/}
+            {/*    className="ml-2"*/}
+            {/*  >*/}
+            {/*    <ButtonText>Cancel</ButtonText>*/}
+            {/*  </Button>*/}
+            {/*  <Button*/}
+            {/*    // mode="contained"*/}
+            {/*    onPress={handlePostingComment}*/}
+            {/*    className="ml-2"*/}
+            {/*  >*/}
+            {/*    <ButtonText>Comment</ButtonText>*/}
+            {/*  </Button>*/}
+            {/*</View>*/}
+
           </View>
         ) : (
           enableComments &&
@@ -312,6 +324,8 @@ export function PostComponent({ post }: { post: PostType }) {
           <PostComments post={post} showAllComments={showAllComments} />
         )}
       </Card>
+        <OinkInfo visible={oinkInfoModalVisible} onClose={() => setOinkInfoModalVisible(false)} />
     </Box>
+    </>
   );
 }
