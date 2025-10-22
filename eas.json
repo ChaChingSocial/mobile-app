@@ -5,6 +5,7 @@
   },
   "build": {
     "development": {
+      "prebuildCommand": "npx expo prebuild --clean",
       "developmentClient": true,
       "distribution": "internal",
       "ios": {
@@ -15,7 +16,16 @@
       "distribution": "internal"
     },
     "production": {
+      "prebuildCommand": "npx expo prebuild --clean",
       "autoIncrement": true
+    },
+    "development-simulator": {
+      "developmentClient": true,
+      "distribution": "internal",
+      "ios": {
+        "simulator": true
+      },
+      "environment": "development"
     }
   },
   "submit": {
