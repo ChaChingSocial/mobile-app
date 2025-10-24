@@ -64,19 +64,19 @@ export function ContactForm() {
 
   return (
     <Box className="bg-gradient-to-b from-white to-gray-100 rounded-lg mt-6">
-      <Heading size="2xl" className="text-center mb-2">
+      <Heading size="2xl" className="text-center mb-2 text-white">
         ☎️ Contact
       </Heading>
       <Box>
-        <Box className="p-4 bg-[#00bf63] rounded-2xl">
-          <Text size="xl" bold className="text-white my-6">
+        <Box className="p-4 bg-white rounded-2xl">
+          <Text size="xl" bold className=" my-6">
             Contact information
           </Text>
 
           <ContactIconsList />
         </Box>
 
-        <FormControl className="p-4 rounded-lg border mt-4">
+        <FormControl className="p-4 rounded-lg border mt-4 bg-white shadow-sm">
           <VStack space="xl">
             <Heading className="">Get in touch</Heading>
             <VStack space="xs">
@@ -126,8 +126,8 @@ export function ContactForm() {
                 <TextareaInput placeholder="Please include all relevant information" />
               </Textarea>
             </VStack>
-            <TouchableOpacity className="bg-[#00bf63] rounded-lg p-2">
-              <Text className="text-white text-center">Send message</Text>
+            <TouchableOpacity className="bg-[#077f5f] rounded-lg p-2">
+              <Text className="text-center text-white">Send message</Text>
             </TouchableOpacity>
           </VStack>
         </FormControl>

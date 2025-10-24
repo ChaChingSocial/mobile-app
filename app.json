@@ -15,7 +15,9 @@
       "infoPlist": {
         "NSAppTransportSecurity": {
           "NSAllowsArbitraryLoads": true
-        }
+        },
+        "NSPhotoLibraryUsageDescription": "Allow this app to access your photos to upload images.",
+        "NSPhotoLibraryAddUsageDescription": "Allow this app to save images to your library."
       }
     },
     "android": {
@@ -32,6 +34,11 @@
       "favicon": "./assets/images/favicon.png"
     },
     "plugins": [
+      [
+        "expo-image-picker", {
+        "photosPermission": "Allow this app to access your photos to upload images."
+        },
+      ],
       "@react-native-google-signin/google-signin",
       "@react-native-firebase/app",
       "@react-native-firebase/auth",

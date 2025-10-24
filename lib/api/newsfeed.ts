@@ -23,18 +23,13 @@ import { sendNotification } from "./notifications";
 import { usePostStore } from "../store/post";
 
 const db = getFirestore(app);
+const user = auth.currentUser;
 
 // Post on the newsfeed
 export async function createPost(newsfeedPost: Post) {
   console.log("Creating post:", newsfeedPost);
-
-  // Get current user at runtime, not at import time
-  const user = auth.currentUser;
   console.log("User session:", user);
-
-  // If Firebase auth user is null, but we have the posterUserId in the post, proceed anyway
-  // This handles cases where the app uses custom session management
-  if (!user && !newsfeedPost.posterUserId) {
+  if (!user) {
     throw new Error("User not authenticated");
   }
 
@@ -45,30 +40,26 @@ export async function createPost(newsfeedPost: Post) {
     // Add the post data with the document ID included
     await setDoc(docRef, { ...newsfeedPost, id: docRef.id });
 
-    // Send notifications using poster data from the post if Firebase user is available
-    const userId = user?.uid || newsfeedPost.posterUserId;
-    const userName = user?.displayName || newsfeedPost.posterName;
-
-    if (userId && userName && newsfeedPost.newsfeedId) {
+    if (user && user?.displayName && newsfeedPost.newsfeedId) {
       await sendNotification(
-        userId,
+        user.uid,
         newsfeedPost.newsfeedId,
-        userName,
+        user.displayName,
         "COMMUNITY_UPDATE",
         "POST"
       );
     }
 
     if (
-      userId &&
-      userName &&
+      user &&
+      user?.displayName &&
       newsfeedPost.newsfeedId &&
       newsfeedPost.taggedUsers
     ) {
       await sendNotification(
-        userId,
+        user.uid,
         newsfeedPost.newsfeedId,
-        userName,
+        user.displayName,
         "TAGGED",
         "POST"
       );
@@ -572,6 +563,64 @@ export async function commentOnPost(
     }
   } catch (error) {
     console.error("Error adding comment:", error);
+  }
+}
+
+// Reply to a comment (nested comment)
+export async function commentOnComment(
+  postId: string,
+  parentCommentId: string,
+  newReply: {
+    userId: string;
+    userName: string;
+    userPic: string;
+    message: { message: string; mentions: string[] };
+    timestamp: Date;
+  },
+  parentAuthorId: string,
+  communityId: string
+) {
+  try {
+    const postDoc = doc(db, "posts", postId);
+    const postSnap = await getDoc(postDoc);
+
+    if (postSnap.exists()) {
+      const postData = postSnap.data();
+      const parent = findComment(postData.comments, parentCommentId);
+      if (!parent) {
+        console.error(`Parent comment ${parentCommentId} not found in post ${postId}`);
+        return;
+      }
+
+      const nextIdx = (parent.comments?.length || 0) + 1;
+      const replyWithId: Comment = {
+        id: `${parentCommentId}_reply_${nextIdx}`,
+        userId: newReply.userId || "",
+        userName: newReply.userName as any,
+        userPic: newReply.userPic as any,
+        message: newReply.message,
+        timestamp: new Date(),
+        likes: [],
+        comments: [],
+      } as any;
+
+      parent.comments = parent.comments ? [...parent.comments, replyWithId] : [replyWithId];
+
+      await updateDoc(postDoc, { comments: postData.comments });
+
+      await sendNotification(
+        parentAuthorId,
+        communityId,
+        newReply.userName,
+        "COMMENTED",
+        "POST"
+      );
+
+      console.log(`Reply added to comment ${parentCommentId} on post ${postId}`);
+      return replyWithId;
+    }
+  } catch (error) {
+    console.error("Error adding nested comment:", error);
   }
 }
 

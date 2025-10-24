@@ -75,8 +75,7 @@ export default function TabLayout() {
           headerLeft: () => (
             <TouchableOpacity
               onPressOut={() => setOpen(!open)}
-              className="ml-5"
-            >
+              className="ml-5">
               <Avatar size="sm">
                 <AvatarFallbackText>{session?.displayName}</AvatarFallbackText>
                 <AvatarImage
