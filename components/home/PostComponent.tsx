@@ -226,6 +226,7 @@ export function PostComponent({ post }: { post: PostType }) {
   };
 
   return (
+      <>
     <Box className="mt-8">
       {communityName && (
         <Box className="relative -top-4 left-6 z-10">
@@ -251,7 +252,7 @@ export function PostComponent({ post }: { post: PostType }) {
           </Pressable>
         </Box>
       )}
-      <Card className="m-2 p-4 rounded-lg bg-[#f3e8ff] border border-[#6b21a8] ">
+      <Card className="m-2 p-4 rounded-lg">
         <PostWrapper
           post={post}
           onLike={handleLike}
@@ -313,5 +314,6 @@ export function PostComponent({ post }: { post: PostType }) {
         )}
       </Card>
     </Box>
+    </>
   );
 }

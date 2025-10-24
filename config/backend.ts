@@ -6,6 +6,7 @@ import {
   NotificationApi,
   ScoreApi,
   UserApi,
+  EventApi,
 } from "@/_sdk";
 
 const BACKEND_URL = process.env.EXPO_PUBLIC_BACKEND || "https://chachingsocial-615685871214.us-central1.run.app";
@@ -21,3 +22,4 @@ export const notificationApi = new NotificationApi(config);
 export const scoreApi = new ScoreApi(config);
 export const newsfeedApi = new NewsfeedApi(config);
 export const blogApi = new BlogApi(config);
+export const eventApi = new EventApi(config);

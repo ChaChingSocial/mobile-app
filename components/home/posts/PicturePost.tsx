@@ -4,7 +4,7 @@ import { Heading } from "@/components/ui/heading";
 import { ChevronLeftIcon, ChevronRightIcon } from "@/components/ui/icon";
 import { VStack } from "@/components/ui/vstack";
 import { Post as PostType } from "@/types/post";
-import { useRef, useState } from "react";
+import { useRef, useState, useEffect } from "react";
 import {
   Dimensions,
   Image,
@@ -18,10 +18,21 @@ import PagerView from "react-native-pager-view";
 export function PicturePost({ post }: { post: PostType }) {
   const [opened, setOpened] = useState(false);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [dimensions, setDimensions] = useState({
+    width: Dimensions.get("window").width,
+    height: Dimensions.get("window").height,
+  });
   const pagerRef = useRef<PagerView>(null);
   const modalPagerRef = useRef<PagerView>(null);
-  const width = Dimensions.get("window").width;
-  const imageHeight = width * 0.6; // Maintain aspect ratio
+  const imageHeight = dimensions.width * 0.6; // Maintain aspect ratio
+
+  useEffect(() => {
+    const subscription = Dimensions.addEventListener("change", ({ window }) => {
+      setDimensions({ width: window.width, height: window.height });
+    });
+
+    return () => subscription?.remove();
+  }, []);
 
   const handleImageClick = (index: number) => {
     setCurrentImageIndex(index);
@@ -95,14 +106,17 @@ export function PicturePost({ post }: { post: PostType }) {
         <PagerView
           ref={pagerRef}
           style={{
-            width: width * 0.8,
+            width: dimensions.width * 0.8,
             height: imageHeight,
           }}
           initialPage={0}
           onPageSelected={handlePageSelected}
         >
           {(post.pictures || []).map((picture, index) => {
-            const uri = typeof picture === "string" ? picture : picture.url;
+            const uri =
+              typeof picture === "object" && picture !== null
+                ? picture.url
+                : picture;
             return (
               <TouchableOpacity
                 activeOpacity={0.9}
@@ -112,7 +126,7 @@ export function PicturePost({ post }: { post: PostType }) {
               >
                 <Image
                   source={{ uri }}
-                  className="w-full h-full"
+                  className="w-full h-full rounded-md"
                   resizeMode="contain"
                   onError={(e) =>
                     console.log("Image error:", e.nativeEvent.error)
@@ -153,12 +167,15 @@ export function PicturePost({ post }: { post: PostType }) {
           )}
           <PagerView
             ref={modalPagerRef}
-            style={{ width: "100%", height: "100%" }}
+            style={{ width: dimensions.width, height: dimensions.height }}
             initialPage={currentImageIndex}
             onPageSelected={handlePageSelected}
           >
             {(post.pictures || []).map((picture, index) => {
-              const uri = typeof picture === "string" ? picture : picture.url;
+              const uri =
+                typeof picture === "object" && picture !== null
+                  ? picture.url
+                  : picture;
               return (
                 <Box key={index} className="flex-1">
                   <Image

@@ -55,7 +55,7 @@ export default function AllCommunitiesPreview() {
               }}
             />
           </Avatar>
-          <Text size="sm" bold className="mt-2" numberOfLines={1}>
+          <Text size="sm" bold className="mt-2 color-[#a3e4d2]" numberOfLines={1}>
             {data?.title?.substring(0, 12)}...
           </Text>
         </Box>
@@ -66,7 +66,7 @@ export default function AllCommunitiesPreview() {
   const keyExtractor = (item: Community) => item.id || Math.random().toString();
 
   return (
-    <Box className="bg-[#E6F8F1]">
+    <Box className="bg-[#077f5f]">
       {communityData.length > 0 && (
         <FlatList
           data={communityData}

@@ -27,11 +27,11 @@ const db = getFirestore(app);
 // Post on the newsfeed
 export async function createPost(newsfeedPost: Post) {
   console.log("Creating post:", newsfeedPost);
-  
+
   // Get current user at runtime, not at import time
   const user = auth.currentUser;
   console.log("User session:", user);
-  
+
   // If Firebase auth user is null, but we have the posterUserId in the post, proceed anyway
   // This handles cases where the app uses custom session management
   if (!user && !newsfeedPost.posterUserId) {
@@ -48,7 +48,7 @@ export async function createPost(newsfeedPost: Post) {
     // Send notifications using poster data from the post if Firebase user is available
     const userId = user?.uid || newsfeedPost.posterUserId;
     const userName = user?.displayName || newsfeedPost.posterName;
-    
+
     if (userId && userName && newsfeedPost.newsfeedId) {
       await sendNotification(
         userId,
@@ -668,7 +668,7 @@ export async function getFeaturedPosts(lastDoc = null) {
       collection(db, "posts"),
       where("featured", "==", true),
       orderBy("createdAt", "desc"),
-      limit(50) // Increased batch size for better performance
+      limit(50)
     );
 
     if (lastDoc) {
