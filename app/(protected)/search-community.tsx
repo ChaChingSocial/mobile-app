@@ -190,7 +190,7 @@ export default function SearchCommunity() {
   );
 
   return (
-    <SafeAreaView className="flex-1 bg-white py-3 px-4">
+    <SafeAreaView className="flex-1 bg-[#2FAE7F] py-3 px-4">
       <Input size="xl" className="mb-4">
         <InputSlot className="pl-3">
           <InputIcon as={SearchIcon} />
