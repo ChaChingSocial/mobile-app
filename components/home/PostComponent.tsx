@@ -313,7 +313,7 @@ export function PostComponent({ post }: { post: PostType }) {
                     {/*{writeComment && (*/}
                     <View className="bg-[#a5e5cb] rounded-md p-4 ml-4 mb-4">
                         <View className="flex flex-row items-center gap-2">
-                            <View>
+                            <View className="flex-1">
                                 <PostEditor
                                     message={commentContent}
                                     setContent={setCommentContent}
