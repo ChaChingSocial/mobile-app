@@ -16,7 +16,8 @@ import { getAllCommunities } from "@/lib/api/communities";
 import { usePostStore } from "@/lib/store/post";
 import { useNavigation, useRouter } from "expo-router";
 import { useEffect, useState } from "react";
-import { SafeAreaView, ScrollView, TouchableOpacity } from "react-native";
+import { SafeAreaView, TouchableOpacity } from "react-native";
+import { FlatList } from "react-native-gesture-handler";
 
 export default function SearchCommunity() {
   const navigate = useNavigation();
@@ -25,6 +26,8 @@ export default function SearchCommunity() {
   const routes = navigate.getState()?.routes;
   const prevRoute = routes[routes.length - 2];
   console.log("previous route", prevRoute);
+  console.log("previous route name", prevRoute?.name);
+  console.log("all routes", routes.map(r => r.name));
 
   const setCreatedPostCommunityData = usePostStore(
     (state) => state.setCreatedPostCommunityData
@@ -107,6 +110,85 @@ export default function SearchCommunity() {
     300
   );
 
+  const renderCommunityItem = ({ item }: { item: { data: Community; id: string } }) => {
+    const { data, id } = item;
+    return (
+      <TouchableOpacity
+        onPress={() => {
+          // Check if coming from any create-post route by examining all routes
+          const allRouteNames = routes.map(r => r.name);
+          const isFromCreatePost = allRouteNames.some(name => 
+            name?.includes('create-post') || 
+            name === 'index' && allRouteNames.some(n => n?.includes('create-post'))
+          );
+          
+          console.log('Is from create post:', isFromCreatePost);
+          console.log('All route names:', allRouteNames);
+          
+          if (!isFromCreatePost) {
+            router.push({
+              pathname: "/(protected)/communities/[slug]",
+              params: { slug: data.slug, communityId: id },
+            });
+          } else {
+            setCreatedPostCommunityData(data);
+            navigate.goBack();
+          }
+        }}
+      >
+        <HStack className="py-4 border-b border-gray-300 gap-4">
+          <Avatar size="md">
+            <AvatarFallbackText>
+              {data.title?.charAt(0).toUpperCase()}
+            </AvatarFallbackText>
+            <AvatarImage
+              source={{
+                uri: data.image || "",
+              }}
+            />
+          </Avatar>
+          <Box>
+            <Text className="font-bold text-lg text-wrap">
+              {data.title}
+            </Text>
+
+            <Text>{data.members?.length ?? 0} members</Text>
+
+            {data.description && (
+              <Text className="mt-1 line-clamp-2 leading-6 text-base text-gray-400 text-wrap">
+                {data.description
+                  .slice(0, 100)
+                  .replace(/<[^>]+>/g, "")}
+                ...
+              </Text>
+            )}
+
+            {data.requiresPaidSubscription && (
+              <Text className="text-primary-50 mt-2 text-xs">
+                💰 paid subscription required
+              </Text>
+            )}
+          </Box>
+        </HStack>
+      </TouchableOpacity>
+    );
+  };
+
+  const keyExtractor = (item: { data: Community; id: string }) => item.id || Math.random().toString();
+
+  const renderEmptyComponent = () => (
+    <Center className="py-8">
+      <Text>No communities found</Text>
+    </Center>
+  );
+
+  const renderLoadingComponent = () => (
+    <Center>
+      <Spinner color="green" size="large" />
+      <Text size="md">Loading communities...</Text>
+    </Center>
+  );
+
   return (
     <SafeAreaView className="flex-1 bg-[#2FAE7F] py-3 px-4">
       <Input size="xl" className="mb-4">
@@ -121,83 +203,18 @@ export default function SearchCommunity() {
           autoCorrect={false}
         />
       </Input>
-      <ScrollView className="flex-1">
-        <Box className="flex-1">
-          {loading ? (
-            <Center>
-              <Spinner color="green" size="large" />
-              <Text size="md">Loading communities...</Text>
-            </Center>
-          ) : filteredData.length > 0 ? (
-            filteredData.map(
-              ({ data, id }: { data: Community; id: string }) => (
-                <TouchableOpacity
-                  key={id}
-                  onPress={() => {
-                    if (
-                      ![
-                        "/(protected)/create-post/index",
-                        "/(protected)/create-post/new-event-post",
-                        "/(protected)/create-post/new-image-post",
-                        "/(protected)/create-post/new-link-post",
-                        "/(protected)/create-post/new-podcast-post",
-                      ].includes(prevRoute?.name)
-                    ) {
-                      router.push({
-                        pathname: "/(protected)/communities/[slug]",
-                        params: { slug: data.slug, communityId: id },
-                      });
-                    } else {
-                      setCreatedPostCommunityData(data);
-                      navigate.goBack();
-                    }
-                  }}
-                >
-                  <HStack className="py-4 px-4 border-b border-gray-300 gap-4">
-                    <Avatar size="md">
-                      <AvatarFallbackText>
-                        {data.title?.charAt(0).toUpperCase()}
-                      </AvatarFallbackText>
-                      <AvatarImage
-                        source={{
-                          uri: data.image || "",
-                        }}
-                        className="object-contain"
-                      />
-                    </Avatar>
-                      <Box className="flex-1">
-                      <Text className="font-bold text-lg text-wrap">
-                        {data.title}
-                      </Text>
-
-                      <Text>{data.members?.length ?? 0} members</Text>
-
-                      {data.description && (
-                        <Text className="mt-1 line-clamp-2 leading-6 text-base text-gray-400 text-wrap">
-                          {data.description
-                            .slice(0, 100)
-                            .replace(/<[^>]+>/g, "")}
-                          ...
-                        </Text>
-                      )}
-
-                      {data.requiresPaidSubscription && (
-                        <Text className="text-primary-50 mt-2 text-xs">
-                          💰 paid subscription required
-                        </Text>
-                      )}
-                    </Box>
-                  </HStack>
-                </TouchableOpacity>
-              )
-            )
-          ) : (
-            <Center className="py-8">
-              <Text>No communities found</Text>
-            </Center>
-          )}
-        </Box>
-      </ScrollView>
+      {loading ? (
+        renderLoadingComponent()
+      ) : (
+        <FlatList
+          data={filteredData}
+          renderItem={renderCommunityItem}
+          keyExtractor={keyExtractor}
+          showsVerticalScrollIndicator={false}
+          ListEmptyComponent={renderEmptyComponent}
+          contentContainerStyle={{ flexGrow: 1 }}
+        />
+      )}
     </SafeAreaView>
   );
 }

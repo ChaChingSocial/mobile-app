@@ -6,7 +6,7 @@ import { subscribeToPostsByNewsfeedId } from "@/lib/api/newsfeed";
 import { useSession } from "@/lib/providers/AuthContext";
 import { stripHtml } from "@/lib/utils/stripHtml";
 import { Post } from "@/types/post";
-import { useLocalSearchParams } from "expo-router";
+import { useLocalSearchParams, useNavigation, useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import { Image, ScrollView, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -17,7 +17,12 @@ export default function SingleCommunity() {
   const params = useLocalSearchParams();
   const { slug, communityId } = params;
   const { session } = useSession();
+  // const navigate = useNavigation();
+  // const router = useRouter();
 
+  // const routes = navigate.getState()?.routes;
+  // const prevRoute = routes[routes.length - 2];
+  console.log("slug comm previous route", prevRoute);
   const [communityData, setCommunityData] = useState<Community | null>(null);
   const [posts, setPosts] = useState<Post[]>([]);
   const [isExpanded, setIsExpanded] = useState(false);
