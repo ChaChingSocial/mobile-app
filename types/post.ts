@@ -1,6 +1,7 @@
 import { Timestamp } from "firebase/firestore";
 import { Goal } from "./goal";
 import { Product } from "./product";
+import { Event } from '../_sdk/models/Event';
 
 export type Post = {
   id?: string;
@@ -22,6 +23,7 @@ export type Post = {
   newsfeedId?: string;
   advert?: AdvertType | null;
   event?: PostEventType | null;
+  eventV2?: Event | null;
   presentation?: string | null;
   goal?: Goal | null;
   podcast?: string | null;

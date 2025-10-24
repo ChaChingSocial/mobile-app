@@ -16,6 +16,7 @@ This is an [Expo](https://expo.dev) project created with [`create-expo-app`](htt
     npx expo start
    ```
 
+
 In the output, you'll find options to open the app in a
 
 - [development build](https://docs.expo.dev/develop/development-builds/introduction/)
@@ -29,6 +30,16 @@ npm run reset-project
 ```
 
 This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+
+## Build Project for Production
+To create a production build of your app, run:
+
+```bash
+npx expo build
+```
+This will generate optimized binaries for your target platforms.
+
+
 
 ## Learn more
 

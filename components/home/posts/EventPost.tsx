@@ -86,6 +86,8 @@ export const EventPost = ({
     const [readMore, setReadMore] = useState(false);
     const [showReadMore, setShowReadMore] = useState(false);
     const descRef = useRef<Text>(null);
+    const [eventTickets, setEventTickets] = useState<Ticket[]>([]);
+    const [newlyPurchasedTickets, setNewlyPurchasedTickets] = useState<Ticket[]>([]);
 
     const descriptionHtml = (selectedSlot?.description as any) || eventV2?.description || "";
 
@@ -128,6 +130,8 @@ export const EventPost = ({
                 });
                 const valid = (t || []).filter((tk) => tk.id && tk.id.trim() !== "");
                 setTickets(valid);
+                console.log('Tickets', valid);
+                setEventTickets(valid);
                 setHasValidTickets(valid.length > 0);
             } catch (e) {
                 setTickets([]);
@@ -676,42 +680,86 @@ export const EventPost = ({
                     eventSlot={selectedSlot}
                     opened={ticketModalOpened}
                     onClose={() => setTicketModalOpened(false)}
-                    onTicketIssued={(newTickets) => {
-                        setTickets((prev) => [...prev, ...newTickets]);
-                        setHasValidTickets(true);
+                    onTicketIssued={async (newTickets) => {
+                        // Optimistic update first
+                        if (newTickets.length > 0) {
+                            setNewlyPurchasedTickets(newTickets);
+                            setHasValidTickets(true);
+                            setTicketViewOpened(true);
+                        }
+
+                        // Then refetch in the background to sync with server
+                        const api = new EventApi();
+                        try {
+                            const t = await api.getUserEventSlotTickets({
+                                eventSlotId: selectedSlot.id,
+                                userId: userId!,
+                            });
+                            const valid = (t || []).filter((tk) => tk.id && tk.id.trim() !== "");
+                            setTickets(valid);
+                            setHasValidTickets(valid.length > 0);
+                        } catch (e) {
+                            // error with refetch is ok, we did an optimistic update
+                            console.log("Failed to refetch tickets after issuing, using optimistic update.", e);
+                        }
                     }}
                 />
             )}
 
-            {/* Ticket Viewer Modal */}
-            <Modal isOpen={ticketViewOpened} onClose={() => setTicketViewOpened(false)}>
-                <ModalBackdrop />
-                <ModalContent>
-                    <ModalHeader>
-                        <Text className="text-lg font-semibold">Your Tickets</Text>
-                        <ModalCloseButton />
-                    </ModalHeader>
-                    <ModalBody>
-                        {tickets.length === 0 ? (
-                            <Text className="text-gray-600">No tickets yet.</Text>
-                        ) : (
-                            tickets.map((t, key) => (
-                                <View key={key} className="mb-3 p-3 border border-gray-200 rounded-md bg-white">
-                                    <Text className="font-semibold">Ticket ID: {t.id}</Text>
-                                    {!!t.ticketStatus && (
-                                        <Text className="text-xs text-gray-600">Status: {t.ticketStatus}</Text>
-                                    )}
-                                </View>
-                            ))
-                        )}
-                    </ModalBody>
-                    <ModalFooter>
-                        <Button onPress={() => setTicketViewOpened(false)}>
-                            <Text className="text-white">Close</Text>
-                        </Button>
-                    </ModalFooter>
-                </ModalContent>
-            </Modal>
+            {hasValidTickets && selectedSlot && post.eventV2 && (
+                <TicketViewerModal
+                    opened={ticketViewOpened}
+                    onClose={() => {
+                        setTicketViewOpened(false);
+                        setNewlyPurchasedTickets([]);
+                        // Refetch tickets when modal is closed
+                        const api = new EventApi();
+                        api.getUserEventSlotTickets({
+                            eventSlotId: selectedSlot.id,
+                            userId: userId!,
+                        }).then((t) => {
+                            const valid = (t || []).filter((tk) => tk.id && tk.id.trim() !== "");
+                            setTickets(valid);
+                            setHasValidTickets(valid.length > 0);
+                        });
+                    }}
+                    event={post.eventV2}
+                    eventSlot={selectedSlot}
+                    tickets={newlyPurchasedTickets.length > 0 ? newlyPurchasedTickets : tickets.filter(
+                        (ticket) =>
+                            ticket.eventSlotId === selectedSlot.id && ticket.id
+                    )}
+                />
+            )}
+            {/*/!* Ticket Viewer Modal *!/*/}
+            {/*<Modal isOpen={ticketViewOpened} onClose={() => setTicketViewOpened(false)}>*/}
+            {/*    <ModalBackdrop />*/}
+            {/*    <ModalContent>*/}
+            {/*        <ModalHeader>*/}
+            {/*            <Text className="text-lg font-semibold">Your Tickets</Text>*/}
+            {/*            <ModalCloseButton />*/}
+            {/*        </ModalHeader>*/}
+            {/*        <ModalBody>*/}
+            {/*            {tickets.length === 0 ? (*/}
+            {/*                <Text className="text-gray-600">No tickets yet.</Text>*/}
+            {/*            ) : (*/}
+            {/*                tickets.map((t, key) => (*/}
+            {/*                    <View key={key} className="mb-3 p-3 border border-gray-200 rounded-md bg-white">*/}
+            {/*                        <Text className="font-semibold">Ticket ID: {t.id}</Text>*/}
+            {/*                        {!!t.ticketStatus && (*/}
+            {/*                            <Text className="text-xs text-gray-600">Status: {t.ticketStatus}</Text>*/}
+            {/*                        )}*/}
+            {/*                    </View>*/}
+            {/*                ))*/}
+            {/*            )}*/}
+            {/*        </ModalBody>*/}
+            {/*        <ModalFooter>*/}
+            {/*            <Button onPress={() => setTicketViewOpened(false)}>*/}
+            {/*                <Text className="text-white">Close</Text>*/}
+            {/*            </Button>*/}
+            {/*        </ModalFooter>*/}
+            {/*    </ModalContent>*/}
+            {/*</Modal>*/}
 
             {/* Auth prompt */}
             <Modal isOpen={authPromptOpen} onClose={() => setAuthPromptOpen(false)}>

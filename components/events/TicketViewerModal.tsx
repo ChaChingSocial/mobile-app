@@ -3,7 +3,7 @@ import { View, Text, Image, TouchableOpacity, ScrollView, Linking } from "react-
 import { Modal, ModalBackdrop, ModalBody, ModalContent, ModalFooter, ModalHeader, ModalCloseButton } from "@/components/ui/modal";
 import { Button } from "@/components/ui/button";
 import type { EventSlot, Ticket } from "@/_sdk/models";
-// import QRCode from "react-native-qrcode-svg";
+import QRCode from "react-native-qrcode-svg";
 
 export interface TicketViewerModalProps {
   opened: boolean;
@@ -101,9 +101,9 @@ export default function TicketViewerModal({ opened, onClose, tickets, event, eve
               {current && (
                 <View className="items-center p-3 border border-gray-200 rounded-md bg-white">
                   <Text className="font-medium mb-2">Ticket ID: {current.id}</Text>
-                  {/*<View className="mb-2">*/}
-                  {/*  <QRCode value={String(current.id || "ticket")} size={160} backgroundColor="#ffffff" />*/}
-                  {/*</View>*/}
+                  <View className="mb-2">
+                    <QRCode value={String(current.id || "ticket")} size={160} backgroundColor="#ffffff" />
+                  </View>
                   {!!current.ticketStatus && (
                     <Text className="text-xs text-gray-600">Status: {current.ticketStatus}</Text>
                   )}
