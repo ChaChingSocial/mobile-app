@@ -101,7 +101,7 @@ export default function CommunitiesScreen() {
         <Box className="flex-1 bg-[#077f5f]">
             {/* Floating search box - Sticky to top */}
             {showSearchBox && (
-                <Box className="absolute top-0 left-0 right-0 z-50 bg-[#2FAE7F] pt-2 pb-2">
+                <Box className="absolute top-0 left-0 right-0 z-50 pt-2 pb-2">
                     <Box className="mx-4 bg-white rounded-lg shadow-lg p-2">
                         <HStack className="items-center gap-2">
                             <TouchableOpacity
@@ -144,14 +144,14 @@ export default function CommunitiesScreen() {
             )}
 
             <ParallaxScrollView>
-                <Box className="bg-[#2FAE7F] flex-1">
+                <Box className="bg-[#077f5f] flex-1">
                     {loading && (
                         <Center className="flex-1">
                             <Spinner color="green" size="large" />
                             <Text size="md">Please Wait...</Text>
                         </Center>
                     )}
-                    <Box className="gap-5 flex p-4 bg-[#2FAE7F] mt-16 mb-24">
+                    <Box className="gap-5 flex p-4 bg-[#077f5f] mt-16 mb-24">
                         {filteredData?.length > 0 ? (
                             filteredData.map((community) => (
                                 <CommunityCard key={community.id} community={community.data} />
