@@ -8,7 +8,7 @@ import { stripHtml } from "@/lib/utils/stripHtml";
 import { Post } from "@/types/post";
 import { useLocalSearchParams, useNavigation, useRouter } from "expo-router";
 import { useEffect, useState } from "react";
-import { Image, ScrollView, View } from "react-native";
+import { Image, ScrollView, View, NativeSyntheticEvent, NativeScrollEvent } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Center } from "@/components/ui/center";
 import { Spinner } from "@/components/ui/spinner";
@@ -24,6 +24,7 @@ export default function SingleCommunity() {
   // const prevRoute = routes[routes.length - 2];
   const [communityData, setCommunityData] = useState<Community | null>(null);
   const [posts, setPosts] = useState<Post[]>([]);
+  const [visibleCount, setVisibleCount] = useState(10);
   const [isExpanded, setIsExpanded] = useState(false);
 
   const fetchCommunityData = async () => {
@@ -53,7 +54,11 @@ export default function SingleCommunity() {
     fetchCommunityData();
     subscribeToPostsByNewsfeedId(
       Array.isArray(communityId) ? communityId[0] : communityId,
-      setPosts
+      (p) => {
+        setPosts(p);
+        // reset visible count when new data arrives
+        setVisibleCount((prev) => (prev < 10 ? 10 : prev));
+      }
     );
   }, [communityId]);
 
@@ -72,9 +77,17 @@ export default function SingleCommunity() {
   //   ? format(new Date(communityData.createdAt), "MMM d, yyyy")
   //   : "Unknown date";
 
+  const handleScroll = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
+    const { layoutMeasurement, contentSize, contentOffset } = e.nativeEvent;
+    const nearBottom = layoutMeasurement.height + contentOffset.y >= contentSize.height - 200;
+    if (nearBottom && visibleCount < posts.length) {
+      setVisibleCount(Math.min(posts.length, visibleCount + 10));
+    }
+  };
+
   return (
     // <SafeAreaView>
-      <ScrollView className="bg-[#077f5f] flex-1">
+      <ScrollView className="bg-[#077f5f] flex-1" onScroll={handleScroll} scrollEventThrottle={16}>
         {communityData.image && (
           <View className="w-full h-60 overflow-hidden">
             <Image
@@ -136,7 +149,7 @@ export default function SingleCommunity() {
           )}
         </View>
         <NewsfeedList
-          posts={posts}
+          posts={posts.slice(0, visibleCount)}
           communityPage={true}
           isUserCommunityAdmin={session?.uid === communityData.adminUserId}
         />
