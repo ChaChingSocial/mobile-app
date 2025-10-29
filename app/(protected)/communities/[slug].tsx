@@ -2,13 +2,13 @@ import { Community } from "@/_sdk";
 import NewsfeedList from "@/components/home/NewsfeedList";
 import { Text } from "@/components/ui/text";
 import { getSingleCommunityBySlug } from "@/lib/api/communities";
-import { subscribeToPostsByNewsfeedId } from "@/lib/api/newsfeed";
+import { getPostsByNewsfeedId, subscribeToPostsByNewsfeedId } from "@/lib/api/newsfeed";
 import { useSession } from "@/lib/providers/AuthContext";
 import { stripHtml } from "@/lib/utils/stripHtml";
 import { Post } from "@/types/post";
 import { useLocalSearchParams, useNavigation, useRouter } from "expo-router";
 import { useEffect, useState } from "react";
-import { Image, ScrollView, View } from "react-native";
+import { Image, ScrollView, View, RefreshControl } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Center } from "@/components/ui/center";
 import { Spinner } from "@/components/ui/spinner";
@@ -25,6 +25,7 @@ export default function SingleCommunity() {
   const [communityData, setCommunityData] = useState<Community | null>(null);
   const [posts, setPosts] = useState<Post[]>([]);
   const [isExpanded, setIsExpanded] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
 
   const fetchCommunityData = async () => {
     try {
@@ -51,6 +52,11 @@ export default function SingleCommunity() {
     }
 
     fetchCommunityData();
+    // Ensures latest posts when opening: fetch ordered list once
+    getPostsByNewsfeedId(Array.isArray(communityId) ? communityId[0] : (communityId as string)).then((res) => {
+      setPosts(res);
+    });
+    // Keep live updates afterwards
     subscribeToPostsByNewsfeedId(
       Array.isArray(communityId) ? communityId[0] : communityId,
       setPosts
@@ -72,9 +78,19 @@ export default function SingleCommunity() {
   //   ? format(new Date(communityData.createdAt), "MMM d, yyyy")
   //   : "Unknown date";
 
+  const onRefresh = async () => {
+    if (!communityId) return;
+    setRefreshing(true);
+    const fresh = await getPostsByNewsfeedId(
+      Array.isArray(communityId) ? communityId[0] : (communityId as string)
+    );
+    setPosts(fresh);
+    setRefreshing(false);
+  };
+
   return (
     // <SafeAreaView>
-      <ScrollView className="bg-[#077f5f] flex-1">
+      <ScrollView className="bg-[#077f5f] flex-1" refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}>
         {communityData.image && (
           <View className="w-full h-60 overflow-hidden">
             <Image

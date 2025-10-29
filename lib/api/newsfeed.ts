@@ -914,7 +914,8 @@ export async function getPostsByNewsfeedId(newsfeedId: string) {
   try {
     const q = query(
       collection(db, "posts"),
-      where("newsfeedId", "==", newsfeedId)
+      where("newsfeedId", "==", newsfeedId),
+      orderBy("createdAt", "desc")
     );
     const querySnapshot = await getDocs(q);
     const posts = querySnapshot.docs.map((doc) => ({
