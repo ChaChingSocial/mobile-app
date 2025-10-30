@@ -24,16 +24,18 @@ const PostEditor = ({ message, setContent, editorType }: PostEditorProps) => {
 
   const [newPostContent, setNewPostContent] = useState(message ?? "");
   const [keyboardHeight, setKeyboardHeight] = useState(0);
-
-    useEffect(() => {
-        setNewPostContent(message ?? "");
-        // Also clear the RichEditor content
-        if (richText.current && message === "") {
-            richText.current.setContentHTML("");
-        }
-    }, [message]);
+  const isComment = editorType === "comment";
 
   useEffect(() => {
+    setNewPostContent(message ?? "");
+    // Also clear the RichEditor content
+    if (richText.current && message === "") {
+      richText.current.setContentHTML("");
+    }
+  }, [message]);
+
+  useEffect(() => {
+    if (isComment) return; // don't push UI for small inline editors
     const showSubscription = Keyboard.addListener("keyboardDidShow", (e) => {
       setKeyboardHeight(e.endCoordinates.height);
     });
@@ -45,12 +47,40 @@ const PostEditor = ({ message, setContent, editorType }: PostEditorProps) => {
       showSubscription.remove();
       hideSubscription.remove();
     };
-  }, []);
+  }, [isComment]);
 
   const handleChange = (text: string) => {
     setNewPostContent(text);
     setContent(text);
   };
+
+  // avoids ScrollView/flex growth and margin pushes.
+  if (isComment) {
+    return (
+      <Box className="w-full rounded-3xl border-t border-gray-300 bg-white">
+        <RichEditor
+          ref={richText}
+          onChange={handleChange}
+          placeholder="What's on your mind?"
+          initialContentHTML={newPostContent}
+          editorStyle={{
+            backgroundColor: "transparent",
+            color: "gray",
+            placeholderColor: "gray",
+            cssText: `
+                     * {
+                       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+                       font-size: 16px;
+                       line-height: 1.5;
+                     }
+                   `,
+          }}
+          useContainer={true}
+          initialHeight={40}
+        />
+      </Box>
+    );
+  }
 
   return (
     <KeyboardAvoidingView
@@ -86,34 +116,34 @@ const PostEditor = ({ message, setContent, editorType }: PostEditorProps) => {
         </Box>
       </ScrollView>
       {editorType !== "comment" && (
-          <RichToolbar
-              editor={richText}
-              actions={[
-                  actions.setBold,
-                  actions.setItalic,
-                  actions.setUnderline,
-                  actions.insertBulletsList,
-                  actions.insertOrderedList,
-                  actions.insertLink,
-                  // actions.insertImage,
-                  // actions.insertVideo,
-              ]}
-              iconMap={{
-                  [actions.heading1]: ({ tintColor }: { tintColor?: string }) => (
-                      <Text style={[{ color: tintColor }]}>H1</Text>
-                  ),
-                  [actions.heading2]: ({ tintColor }: { tintColor?: string }) => (
-                      <Text style={[{ color: tintColor }]}>H2</Text>
-                  ),
-              }}
-              style={{
-                  backgroundColor: "#fff",
-                  borderColor: "#ddd",
-                  borderTopWidth: 1,
-                  marginLeft: -10,
-                  marginRight: -10,
-              }}
-          />
+        <RichToolbar
+          editor={richText}
+          actions={[
+            actions.setBold,
+            actions.setItalic,
+            actions.setUnderline,
+            actions.insertBulletsList,
+            actions.insertOrderedList,
+            actions.insertLink,
+            // actions.insertImage,
+            // actions.insertVideo,
+          ]}
+          iconMap={{
+            [actions.heading1]: ({ tintColor }: { tintColor?: string }) => (
+              <Text style={[{ color: tintColor }]}>H1</Text>
+            ),
+            [actions.heading2]: ({ tintColor }: { tintColor?: string }) => (
+              <Text style={[{ color: tintColor }]}>H2</Text>
+            ),
+          }}
+          style={{
+            backgroundColor: "#fff",
+            borderColor: "#ddd",
+            borderTopWidth: 1,
+            marginLeft: -10,
+            marginRight: -10,
+          }}
+        />
       )}
     </KeyboardAvoidingView>
   );
