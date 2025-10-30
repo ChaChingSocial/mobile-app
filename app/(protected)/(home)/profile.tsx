@@ -22,7 +22,7 @@ import { useSession } from "@/lib/providers/AuthContext";
 import {Link, useLocalSearchParams} from "expo-router";
 import { useEffect, useState } from "react";
 import { ScrollView } from "react-native-gesture-handler";
-import { Image, RefreshControl, TouchableOpacity } from "react-native";
+import { Image, RefreshControl, TouchableOpacity, NativeSyntheticEvent, NativeScrollEvent } from "react-native";
 import { DocumentSnapshot } from "firebase/firestore";
 import { Badge, BadgeText, BadgeIcon } from '@/components/ui/badge';
 import {AntDesign} from "@expo/vector-icons";
@@ -133,11 +133,23 @@ export default function Profile() {
         setRefreshing(false);
     };
 
-    return (
-        <ScrollView
-            className="bg-[#077f5f] flex-1"
-            refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
-        >
+  const handleScroll = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
+    const { layoutMeasurement, contentSize, contentOffset } = e.nativeEvent;
+    const paddingToBottom = 200; 
+    const isNearBottom =
+      layoutMeasurement.height + contentOffset.y >= contentSize.height - paddingToBottom;
+    if (isNearBottom) {
+      fetchMorePosts();
+    }
+  };
+
+  return (
+    <ScrollView
+      className="bg-[#077f5f] flex-1"
+      onScroll={handleScroll}
+      scrollEventThrottle={16}
+      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+    >
             <VStack space="md" className="pt-6 px-4 justify-center items-center">
                 <Heading size="xl" className="text-white text-center">
                     @{userInfo?.username || session?.displayName}
@@ -278,15 +290,7 @@ export default function Profile() {
                     className="w-full"
                 />
             )}
-            {lastDoc && (
-                <TouchableOpacity
-                    className="bg-[#00bf63] rounded-lg p-2 w-36 mx-auto my-6"
-                    onPress={fetchMorePosts}
-                    disabled={loading}
-                >
-                    <Text bold className="text-center text-white">Load More</Text>
-                </TouchableOpacity>
-            )}
+      {/* removed manual Load More button */}
         </ScrollView>
     );
 }
