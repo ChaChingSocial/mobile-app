@@ -24,6 +24,7 @@ export default function SingleCommunity() {
   // const prevRoute = routes[routes.length - 2];
   const [communityData, setCommunityData] = useState<Community | null>(null);
   const [posts, setPosts] = useState<Post[]>([]);
+  const [visibleCount, setVisibleCount] = useState(10);
   const [isExpanded, setIsExpanded] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
 
@@ -59,7 +60,11 @@ export default function SingleCommunity() {
     // Keep live updates afterwards
     subscribeToPostsByNewsfeedId(
       Array.isArray(communityId) ? communityId[0] : communityId,
-      setPosts
+      (p) => {
+        setPosts(p);
+        // reset visible count when new data arrives
+        setVisibleCount((prev) => (prev < 10 ? 10 : prev));
+      }
     );
   }, [communityId]);
 
@@ -152,7 +157,7 @@ export default function SingleCommunity() {
           )}
         </View>
         <NewsfeedList
-          posts={posts}
+          posts={posts.slice(0, visibleCount)}
           communityPage={true}
           isUserCommunityAdmin={session?.uid === communityData.adminUserId}
         />
