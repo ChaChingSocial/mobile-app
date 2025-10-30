@@ -436,349 +436,447 @@ export const EventPost = ({
 
     // ---------- Render Event V2 look ----------
     return (
-        <View className="p-2 my-2">
-            {!!eventV2?.title && (
-                <Text className="text-2xl font-semibold text-gray-800 mb-2">{eventV2.title}</Text>
-            )}
+      <View className="p-2 my-2">
+        {!!eventV2?.title && (
+          <Text className="text-2xl font-semibold text-gray-800 mb-2">
+            {eventV2.title}
+          </Text>
+        )}
 
-            {eventSlots.length > 1 && (
-                <ScrollView
-                    horizontal
-                    showsHorizontalScrollIndicator={false}
-                    className="mb-2"
-                >
-                    {eventSlots.map((slot, idx) => (
-                        <TouchableOpacity
-                            key={idx}
-                            onPress={() => handleSelectSlot(idx)}
-                            className={`mr-3 p-3 rounded-lg border ${
-                                selectedSlotIndex === idx ? "border-violet-500" : "border-gray-200"
-                            } bg-white`}
-                            activeOpacity={0.8}
-                        >
-                            <Text className="text-xs text-gray-500">{dayjs(getDateFromAny(slot.startTimeDate)).format("MMM DD")}</Text>
-                            <Text className="font-semibold" numberOfLines={1}>{slot.title || "Event Slot"}</Text>
-                            <Text className="text-xs text-gray-600" numberOfLines={1}>
-                                {dayjs(getDateFromAny(slot.startTimeDate)).format("h:mm A")} - {dayjs(getDateFromAny(slot.endTimeDate)).format("h:mm A")}
-                            </Text>
-                        </TouchableOpacity>
-                    ))}
-                </ScrollView>
-            )}
+        {eventSlots.length > 1 && (
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            className="mb-2"
+          >
+            {eventSlots.map((slot, idx) => (
+              <TouchableOpacity
+                key={idx}
+                onPress={() => handleSelectSlot(idx)}
+                className={`mr-3 p-3 rounded-lg border ${
+                  selectedSlotIndex === idx
+                    ? "border-violet-500"
+                    : "border-gray-200"
+                } bg-white`}
+                activeOpacity={0.8}
+              >
+                <Text className="text-xs text-gray-500">
+                  {dayjs(getDateFromAny(slot.startTimeDate)).format("MMM DD")}
+                </Text>
+                <Text className="font-semibold" numberOfLines={1}>
+                  {slot.title || "Event Slot"}
+                </Text>
+                <Text className="text-xs text-gray-600" numberOfLines={1}>
+                  {dayjs(getDateFromAny(slot.startTimeDate)).format("h:mm A")} -{" "}
+                  {dayjs(getDateFromAny(slot.endTimeDate)).format("h:mm A")}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
+        )}
 
-            <View className="w-full flex-col gap-3">
-                {(() => {
-                    const img0: any = eventV2?.images?.[0];
-                    const uri = typeof img0 === "string" ? img0 : (img0?.uri ?? img0?.url ?? "");
-                    return uri ? (
-                        <Image
-                            source={{ uri }}
-                            className="w-full h-48 rounded-lg"
-                            resizeMode="cover"
-                        />
-                    ) : null;
-                })()}
+        <View className="w-full flex-col gap-3">
+          {(() => {
+            const img0: any = eventV2?.images?.[0];
+            const uri =
+              typeof img0 === "string" ? img0 : img0?.uri ?? img0?.url ?? "";
+            return uri ? (
+              <Image
+                source={{ uri }}
+                className="w-full h-48 rounded-lg"
+                resizeMode="cover"
+              />
+            ) : null;
+          })()}
 
-                {!!selectedSlot && (
-                    <View className="flex-row items-stretch border border-gray-300 rounded-lg bg-gray-100 w-full overflow-hidden min-h-[60px]">
-                        <View className="items-center justify-center bg-gray-800 w-16 rounded-l-lg">
-                            <Text className="text-[10px] text-gray-300 uppercase">{month}</Text>
-                            <Text className="text-lg text-white font-semibold">{day}</Text>
-                        </View>
-                        <View className="flex-1 justify-center px-3 py-2">
-                            <Text className="text-sm text-black">
-                                {calendarStartDate === calendarEndDate ? calendarStartDate : `${calendarStartDate} - ${calendarEndDate}`}
-                            </Text>
-                            <Text className="text-xs text-gray-600">
-                                {displayStartTime} - {displayEndTime} {eventV2?.timezone || ""}
-                            </Text>
-                        </View>
-                    </View>
-                )}
-
-                {/* meeting link */}
-                {(selectedSlot as any)?.meetingLink || eventV2?.meetingLink ? (
-                    <TouchableOpacity
-                        className="flex-row items-center border border-gray-300 rounded-lg bg-gray-100 min-h-[60px]"
-                        onPress={() => {
-                            const url = (selectedSlot as any)?.meetingLink || eventV2?.meetingLink;
-                            if (url) Linking.openURL(url);
-                        }}
-                        activeOpacity={0.8}
-                    >
-                        <View className="items-center justify-center bg-gray-800 w-16 rounded-l-lg min-h-[60px]">
-                            <FontAwesome5 name="link" size={20} color="#fff" />
-                        </View>
-                        <Text className="flex-1 text-blue-600 underline px-2" numberOfLines={1}>
-                            {(selectedSlot as any)?.meetingLink || eventV2?.meetingLink}
-                        </Text>
-                    </TouchableOpacity>
-                ) : null}
-
-                {/* address */}
-                {!!selectedSlot?.address && (
-                    <TouchableOpacity
-                        className="flex-row items-center border border-gray-300 rounded-lg bg-gray-100 min-h-[60px]"
-                        onPress={() => {
-                            const addr = (selectedSlot?.address as any)?.address || (selectedSlot?.address as any) || "";
-                            if (addr) {
-                                Linking.openURL(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(addr)}`);
-                            }
-                        }}
-                        activeOpacity={0.8}
-                    >
-                        <View className="items-center justify-center bg-gray-800 w-16 rounded-l-lg min-h-[60px]">
-                            <FontAwesome5 name="map-pin" size={18} color="#fff" />
-                        </View>
-                        <Text className="flex-1 text-blue-600 underline px-2" numberOfLines={2}>
-                            {(selectedSlot?.address as any)?.address || (selectedSlot?.address as any)}
-                        </Text>
-                    </TouchableOpacity>
-                )}
-
-                {/* action buttons */}
-                <View className="flex-row flex-wrap gap-3 mt-2">
-                    <Button onPress={handleGetTickets} className="px-4 py-3">
-                        <Text className="text-white font-medium">Get Ticket</Text>
-                    </Button>
-                    {(post as any).event?.moderators?.includes(userId || "") && (
-                        <Button variant="solid" className="px-4 py-3 bg-gray-800">
-                            <Text className="text-white font-medium">Scan Tickets</Text>
-                        </Button>
-                    )}
-                    {hasValidTickets && (
-                        <Button variant="solid" className="px-4 py-3 bg-gray-700" onPress={handleViewTicket}>
-                            <Text className="text-white font-medium">View Ticket</Text>
-                        </Button>
-                    )}
-                </View>
-
-                {/* description */}
-                {!!descriptionHtml && (
-                    <View className="bg-white rounded-md p-2">
-                        <View>
-                            {!readMore ? (
-                                <Text numberOfLines={6} className="text-gray-700">
-                                    {/* Render stripped HTML preview */}
-                                    {String(descriptionHtml).replace(/<[^>]+>/g, "")}
-                                </Text>
-                            ) : (
-                                <HtmlRenderText source={String(descriptionHtml)} />
-                            )}
-                        </View>
-                        {showReadMore && (
-                            <TouchableOpacity onPress={() => setReadMore((p) => !p)}>
-                                <Text className="text-blue-600 underline mt-2">{readMore ? "Read Less" : "Read more"}</Text>
-                            </TouchableOpacity>
-                        )}
-                    </View>
-                )}
-
-                {/* links */}
-                {Array.isArray(eventV2?.links) && eventV2.links.length > 0 && (
-                    <View className="mt-2">
-                        {eventV2.links.map((ln: string, i: number) => (
-                            <TouchableOpacity key={i} className="flex-row items-center mb-2" onPress={() => Linking.openURL(ln)}>
-                                <FontAwesome5 name="link" size={16} color="#3b82f6" />
-                                <Text className="text-sm text-blue-600 underline ml-2" numberOfLines={1}>{ln}</Text>
-                            </TouchableOpacity>
-                        ))}
-                    </View>
-                )}
-
-                {/* sponsors */}
-                {Array.isArray(eventV2?.sponsors) && eventV2.sponsors.length > 0 && (
-                    <View className="mt-4">
-                        <Text className="text-base font-semibold text-gray-800 mb-2">Event Sponsors & Partners</Text>
-                        <View className="flex-row flex-wrap gap-3">
-                            {eventV2.sponsors.map((sp: any, idx: number) => {
-                                const hasUrl = !!sp?.link;
-                                const CardComponent = hasUrl ? TouchableOpacity : View;
-                                return (
-                                    <CardComponent
-                                        key={idx}
-                                        className="w-[48%] bg-white rounded-md border border-gray-200 p-3"
-                                        {...(hasUrl && { onPress: () => Linking.openURL(sp.link) })}
-                                        activeOpacity={hasUrl ? 0.8 : 1}
-                                    >
-                                        {!!sp?.image && (
-                                            <Image source={{ uri: typeof sp.image === "string" ? sp.image : sp.image?.uri }} className="w-full h-16 rounded" resizeMode="contain" />
-                                        )}
-                                        {!!sp?.title && (
-                                            <Text className="text-center font-semibold text-xs mt-2">{sp.title}</Text>
-                                        )}
-                                        {!!sp?.description && (
-                                            <Text className="text-center text-[11px] text-gray-600 mt-1" numberOfLines={3}>{sp.description}</Text>
-                                        )}
-                                    </CardComponent>
-                                );
-                            })}
-                        </View>
-                    </View>
-                )}
-
-                {/* hosts */}
-                {Array.isArray(selectedSlot?.hosts) && selectedSlot!.hosts!.length > 0 && (
-                    <View className="px-1 mt-3">
-                        <View className="flex-row items-center gap-2">
-                            <Text className="font-bold text-base mr-2">Hosts:</Text>
-                            <AvatarGroup>
-                                {selectedSlot!.hosts!.slice(0, 4).map((h: any, idx: number) => (
-                                    <Avatar size="sm" key={idx}>
-                                        <AvatarFallbackText>{h?.username || "Host"}</AvatarFallbackText>
-                                        {h?.profilePic ? <AvatarImage source={{ uri: h.profilePic }} /> : null}
-                                    </Avatar>
-                                ))}
-                                {selectedSlot!.hosts!.length > 4 && (
-                                    <Avatar size="sm">
-                                        <AvatarFallbackText>{`+${selectedSlot!.hosts!.length - 4}`}</AvatarFallbackText>
-                                    </Avatar>
-                                )}
-                            </AvatarGroup>
-                        </View>
-                    </View>
-                )}
-
-                {/* attendees */}
-                {allTickets.length > 0 && (
-                    <View className="px-1 mt-3">
-                        <View className="flex-row items-center gap-2">
-                            <Text className="font-bold text-base mr-2">Attendees:</Text>
-                            <AvatarGroup>
-                                {allTickets.slice(0, 6).map((t, idx) => (
-                                    <Avatar size="sm" key={idx}>
-                                        <AvatarFallbackText>{t.username || t.email || "Attendee"}</AvatarFallbackText>
-                                        {t.profilePic ? <AvatarImage source={{ uri: t.profilePic }} /> : null}
-                                    </Avatar>
-                                ))}
-                                {allTickets.length > 6 && (
-                                    <Avatar size="sm">
-                                        <AvatarFallbackText>{`+${allTickets.length - 6}`}</AvatarFallbackText>
-                                    </Avatar>
-                                )}
-                            </AvatarGroup>
-                        </View>
-                    </View>
-                )}
-
-                {/* tags */}
-                {post.tags && post.tags.length > 0 && <PostTags tags={post.tags} />}
-
-                {/* going badge */}
-                {hasValidTickets && (
-                    <View className="absolute right-4 top-4">
-                        <Badge variant="solid" action="success">
-                            <Text className="text-white">You're Going</Text>
-                        </Badge>
-                    </View>
-                )}
+          {!!selectedSlot && (
+            <View className="flex-row items-stretch border border-gray-300 rounded-lg bg-gray-100 w-full overflow-hidden min-h-[60px]">
+              <View className="items-center justify-center bg-gray-800 w-16 rounded-l-lg">
+                <Text className="text-[10px] text-gray-300 uppercase">
+                  {month}
+                </Text>
+                <Text className="text-lg text-white font-semibold">{day}</Text>
+              </View>
+              <View className="flex-1 justify-center px-3 py-2">
+                <Text className="text-sm text-black">
+                  {calendarStartDate === calendarEndDate
+                    ? calendarStartDate
+                    : `${calendarStartDate} - ${calendarEndDate}`}
+                </Text>
+                <Text className="text-xs text-gray-600">
+                  {displayStartTime} - {displayEndTime}{" "}
+                  {eventV2?.timezone || ""}
+                </Text>
+              </View>
             </View>
+          )}
 
-            {/* Get Ticket Modal */}
-            {selectedSlot && (
-                <GetTicketModal
-                    eventSlot={selectedSlot}
-                    opened={ticketModalOpened}
-                    onClose={() => setTicketModalOpened(false)}
-                    onTicketIssued={async (newTickets) => {
-                        // Optimistic update first
-                        if (newTickets.length > 0) {
-                            setNewlyPurchasedTickets(newTickets);
-                            setHasValidTickets(true);
-                            setTicketViewOpened(true);
-                        }
+          {/* meeting link */}
+          {(selectedSlot as any)?.meetingLink || eventV2?.meetingLink ? (
+            <TouchableOpacity
+              className="flex-row items-center border border-gray-300 rounded-lg bg-gray-100 min-h-[60px]"
+              onPress={() => {
+                const url =
+                  (selectedSlot as any)?.meetingLink || eventV2?.meetingLink;
+                if (url) Linking.openURL(url);
+              }}
+              activeOpacity={0.8}
+            >
+              <View className="items-center justify-center bg-gray-800 w-16 rounded-l-lg min-h-[60px]">
+                <FontAwesome5 name="link" size={20} color="#fff" />
+              </View>
+              <Text
+                className="flex-1 text-blue-600 underline px-2"
+                numberOfLines={1}
+              >
+                {(selectedSlot as any)?.meetingLink || eventV2?.meetingLink}
+              </Text>
+            </TouchableOpacity>
+          ) : null}
 
-                        // Then refetch in the background to sync with server
-                        const api = new EventApi();
-                        try {
-                            const t = await api.getUserEventSlotTickets({
-                                eventSlotId: selectedSlot.id,
-                                userId: userId!,
-                            });
-                            const valid = (t || []).filter((tk) => tk.id && tk.id.trim() !== "");
-                            setTickets(valid);
-                            setHasValidTickets(valid.length > 0);
-                        } catch (e) {
-                            // error with refetch is ok, we did an optimistic update
-                            console.log("Failed to refetch tickets after issuing, using optimistic update.", e);
-                        }
-                    }}
-                />
+          {/* address */}
+          {!!selectedSlot?.address && (
+            <TouchableOpacity
+              className="flex-row items-center border border-gray-300 rounded-lg bg-gray-100 min-h-[60px]"
+              onPress={() => {
+                const addr =
+                  (selectedSlot?.address as any)?.address ||
+                  (selectedSlot?.address as any) ||
+                  "";
+                if (addr) {
+                  Linking.openURL(
+                    `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
+                      addr
+                    )}`
+                  );
+                }
+              }}
+              activeOpacity={0.8}
+            >
+              <View className="items-center justify-center bg-gray-800 w-16 rounded-l-lg min-h-[60px]">
+                <FontAwesome5 name="map-pin" size={18} color="#fff" />
+              </View>
+              <Text
+                className="flex-1 text-blue-600 underline px-2"
+                numberOfLines={2}
+              >
+                {(selectedSlot?.address as any)?.address ||
+                  (selectedSlot?.address as any)}
+              </Text>
+            </TouchableOpacity>
+          )}
+
+          {/* action buttons */}
+          <View className="flex-row flex-wrap gap-3 mt-2">
+            <Button onPress={handleGetTickets} className="px-4 py-1">
+              <Text className="text-white font-medium">Get Ticket</Text>
+            </Button>
+            {(post as any).event?.moderators?.includes(userId || "") && (
+              <Button variant="solid" className="px-4 py-3 bg-gray-800">
+                <Text className="text-white font-medium">Scan Tickets</Text>
+              </Button>
             )}
+            {hasValidTickets && (
+              <Button
+                variant="solid"
+                className="px-4 py-3 bg-gray-700"
+                onPress={handleViewTicket}
+              >
+                <Text className="text-white font-medium">View Ticket</Text>
+              </Button>
+            )}
+          </View>
 
-            {hasValidTickets && selectedSlot && post.eventV2 && (
-                <TicketViewerModal
-                    opened={ticketViewOpened}
-                    onClose={() => {
-                        setTicketViewOpened(false);
-                        setNewlyPurchasedTickets([]);
-                        // Refetch tickets when modal is closed
-                        const api = new EventApi();
-                        api.getUserEventSlotTickets({
-                            eventSlotId: selectedSlot.id,
-                            userId: userId!,
-                        }).then((t) => {
-                            const valid = (t || []).filter((tk) => tk.id && tk.id.trim() !== "");
-                            setTickets(valid);
-                            setHasValidTickets(valid.length > 0);
-                        });
-                    }}
-                    event={post.eventV2}
-                    eventSlot={selectedSlot}
-                    tickets={newlyPurchasedTickets.length > 0 ? newlyPurchasedTickets : tickets.filter(
-                        (ticket) =>
-                            ticket.eventSlotId === selectedSlot.id && ticket.id
+          {/* description */}
+          {!!descriptionHtml && (
+            <View className="bg-white rounded-md p-2">
+              <View>
+                {!readMore ? (
+                  <Text numberOfLines={6} className="text-gray-700">
+                    {/* Render stripped HTML preview */}
+                    {String(descriptionHtml).replace(/<[^>]+>/g, "")}
+                  </Text>
+                ) : (
+                  <HtmlRenderText source={String(descriptionHtml)} />
+                )}
+              </View>
+              {showReadMore && (
+                <TouchableOpacity onPress={() => setReadMore((p) => !p)}>
+                  <Text className="text-blue-600 underline mt-2">
+                    {readMore ? "Read Less" : "Read more"}
+                  </Text>
+                </TouchableOpacity>
+              )}
+            </View>
+          )}
+
+          {/* links */}
+          {Array.isArray(eventV2?.links) && eventV2.links.length > 0 && (
+            <View className="mt-2">
+              {eventV2.links.map((ln: string, i: number) => (
+                <TouchableOpacity
+                  key={i}
+                  className="flex-row items-center mb-2"
+                  onPress={() => Linking.openURL(ln)}
+                >
+                  <FontAwesome5 name="link" size={16} color="#3b82f6" />
+                  <Text
+                    className="text-sm text-blue-600 underline ml-2"
+                    numberOfLines={1}
+                  >
+                    {ln}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          )}
+
+          {/* sponsors */}
+          {Array.isArray(eventV2?.sponsors) && eventV2.sponsors.length > 0 && (
+            <View className="mt-4">
+              <Text className="text-base font-semibold text-gray-800 mb-2">
+                Event Sponsors & Partners
+              </Text>
+              <View className="flex-row flex-wrap gap-3">
+                {eventV2.sponsors.map((sp: any, idx: number) => {
+                  const hasUrl = !!sp?.link;
+                  const CardComponent = hasUrl ? TouchableOpacity : View;
+                  return (
+                    <CardComponent
+                      key={idx}
+                      className="w-[48%] bg-white rounded-md border border-gray-200 p-3"
+                      {...(hasUrl && {
+                        onPress: () => Linking.openURL(sp.link),
+                      })}
+                      activeOpacity={hasUrl ? 0.8 : 1}
+                    >
+                      {!!sp?.image && (
+                        <Image
+                          source={{
+                            uri:
+                              typeof sp.image === "string"
+                                ? sp.image
+                                : sp.image?.uri,
+                          }}
+                          className="w-full h-16 rounded"
+                          resizeMode="contain"
+                        />
+                      )}
+                      {!!sp?.title && (
+                        <Text className="text-center font-semibold text-xs mt-2">
+                          {sp.title}
+                        </Text>
+                      )}
+                      {!!sp?.description && (
+                        <Text
+                          className="text-center text-[11px] text-gray-600 mt-1"
+                          numberOfLines={3}
+                        >
+                          {sp.description}
+                        </Text>
+                      )}
+                    </CardComponent>
+                  );
+                })}
+              </View>
+            </View>
+          )}
+
+          {/* hosts */}
+          {Array.isArray(selectedSlot?.hosts) &&
+            selectedSlot!.hosts!.length > 0 && (
+              <View className="px-1 mt-3">
+                <View className="flex-row items-center gap-2">
+                  <Text className="font-bold text-base mr-2">Hosts:</Text>
+                  <AvatarGroup>
+                    {selectedSlot!
+                      .hosts!.slice(0, 4)
+                      .map((h: any, idx: number) => (
+                        <Avatar size="sm" key={idx}>
+                          <AvatarFallbackText>
+                            {h?.username || "Host"}
+                          </AvatarFallbackText>
+                          {h?.profilePic ? (
+                            <AvatarImage source={{ uri: h.profilePic }} />
+                          ) : null}
+                        </Avatar>
+                      ))}
+                    {selectedSlot!.hosts!.length > 4 && (
+                      <Avatar size="sm">
+                        <AvatarFallbackText>{`+${
+                          selectedSlot!.hosts!.length - 4
+                        }`}</AvatarFallbackText>
+                      </Avatar>
                     )}
-                />
+                  </AvatarGroup>
+                </View>
+              </View>
             )}
-            {/*/!* Ticket Viewer Modal *!/*/}
-            {/*<Modal isOpen={ticketViewOpened} onClose={() => setTicketViewOpened(false)}>*/}
-            {/*    <ModalBackdrop />*/}
-            {/*    <ModalContent>*/}
-            {/*        <ModalHeader>*/}
-            {/*            <Text className="text-lg font-semibold">Your Tickets</Text>*/}
-            {/*            <ModalCloseButton />*/}
-            {/*        </ModalHeader>*/}
-            {/*        <ModalBody>*/}
-            {/*            {tickets.length === 0 ? (*/}
-            {/*                <Text className="text-gray-600">No tickets yet.</Text>*/}
-            {/*            ) : (*/}
-            {/*                tickets.map((t, key) => (*/}
-            {/*                    <View key={key} className="mb-3 p-3 border border-gray-200 rounded-md bg-white">*/}
-            {/*                        <Text className="font-semibold">Ticket ID: {t.id}</Text>*/}
-            {/*                        {!!t.ticketStatus && (*/}
-            {/*                            <Text className="text-xs text-gray-600">Status: {t.ticketStatus}</Text>*/}
-            {/*                        )}*/}
-            {/*                    </View>*/}
-            {/*                ))*/}
-            {/*            )}*/}
-            {/*        </ModalBody>*/}
-            {/*        <ModalFooter>*/}
-            {/*            <Button onPress={() => setTicketViewOpened(false)}>*/}
-            {/*                <Text className="text-white">Close</Text>*/}
-            {/*            </Button>*/}
-            {/*        </ModalFooter>*/}
-            {/*    </ModalContent>*/}
-            {/*</Modal>*/}
 
-            {/* Auth prompt */}
-            <Modal isOpen={authPromptOpen} onClose={() => setAuthPromptOpen(false)}>
-                <ModalBackdrop />
-                <ModalContent>
-                    <ModalHeader>
-                        <Text className="text-lg font-semibold">Sign in required</Text>
-                        <ModalCloseButton />
-                    </ModalHeader>
-                    <ModalBody>
-                        <Text className="text-gray-700">Please log in to get tickets.</Text>
-                    </ModalBody>
-                    <ModalFooter>
-                        <Button onPress={() => setAuthPromptOpen(false)} variant="outline">
-                            <Text>Close</Text>
-                        </Button>
-                    </ModalFooter>
-                </ModalContent>
-            </Modal>
+          {/* attendees */}
+          {allTickets.length > 0 && (
+            <View className="px-1 mt-3">
+              <View className="flex-row items-center gap-2">
+                <Text className="font-bold text-base mr-2">Attendees:</Text>
+                <AvatarGroup>
+                  {allTickets.slice(0, 6).map((t, idx) => (
+                    <Avatar size="sm" key={idx}>
+                      <AvatarFallbackText>
+                        {t.username || t.email || "Attendee"}
+                      </AvatarFallbackText>
+                      {t.profilePic ? (
+                        <AvatarImage source={{ uri: t.profilePic }} />
+                      ) : null}
+                    </Avatar>
+                  ))}
+                  {allTickets.length > 6 && (
+                    <Avatar size="sm">
+                      <AvatarFallbackText>{`+${
+                        allTickets.length - 6
+                      }`}</AvatarFallbackText>
+                    </Avatar>
+                  )}
+                </AvatarGroup>
+              </View>
+            </View>
+          )}
+
+          {/* tags */}
+          {post.tags && post.tags.length > 0 && <PostTags tags={post.tags} />}
+
+          {/* going badge */}
+          {hasValidTickets && (
+            <View className="absolute right-4 top-4">
+              <Badge variant="solid" action="success">
+                <Text className="text-white">You're Going</Text>
+              </Badge>
+            </View>
+          )}
         </View>
+
+        {/* Get Ticket Modal */}
+        {selectedSlot && (
+          <GetTicketModal
+            eventSlot={selectedSlot}
+            opened={ticketModalOpened}
+            onClose={() => setTicketModalOpened(false)}
+            onTicketIssued={async (newTickets) => {
+              // Optimistic update first
+              if (newTickets.length > 0) {
+                setNewlyPurchasedTickets(newTickets);
+                setHasValidTickets(true);
+                setTicketViewOpened(true);
+              }
+
+              // Then refetch in the background to sync with server
+              const api = new EventApi();
+              try {
+                const t = await api.getUserEventSlotTickets({
+                  eventSlotId: selectedSlot.id,
+                  userId: userId!,
+                });
+                const valid = (t || []).filter(
+                  (tk) => tk.id && tk.id.trim() !== ""
+                );
+                setTickets(valid);
+                setHasValidTickets(valid.length > 0);
+              } catch (e) {
+                // error with refetch is ok, we did an optimistic update
+                console.log(
+                  "Failed to refetch tickets after issuing, using optimistic update.",
+                  e
+                );
+              }
+            }}
+          />
+        )}
+
+        {hasValidTickets && selectedSlot && post.eventV2 && (
+          <TicketViewerModal
+            opened={ticketViewOpened}
+            onClose={() => {
+              setTicketViewOpened(false);
+              setNewlyPurchasedTickets([]);
+              // Refetch tickets when modal is closed
+              const api = new EventApi();
+              api
+                .getUserEventSlotTickets({
+                  eventSlotId: selectedSlot.id,
+                  userId: userId!,
+                })
+                .then((t) => {
+                  const valid = (t || []).filter(
+                    (tk) => tk.id && tk.id.trim() !== ""
+                  );
+                  setTickets(valid);
+                  setHasValidTickets(valid.length > 0);
+                });
+            }}
+            event={post.eventV2}
+            eventSlot={selectedSlot}
+            tickets={
+              newlyPurchasedTickets.length > 0
+                ? newlyPurchasedTickets
+                : tickets.filter(
+                    (ticket) =>
+                      ticket.eventSlotId === selectedSlot.id && ticket.id
+                  )
+            }
+          />
+        )}
+        {/*/!* Ticket Viewer Modal *!/*/}
+        {/*<Modal isOpen={ticketViewOpened} onClose={() => setTicketViewOpened(false)}>*/}
+        {/*    <ModalBackdrop />*/}
+        {/*    <ModalContent>*/}
+        {/*        <ModalHeader>*/}
+        {/*            <Text className="text-lg font-semibold">Your Tickets</Text>*/}
+        {/*            <ModalCloseButton />*/}
+        {/*        </ModalHeader>*/}
+        {/*        <ModalBody>*/}
+        {/*            {tickets.length === 0 ? (*/}
+        {/*                <Text className="text-gray-600">No tickets yet.</Text>*/}
+        {/*            ) : (*/}
+        {/*                tickets.map((t, key) => (*/}
+        {/*                    <View key={key} className="mb-3 p-3 border border-gray-200 rounded-md bg-white">*/}
+        {/*                        <Text className="font-semibold">Ticket ID: {t.id}</Text>*/}
+        {/*                        {!!t.ticketStatus && (*/}
+        {/*                            <Text className="text-xs text-gray-600">Status: {t.ticketStatus}</Text>*/}
+        {/*                        )}*/}
+        {/*                    </View>*/}
+        {/*                ))*/}
+        {/*            )}*/}
+        {/*        </ModalBody>*/}
+        {/*        <ModalFooter>*/}
+        {/*            <Button onPress={() => setTicketViewOpened(false)}>*/}
+        {/*                <Text className="text-white">Close</Text>*/}
+        {/*            </Button>*/}
+        {/*        </ModalFooter>*/}
+        {/*    </ModalContent>*/}
+        {/*</Modal>*/}
+
+        {/* Auth prompt */}
+        <Modal isOpen={authPromptOpen} onClose={() => setAuthPromptOpen(false)}>
+          <ModalBackdrop />
+          <ModalContent>
+            <ModalHeader>
+              <Text className="text-lg font-semibold">Sign in required</Text>
+              <ModalCloseButton />
+            </ModalHeader>
+            <ModalBody>
+              <Text className="text-gray-700">
+                Please log in to get tickets.
+              </Text>
+            </ModalBody>
+            <ModalFooter>
+              <Button
+                onPress={() => setAuthPromptOpen(false)}
+                variant="outline"
+              >
+                <Text>Close</Text>
+              </Button>
+            </ModalFooter>
+          </ModalContent>
+        </Modal>
+      </View>
     );
 };

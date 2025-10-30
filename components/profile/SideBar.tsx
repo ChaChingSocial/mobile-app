@@ -140,21 +140,19 @@ export default function SideBar({
                     About
                   </Text>
                 </Pressable>
-                {/* <Pressable
+                <Pressable
                   className="flex flex-row gap-3 items-center"
                   onPress={() => {
-                    Linking.openURL("https://www.chaching.social/settings");
+                    router.push(`/(protected)/settings`);
                     onOpenChange(false);
                   }}
                 >
                   <FontAwesome5 name="cog" size={20} color="black" />
-            <FontAwesome size={22} name="info-circle" color={color} />
 
                   <Text size="xl" bold>
                     Settings
-                    <EvilIcons name="external-link" size={12} color="black" />
                   </Text>
-                </Pressable> */}
+                </Pressable>
               </VStack>
             </Box>
           </DrawerBody>

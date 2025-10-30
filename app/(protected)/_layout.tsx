@@ -84,6 +84,13 @@ export default function ProtectedLayout() {
             headerShown: true,
           }}
         />
+        <Stack.Screen
+          name="settings"
+          options={{
+            title: "Settings",
+            headerShown: true,
+          }}
+        />
       </Stack>
     </DrawerProvider>
   );
