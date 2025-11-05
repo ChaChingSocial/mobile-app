@@ -1,3 +1,11 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer components {
+  /* Force consistent text color for all text inputs */
+  input,
+  textarea {
+    color: #181718 !important; /* typography-black */
+  }
+}
