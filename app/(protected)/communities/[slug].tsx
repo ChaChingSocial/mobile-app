@@ -2,13 +2,13 @@ import { Community } from "@/_sdk";
 import NewsfeedList from "@/components/home/NewsfeedList";
 import { Text } from "@/components/ui/text";
 import { getSingleCommunityBySlug } from "@/lib/api/communities";
-import { subscribeToPostsByNewsfeedId } from "@/lib/api/newsfeed";
+import { getPostsByNewsfeedId, subscribeToPostsByNewsfeedId } from "@/lib/api/newsfeed";
 import { useSession } from "@/lib/providers/AuthContext";
 import { stripHtml } from "@/lib/utils/stripHtml";
 import { Post } from "@/types/post";
 import { useLocalSearchParams, useNavigation, useRouter } from "expo-router";
 import { useEffect, useState } from "react";
-import { Image, ScrollView, View } from "react-native";
+import { Image, ScrollView, View, RefreshControl } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Center } from "@/components/ui/center";
 import { Spinner } from "@/components/ui/spinner";
@@ -22,9 +22,11 @@ export default function SingleCommunity() {
 
   // const routes = navigate.getState()?.routes;
   // const prevRoute = routes[routes.length - 2];
-  console.log("slug comm previous route", prevRoute);
   const [communityData, setCommunityData] = useState<Community | null>(null);
   const [posts, setPosts] = useState<Post[]>([]);
+  const [visibleCount, setVisibleCount] = useState(10);
+  const [isExpanded, setIsExpanded] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
 
   const fetchCommunityData = async () => {
     try {
@@ -51,9 +53,18 @@ export default function SingleCommunity() {
     }
 
     fetchCommunityData();
+    // Ensures latest posts when opening: fetch ordered list once
+    getPostsByNewsfeedId(Array.isArray(communityId) ? communityId[0] : (communityId as string)).then((res) => {
+      setPosts(res);
+    });
+    // Keep live updates afterwards
     subscribeToPostsByNewsfeedId(
       Array.isArray(communityId) ? communityId[0] : communityId,
-      setPosts
+      (p) => {
+        setPosts(p);
+        // reset visible count when new data arrives
+        setVisibleCount((prev) => (prev < 10 ? 10 : prev));
+      }
     );
   }, [communityId]);
 
@@ -72,9 +83,19 @@ export default function SingleCommunity() {
   //   ? format(new Date(communityData.createdAt), "MMM d, yyyy")
   //   : "Unknown date";
 
+  const onRefresh = async () => {
+    if (!communityId) return;
+    setRefreshing(true);
+    const fresh = await getPostsByNewsfeedId(
+      Array.isArray(communityId) ? communityId[0] : (communityId as string)
+    );
+    setPosts(fresh);
+    setRefreshing(false);
+  };
+
   return (
     // <SafeAreaView>
-      <ScrollView className="bg-white">
+      <ScrollView className="bg-[#077f5f] flex-1" refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}>
         {communityData.image && (
           <View className="w-full h-60 overflow-hidden">
             <Image
@@ -86,18 +107,18 @@ export default function SingleCommunity() {
         )}
         <View className="p-4">
           <View className="flex-row justify-between items-start mb-2">
-            <Text className="text-2xl font-bold flex-1 mr-2">
+            <Text className="text-2xl font-bold flex-1 mr-2 text-white">
               {communityData.title}
             </Text>
-            <View className="bg-green-100 px-2 py-1 rounded-full">
-              <Text className="text-green-800 text-xs font-medium">
-                {communityData.status}
-              </Text>
-            </View>
+            {/*<View className="bg-green-100 px-2 py-1 rounded-full">*/}
+            {/*  <Text className="text-white text-xs font-medium">*/}
+            {/*    {communityData.status}*/}
+            {/*  </Text>*/}
+            {/*</View>*/}
           </View>
           {communityData.featured && (
-            <View className="bg-amber-100 self-start px-2 py-1 rounded-full mb-3">
-              <Text className="text-amber-800 text-xs font-medium">
+            <View className="bg-amber-400 self-start px-2 py-1 rounded-full mb-3">
+              <Text className="text-green-900 text-xs font-medium">
                 Featured Community
               </Text>
             </View>
@@ -105,23 +126,30 @@ export default function SingleCommunity() {
           <Text className="text-gray-500 text-sm mb-4">
             {/* Created on {createdAt} */}
           </Text>
-          <View className="mb-6">
-            <Text className="text-base">
-              {stripHtml(communityData?.description ?? "")}
-            </Text>
-          </View>
+            <View className="mb-6">
+                <Text className="text-base text-white" numberOfLines={isExpanded ? undefined : 3}>
+                    {stripHtml(communityData?.description ?? "")}
+                </Text>
+                <Text
+                    className="text-white mt-2 underline"
+                    onPress={() => setIsExpanded(!isExpanded)}
+                >
+                    {isExpanded ? "Show less" : "Show more"}
+                </Text>
+            </View>
+
           {communityData.interests && communityData.interests.length > 0 && (
             <View className="mb-6">
-              <Text className="font-bold text-lg mb-2">
-                Community Interests
-              </Text>
+              {/*<Text className="font-bold text-lg mb-2 text-white">*/}
+              {/*  Community Interests*/}
+              {/*</Text>*/}
               <View className="flex-row flex-wrap">
                 {communityData.interests.map((interest, index) => (
                   <View
                     key={index}
-                    className="bg-purple-100 px-3 py-1 rounded-full mr-2 mb-2"
+                    className="bg-[#a3e4d2] px-3 py-1 rounded-full mr-2 mb-2"
                   >
-                    <Text className="text-purple-800">{interest}</Text>
+                    <Text className="text-[#077f5f]">{interest}</Text>
                   </View>
                 ))}
               </View>
@@ -129,7 +157,7 @@ export default function SingleCommunity() {
           )}
         </View>
         <NewsfeedList
-          posts={posts}
+          posts={posts.slice(0, visibleCount)}
           communityPage={true}
           isUserCommunityAdmin={session?.uid === communityData.adminUserId}
         />

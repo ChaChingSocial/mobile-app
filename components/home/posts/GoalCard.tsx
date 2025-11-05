@@ -16,6 +16,9 @@ import {
   CopyIcon,
   EditIcon,
   Icon,
+  MenuIcon,
+  ShareIcon,
+  TrashIcon,
 } from "@/components/ui/icon";
 import {
   ModalBackdrop,
@@ -112,11 +115,7 @@ export const GoalCard = ({
             className="absolute top-4 right-4 z-10"
             onPress={() => setMenuVisible(true)}
           >
-            <Icon
-              as={MoreVerticalIcon}
-              size="md"
-              className="color-purple-500"
-            />
+            <Icon as={MenuIcon} size="md" className="color-purple-500" />
           </TouchableOpacity>
 
           {/* Menu Modal */}
@@ -142,7 +141,7 @@ export const GoalCard = ({
                     }}
                   >
                     <Icon
-                      as={Share2Icon}
+                      as={ShareIcon}
                       size="md"
                       className="mr-2 color-purple-500"
                     />
@@ -156,7 +155,11 @@ export const GoalCard = ({
                       setMenuVisible(false);
                     }}
                   >
-                    <Icon as={EditIcon} size="md" color="$purple500" mr="$2" />
+                    <Icon
+                      as={EditIcon}
+                      size="md"
+                      className="mr-2 color-purple-500"
+                    />
                     <Text>Edit</Text>
                   </TouchableOpacity>
 
@@ -168,7 +171,7 @@ export const GoalCard = ({
                     }}
                   >
                     <Icon
-                      as={Trash2Icon}
+                      as={TrashIcon}
                       size="md"
                       className="mr-2 color-purple-500"
                     />
@@ -182,13 +185,13 @@ export const GoalCard = ({
           {/* Desktop Buttons */}
           <HStack className="absolute top-4 right-4 space-x-4 hidden md:flex">
             <TouchableOpacity onPress={() => onShareGoal?.(goal)}>
-              <Icon as={Share2Icon} size="md" className="color-purple-500" />
+              <Icon as={ShareIcon} size="md" className="color-purple-500" />
             </TouchableOpacity>
             <TouchableOpacity onPress={() => onEditGoal?.(goal)}>
               <Icon as={EditIcon} size="md" className="color-purple-500" />
             </TouchableOpacity>
             <TouchableOpacity onPress={confirmDelete}>
-              <Icon as={Trash2Icon} size="md" className="color-purple-500" />
+              <Icon as={TrashIcon} size="md" className="color-purple-500" />
             </TouchableOpacity>
           </HStack>
         </>
@@ -258,7 +261,7 @@ export const GoalCard = ({
             }}
             className="ml-2"
           >
-            <Icon as={CopyIcon} size="md" color="$purple500" />
+            <Icon as={CopyIcon} size="md" className="color-purple-500" />
           </TouchableOpacity>
         )}
       </HStack>

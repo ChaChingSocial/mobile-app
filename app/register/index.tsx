@@ -129,14 +129,14 @@ export default function RegisterScreen() {
   };
 
   return (
-    <Center className="flex-1 bg-white justify-between">
+    <Center className="flex-1 bg-[#7ad8bd] justify-between">
       <VStack
         space="xl"
         className="flex-1 justify-center items-center w-full px-6"
       >
         <Image
           source={require("@/assets/images/logo.png")}
-          className="mb-6 h-20 w-64"
+          className="mb-6 h-32 w-full"
         />
 
         <Heading className="text-2xl font-bold mb-6 text-center">

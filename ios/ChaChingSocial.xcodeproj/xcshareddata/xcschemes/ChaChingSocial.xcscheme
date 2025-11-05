@@ -15,9 +15,9 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "13B07F861A680F5B00A75B9A"
-               BuildableName = "chachingmobileapp.app"
-               BlueprintName = "chachingmobileapp"
-               ReferencedContainer = "container:chachingmobileapp.xcodeproj">
+               BuildableName = "ChaChingSocial.app"
+               BlueprintName = "ChaChingSocial"
+               ReferencedContainer = "container:ChaChingSocial.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
       </BuildActionEntries>
@@ -33,9 +33,9 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "00E356ED1AD99517003FC87E"
-               BuildableName = "chachingmobileappTests.xctest"
-               BlueprintName = "chachingmobileappTests"
-               ReferencedContainer = "container:chachingmobileapp.xcodeproj">
+               BuildableName = "ChaChingSocialTests.xctest"
+               BlueprintName = "ChaChingSocialTests"
+               ReferencedContainer = "container:ChaChingSocial.xcodeproj">
             </BuildableReference>
          </TestableReference>
       </Testables>
@@ -55,9 +55,9 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "13B07F861A680F5B00A75B9A"
-            BuildableName = "chachingmobileapp.app"
-            BlueprintName = "chachingmobileapp"
-            ReferencedContainer = "container:chachingmobileapp.xcodeproj">
+            BuildableName = "ChaChingSocial.app"
+            BlueprintName = "ChaChingSocial"
+            ReferencedContainer = "container:ChaChingSocial.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
    </LaunchAction>
@@ -72,9 +72,9 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "13B07F861A680F5B00A75B9A"
-            BuildableName = "chachingmobileapp.app"
-            BlueprintName = "chachingmobileapp"
-            ReferencedContainer = "container:chachingmobileapp.xcodeproj">
+            BuildableName = "ChaChingSocial.app"
+            BlueprintName = "ChaChingSocial"
+            ReferencedContainer = "container:ChaChingSocial.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
    </ProfileAction>

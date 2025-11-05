@@ -31,7 +31,7 @@ extensions.configure(com.facebook.react.ReactSettingsExtension) { ex ->
 }
 expoAutolinking.useExpoModules()
 
-rootProject.name = 'chaching-mobile-app'
+rootProject.name = 'ChaChing Social'
 
 expoAutolinking.useExpoVersionCatalog()
 

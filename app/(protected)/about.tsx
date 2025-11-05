@@ -7,10 +7,10 @@ import ParallaxScrollView from "@/components/ParallaxScrollView";
 
 export default function AboutScreen() {
   return (
-    <ParallaxScrollView classNames="p-10 bg-gradient-to-b from-white to-gray-100 rounded-lg">
+    <ParallaxScrollView classNames="p-10 bg-[#077f5f] rounded-lg">
       <AboutDescription />
       <ContactForm />
-      <PartnerProgramIntro />
+      {/*<PartnerProgramIntro />*/}
       <Faq />
       <AccountDeletion />
     </ParallaxScrollView>

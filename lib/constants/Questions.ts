@@ -65,30 +65,11 @@ export const faq = [
   {
     question: "How can I delete my account?",
     answer:
-      "Submit your information to this url: https://form.jotform.com/252326934974063",
-  },
-  {
-    question:
-      "If someone offers me a loan for financial services, should I trust them?",
-    answer: "No, you still need to verify their credentials.",
-  },
-  {
-    question: "Does this app provide professional financial advice?",
-    answer: "No, this app is for discussion purposes only.",
+      "Go to the bottom of the About page to request an account deletion",
   },
   {
     question: "How do I advertise on ChaChing Social?",
     answer:
       "You can email us at support@chachingsocial.io to inquire about advertising with us.",
-  },
-  {
-    question: "Is my financial data shared with a 3rd party?",
-    answer:
-      "You own your data and we do not share it with anyone, unless you opt into connecting your bank account using our Plaid plugin. Plaid is an open banking platform authorized by major banks to connect FinTechs with banking data.",
-  },
-  {
-    question: "Is my financial profile private",
-    answer:
-      "We have a privacy setting that allows you to make your profile private or public. In the profile page you always edit the visibility of your profile to the community by selecting the eye on the top of the card.",
   },
 ];

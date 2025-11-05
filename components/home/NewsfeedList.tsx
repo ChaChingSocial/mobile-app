@@ -20,8 +20,9 @@ export const NewsfeedList = React.memo<NewsfeedListProps>(function NewsfeedList(
 
   // Memoize featured posts to avoid recalculating on every render
   const featuredPosts = useMemo(() => {
-    return posts.filter(item => item && item.featured);
-  }, [posts]);
+    // On community pages, show all provided posts instead of only featured
+    return communityPage ? posts : posts.filter((item) => item && item.featured);
+  }, [posts, communityPage]);
 
   useEffect(() => {
     // Skip if posts haven't changed
