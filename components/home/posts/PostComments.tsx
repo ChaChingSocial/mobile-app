@@ -63,7 +63,6 @@ export const PostComments = ({
     <Box>
       {sortedComments.length > 0 && (
         <Box className="mt-4 relative ">
-          <Comment comment={sortedComments[0]} post={post} />
           {!canViewComments && (
             <Pressable
               className="absolute top-0 left-0 w-full h-full items-center justify-center rounded-xl overflow-hidden"
@@ -85,13 +84,15 @@ export const PostComments = ({
               </Button>
             </Pressable>
           )}
-          {canViewComments &&
-            showComments &&
+          {canViewComments && showComments ? (
             sortedComments.map((comment, index) => (
               <Box key={index} className="mt-6 mb-6">
                 <Comment comment={comment} post={post} />
               </Box>
-            ))}
+            ))
+          ) : (
+            <Comment comment={sortedComments[0]} post={post} />
+          )}
         </Box>
       )}
     </Box>

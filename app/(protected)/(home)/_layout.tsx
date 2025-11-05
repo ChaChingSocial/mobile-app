@@ -1,24 +1,22 @@
-import { Tabs, useRouter } from "expo-router";
-import { useContext, useEffect, useState } from "react";
-import { Image, Platform, TouchableOpacity } from "react-native";
 import {
   Avatar,
   AvatarFallbackText,
   AvatarImage,
 } from "@/components/ui/avatar";
-import TabBarBackground from "@/components/ui/TabBarBackground";
+import { Box } from "@/components/ui/box";
+import { Text } from "@/components/ui/text";
+import { notificationApi } from "@/config/backend";
 import { Colors } from "@/lib/constants/Colors";
 import { useSession } from "@/lib/providers/AuthContext";
 import { DrawerContext } from "@/lib/providers/DrawerContext";
 import { FontAwesome, FontAwesome5, Ionicons } from "@expo/vector-icons";
-import { notificationApi } from "@/config/backend";
-import { Text } from "@/components/ui/text";
-import { Box } from "@/components/ui/box";
+import { Tabs } from "expo-router";
+import { useContext, useEffect, useState } from "react";
+import { Image, Platform, TouchableOpacity } from "react-native";
 
 export default function TabLayout() {
   const { open, setOpen } = useContext(DrawerContext);
   const { session } = useSession();
-  const router = useRouter();
   const [totalUnreadNotifications, setTotalUnreadNotifications] = useState(0);
 
   useEffect(() => {
@@ -44,7 +42,12 @@ export default function TabLayout() {
             <TouchableOpacity onPressOut={() => navigation.navigate("index")}>
               <Image
                 source={require("@/assets/images/logo.png")}
-                style={{ height: 40, resizeMode: "contain", width: 140, marginBottom: 10 }}
+                style={{
+                  height: 40,
+                  resizeMode: "contain",
+                  width: 140,
+                  marginBottom: 10,
+                }}
               />
             </TouchableOpacity>
           ),
@@ -75,8 +78,9 @@ export default function TabLayout() {
           headerLeft: () => (
             <TouchableOpacity
               onPressOut={() => setOpen(!open)}
-              className="ml-5">
-              <Avatar size="sm">
+              className="ml-5"
+            >
+              <Avatar size="md">
                 <AvatarFallbackText>{session?.displayName}</AvatarFallbackText>
                 <AvatarImage
                   source={{
@@ -92,15 +96,15 @@ export default function TabLayout() {
           tabBarInactiveTintColor: Colors["dark"].muted,
           // tabBarButton: HapticTab,
           tabBarStyle: Platform.select({
-              ios: {
-                  position: "absolute",
-                  backgroundColor: Colors["light"].tint, // set iOS tab bar color (keeps absolute positioning)
-              },
-              default: {
-                  backgroundColor: Colors["light"].tint, // Android / default tab bar color
-                  height: 60,
-                  elevation: 8, // Android shadow
-              },
+            ios: {
+              position: "absolute",
+              backgroundColor: Colors["light"].tint, // set iOS tab bar color (keeps absolute positioning)
+            },
+            default: {
+              backgroundColor: Colors["light"].tint, // Android / default tab bar color
+              height: 60,
+              elevation: 8, // Android shadow
+            },
           }),
         };
       }}
@@ -124,7 +128,7 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="profile"
+        name="profile/index"
         options={{
           title: "Profile",
           tabBarIcon: ({ color }) => (
@@ -132,6 +136,14 @@ export default function TabLayout() {
           ),
         }}
       />
+      <Tabs.Screen
+        name="profile/edit-profile"
+        options={{
+          href: null,
+          headerShadowVisible: true,
+        }}
+      />
+
       <Tabs.Screen
         name="blog/index"
         options={{

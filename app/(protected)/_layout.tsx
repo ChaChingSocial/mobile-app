@@ -91,6 +91,12 @@ export default function ProtectedLayout() {
             headerShown: true,
           }}
         />
+        <Stack.Screen
+          name="user-profile"
+          options={{
+            headerShown: true,
+          }}
+        />
       </Stack>
     </DrawerProvider>
   );

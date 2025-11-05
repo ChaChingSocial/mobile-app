@@ -52,7 +52,7 @@ export const PostInfo = ({
   return (
     <Box className="flex flex-row items-center justify-between w-full px-4">
       <TouchableOpacity
-        onPress={() => router.push(`/(protected)/profile?id=${displayUserId}`)}
+        onPress={() => router.push(`/(protected)/user-profile?id=${displayUserId}`)}
         className="flex items-left justify-start mt-4"
       >
         <Avatar
