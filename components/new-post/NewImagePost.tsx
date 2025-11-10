@@ -41,6 +41,9 @@ export default function NewImagePost() {
   const createdPostCommunityData = usePostStore(
     (state) => state.createdPostCommunityData
   );
+  const createdPostCommunityId = usePostStore(
+    (state) => state.createdPostCommunityId
+  );
   const setCreatedPost = usePostStore((state) => state.setCreatedPost);
   const createdPostImage = usePostStore((state) => state.createdPostImage);
 
@@ -92,7 +95,9 @@ export default function NewImagePost() {
           pictures: createdPostImage || [],
           documents: [],
           category: "image",
-          newsfeedId: createdPostCommunityData?.id,
+          newsfeedId:
+            (createdPostCommunityId as string) ||
+            ((createdPostCommunityData as any)?.id as string | undefined),
         };
 
         console.log("Post object created:", post);
@@ -101,7 +106,20 @@ export default function NewImagePost() {
           .then((createdPost) => {
             console.log("Post created successfully:", createdPost);
 
-            navigation.goBack();
+            // Redirect to the community the post was created in
+            const slug = createdPostCommunityData?.slug as string | undefined;
+            const communityId =
+              (createdPostCommunityId as string) ||
+              (createdPostCommunityData as any)?.id ||
+              createdPost.newsfeedId;
+            if (slug && communityId) {
+              router.replace({
+                pathname: "/(protected)/communities/[slug]",
+                params: { slug, communityId },
+              });
+            } else {
+              navigation.goBack();
+            }
           })
           .catch((error) => {
             console.error("Error creating text post:", error);
