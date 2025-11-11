@@ -41,6 +41,9 @@ export default function NewPodcastPost() {
   const createdPostCommunityData = usePostStore(
     (state) => state.createdPostCommunityData
   );
+  const createdPostCommunityId = usePostStore(
+    (state) => state.createdPostCommunityId
+  );
   const setCreatedPost = usePostStore((state) => state.setCreatedPost);
 
   const navigation = useNavigation();
@@ -133,7 +136,9 @@ export default function NewPodcastPost() {
           documents: [],
           linkPreview: null,
           category: "podcast",
-          newsfeedId: createdPostCommunityData?.id,
+          newsfeedId:
+            (createdPostCommunityId as string) ||
+            ((createdPostCommunityData as any)?.id as string | undefined),
         };
         console.log("Post object created:", post);
         setCreatedPost(post);
@@ -141,7 +146,20 @@ export default function NewPodcastPost() {
           .then((createdPost) => {
             console.log("Post created successfully:", createdPost);
 
-            navigation.goBack();
+            // Redirect to the community the post was created in
+            const slug = createdPostCommunityData?.slug as string | undefined;
+            const communityId =
+              (createdPostCommunityId as string) ||
+              (createdPostCommunityData as any)?.id ||
+              createdPost.newsfeedId;
+            if (slug && communityId) {
+              router.replace({
+                pathname: "/(protected)/communities/[slug]",
+                params: { slug, communityId },
+              });
+            } else {
+              navigation.goBack();
+            }
           })
           .catch((error) => {
             console.error("Error creating podcast post:", error);

@@ -34,6 +34,9 @@ export default function SearchCommunity() {
     const setCreatedPostCommunityData = usePostStore(
         (state) => state.setCreatedPostCommunityData
     );
+    const setCreatedPostCommunityId = usePostStore(
+        (state) => state.setCreatedPostCommunityId
+    );
 
     const [communityData, setCommunityData] = useState<Community[]>([]);
     const [filteredData, setFilteredData] = useState<Community[]>([]);
@@ -131,6 +134,7 @@ export default function SearchCommunity() {
                         });
                     } else {
                         setCreatedPostCommunityData(data);
+                        setCreatedPostCommunityId(id);
                         navigate.goBack();
                     }
                 }}
