@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { View, Text, TouchableOpacity } from "react-native";
-import { FontAwesome } from "@expo/vector-icons";
+import { FontAwesome, Ionicons } from "@expo/vector-icons";
 
 // import { runHearts } from "@/components/VisualEffects/runHearts";
 
@@ -222,19 +222,21 @@ export function Comment({
             </View>
 
             {replying && (
-                <View className="ml-6 mt-2 border border-secondary-0 rounded-md p-3 bg-[#f3e8ff]">
-                    <PostEditor
-                        message={replyContent}
-                        setContent={setReplyContent}
-                        editorType="comment"
-                    />
-                    <View className="flex-row justify-end mt-2 space-x-2">
-                        <Button onPress={() => setReplying(false)} variant="outline" className="px-4 py-2 border border-purple-700 rounded bg-transparent">
-                            <Text className="font-medium text-purple-700">Cancel</Text>
-                        </Button>
-                        <Button onPress={handleReply} className="px-4 py-2 bg-purple-700 rounded">
-                            <Text className="text-white font-medium">Send</Text>
-                        </Button>
+                <View className="bg-[#a5e5cb] rounded-md p-4 ml-6 mb-4">
+                    <View className="flex flex-row items-center gap-2">
+                        <View className="flex-1">
+                            <PostEditor
+                                message={replyContent}
+                                setContent={setReplyContent}
+                                editorType="comment"
+                            />
+                        </View>
+                        <TouchableOpacity
+                            onPress={handleReply}
+                            className="bg-primary-500 rounded-full p-3"
+                        >
+                            <Ionicons name="send" size={20} color="white" />
+                        </TouchableOpacity>
                     </View>
                 </View>
             )}
