@@ -46,9 +46,9 @@ import {
     ModalHeader,
     ModalCloseButton,
 } from "@/components/ui/modal";
-import { EventApi } from "@/_sdk/apis";
 import type { Ticket, EventSlot } from "@/_sdk/models";
 import GetTicketModal from "@/components/events/GetTicketModal";
+import { eventApi } from "@/config/backend";
 
 interface EventPostProps {
     post: PostType;
@@ -99,7 +99,7 @@ export const EventPost = ({
 
     // tickets for selected slot
     useEffect(() => {
-        const api = new EventApi();
+        const api = eventApi;
         async function fetchTickets() {
             try {
                 if (selectedSlot?.id) {
@@ -116,7 +116,7 @@ export const EventPost = ({
     }, [selectedSlot?.id]);
 
     useEffect(() => {
-        const api = new EventApi();
+        const api = eventApi;
         async function fetchUserTickets() {
             if (!selectedSlot?.id || !userId) {
                 setTickets([]);
@@ -130,7 +130,6 @@ export const EventPost = ({
                 });
                 const valid = (t || []).filter((tk) => tk.id && tk.id.trim() !== "");
                 setTickets(valid);
-                console.log('Tickets', valid);
                 setEventTickets(valid);
                 setHasValidTickets(valid.length > 0);
             } catch (e) {
@@ -769,7 +768,7 @@ export const EventPost = ({
               }
 
               // Then refetch in the background to sync with server
-              const api = new EventApi();
+              const api = eventApi;
               try {
                 const t = await api.getUserEventSlotTickets({
                   eventSlotId: selectedSlot.id,
@@ -798,7 +797,7 @@ export const EventPost = ({
               setTicketViewOpened(false);
               setNewlyPurchasedTickets([]);
               // Refetch tickets when modal is closed
-              const api = new EventApi();
+              const api = eventApi;
               api
                 .getUserEventSlotTickets({
                   eventSlotId: selectedSlot.id,
