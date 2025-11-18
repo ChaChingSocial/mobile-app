@@ -38,6 +38,7 @@ export default function TabLayout() {
           headerStyle: {
             backgroundColor: "#a3e4d2",
           },
+          tabBarHideOnKeyboard: Platform.OS === "android" ? true : undefined,
           headerTitle: () => (
             <TouchableOpacity onPressOut={() => navigation.navigate("index")}>
               <Image
