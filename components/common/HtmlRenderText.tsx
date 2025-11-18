@@ -112,6 +112,7 @@ const customStyles = {
     marginTop: 8,
     borderRadius: 16,
     padding: 4,
+    width: "100%",
   }
 };
 
@@ -179,11 +180,12 @@ const customRenderers = {
   },
 };
 
-export default function HtmlRenderText({ source }: { source: string }) {
+export default function HtmlRenderText({ source, inset = 32 }: { source: string; inset?: number }) {
   const { width } = useWindowDimensions();
+  const contentWidth = Math.max(100, width - inset);
   return (
     <RenderHtml
-      contentWidth={width - 32}
+      contentWidth={contentWidth}
       source={{ html: source }}
       tagsStyles={customStyles}
       renderers={customRenderers}
