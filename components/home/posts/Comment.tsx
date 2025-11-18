@@ -186,6 +186,7 @@ export function Comment({
                 <View className="mb-1">
                     <Text className="text-base leading-relaxed mx-3">
                         <HtmlRenderText
+                            inset={96}
                             source={
                                 typeof comment.message === "string"
                                     ? comment.message
