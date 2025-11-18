@@ -157,6 +157,11 @@ export function PostWrapper({
     }
   };
 
+  // Computes like count based on local toggle
+  const serverLiked = (post.likes ?? []).some((l: any) => l?.userId === currentUserId);
+  const baseLikes = post.likes ? post.likes.length : 0;
+  const displayedLikes = baseLikes + (userLikedPost && !serverLiked ? 1 : 0) - (!userLikedPost && serverLiked ? 1 : 0);
+
   return (
     <Box
       className="relative align-middle rounded-lg bg-white">
@@ -186,7 +191,7 @@ export function PostWrapper({
               />
             </TouchableOpacity>
 
-            <Text>{post.likes ? post.likes.length : 0}</Text>
+            <Text>{displayedLikes}</Text>
           </Box>
           {currentUserId !== post.posterUserId && (
             <Tooltip
