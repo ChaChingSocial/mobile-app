@@ -27,6 +27,19 @@ export default function SingleCommunity() {
   const [visibleCount, setVisibleCount] = useState(10);
   const [isExpanded, setIsExpanded] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
+  const loadMore = () => {
+    setVisibleCount((prev) => Math.min(prev + 10, posts.length));
+  };
+  const onScrollNearBottom = (e: any) => {
+    try {
+      const { layoutMeasurement, contentOffset, contentSize } = e.nativeEvent || {};
+      if (!layoutMeasurement || !contentOffset || !contentSize) return;
+      const distanceFromBottom = contentSize.height - (contentOffset.y + layoutMeasurement.height);
+      if (distanceFromBottom < 200) {
+        loadMore();
+      }
+    } catch {}
+  };
 
   const fetchCommunityData = async () => {
     try {
@@ -95,7 +108,7 @@ export default function SingleCommunity() {
 
   return (
     // <SafeAreaView>
-      <ScrollView className="bg-[#077f5f] flex-1" refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}>
+      <ScrollView className="bg-[#077f5f] flex-1" refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />} onScroll={onScrollNearBottom} scrollEventThrottle={32}>
         {communityData.image && (
           <View className="w-full h-60 overflow-hidden">
             <Image
@@ -161,6 +174,8 @@ export default function SingleCommunity() {
           communityPage={true}
           isUserCommunityAdmin={session?.uid === communityData.adminUserId}
         />
+        {/* simple spacer to make sure onScroll bottom detection triggers */}
+        <View style={{ height: 24 }} />
       </ScrollView>
     // </SafeAreaView>
   );
