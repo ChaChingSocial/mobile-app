@@ -1,5 +1,5 @@
 import NewPodcastPost from "@/components/new-post/NewPodcastPost";
-import { SafeAreaView } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function NewPodcastPostScreen() {
   return (

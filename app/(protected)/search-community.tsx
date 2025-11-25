@@ -16,9 +16,9 @@ import { getAllCommunities } from "@/lib/api/communities";
 import { usePostStore } from "@/lib/store/post";
 import { useNavigation, useRouter } from "expo-router";
 import { useEffect, useState } from "react";
-import { SafeAreaView, TouchableOpacity } from "react-native";
-import { FlatList } from "react-native-gesture-handler";
+import { FlatList, TouchableOpacity } from "react-native";
 import {Ionicons} from "@expo/vector-icons";
+import { SafeAreaView } from "react-native-safe-area-context";
 import {Fab, FabIcon} from "@/components/ui/fab";
 
 export default function SearchCommunity() {

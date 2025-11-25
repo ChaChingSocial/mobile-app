@@ -22,7 +22,7 @@ import {
   NotificationNotificationTypeEnum,
 } from "@/_sdk";
 import Toast from "react-native-toast-message";
-import { SafeAreaView } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function ReportScreen() {
   const { id: postId } = useLocalSearchParams<{ id?: string }>();

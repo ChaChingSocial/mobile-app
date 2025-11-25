@@ -33,9 +33,9 @@ import {
   NativeScrollEvent,
   NativeSyntheticEvent,
   RefreshControl,
+  ScrollView,
   TouchableOpacity,
 } from "react-native";
-import { ScrollView } from "react-native-gesture-handler";
 
 export default function Profile() {
   const { id: UserId } = useLocalSearchParams();

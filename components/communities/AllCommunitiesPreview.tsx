@@ -7,9 +7,8 @@ import {
 import { Box } from "@/components/ui/box";
 import { getAllCommunities } from "@/lib/api/communities";
 import { useMemo, useState } from "react";
-import { FlatList } from "react-native-gesture-handler";
 import { Text } from "@/components/ui/text";
-import { TouchableOpacity } from "react-native";
+import { FlatList, TouchableOpacity } from "react-native";
 import { useRouter } from "expo-router";
 
 export default function AllCommunitiesPreview() {
