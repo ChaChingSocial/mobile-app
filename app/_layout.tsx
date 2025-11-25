@@ -35,10 +35,10 @@ function RootLayoutNav() {
   console.log("session layout", session, pathname);
 
   return (
-    <GluestackUIProvider>
+    <GluestackUIProvider mode="light">
       <GestureHandlerRootView style={{ flex: 1 }}>
         <Stack>
-          <StatusBar style="auto" backgroundColor="transparent" />
+          <StatusBar style="dark" backgroundColor="transparent" />
           <Stack.Screen
             name="(protected)"
             options={{
