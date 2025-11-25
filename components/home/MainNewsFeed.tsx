@@ -1,12 +1,13 @@
 import useFeaturedPosts from "@/hooks/useSubscribeToPosts";
-import React from "react";
+import React, { forwardRef, useImperativeHandle } from "react";
 import { Image, TouchableOpacity } from "react-native";
 import { Box } from "../ui/box";
 import { Text } from "../ui/text";
 import NewsfeedList from "./NewsfeedList";
 
-export function MainNewsfeed() {
-  const { posts, fetchMorePosts, loading, hasMore } = useFeaturedPosts();
+export const MainNewsfeed = forwardRef(function MainNewsfeed(_props, ref: any) {
+  const { posts, fetchMorePosts, loading } = useFeaturedPosts();
+  useImperativeHandle(ref, () => ({ fetchMore: fetchMorePosts }));
   // const [posts, setPosts] = useState<Post[]>([]);
   // const [loading, setLoading] = useState(false);
 
@@ -51,6 +52,6 @@ export function MainNewsfeed() {
       </Box>
     </Box>
   );
-}
+});
 
 export default MainNewsfeed;
