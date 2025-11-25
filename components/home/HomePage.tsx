@@ -210,13 +210,28 @@ export default function HomePage() {
     router.push(route);
   };
 
+  // Auto-load more featured posts when scrolled near bottom (3 at a time)
+  const mainFeedRef = useRef<any>(null);
+  const onScrollNearBottom = (e: any) => {
+    try {
+      const { layoutMeasurement, contentOffset, contentSize } = e.nativeEvent || {};
+      if (!layoutMeasurement || !contentOffset || !contentSize) return;
+      const distanceFromBottom = contentSize.height - (contentOffset.y + layoutMeasurement.height);
+      if (distanceFromBottom < 200) {
+        mainFeedRef.current?.fetchMore?.();
+      }
+    } catch {}
+  };
+
   return (
     <Box className="flex-1 relative">
       <ScrollView
         contentInsetAdjustmentBehavior="automatic"
         className="bg-[#077f5f] flex-1"
+        onScroll={onScrollNearBottom}
+        scrollEventThrottle={32}
         >
-        <MainNewsfeed />
+        <MainNewsfeed ref={mainFeedRef} />
         <SideBar open={open} onOpenChange={setOpen} />
       </ScrollView>
 

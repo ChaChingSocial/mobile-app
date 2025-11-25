@@ -722,11 +722,12 @@ export function subscribeToFeaturedPost(
 
 export async function getFeaturedPosts(lastDoc = null) {
   try {
+    const PAGE_SIZE = 3;
     let q = query(
       collection(db, "posts"),
       where("featured", "==", true),
       orderBy("createdAt", "desc"),
-      limit(50)
+      limit(PAGE_SIZE)
     );
 
     if (lastDoc) {
@@ -740,7 +741,7 @@ export async function getFeaturedPosts(lastDoc = null) {
         throw new Error("lastDoc missing createdAt field");
       }
 
-      q = query(q, startAfter(lastDoc), limit(50));
+      q = query(q, startAfter(lastDoc), limit(PAGE_SIZE));
     }
 
     const querySnapshot = await getDocs(q);
@@ -752,7 +753,7 @@ export async function getFeaturedPosts(lastDoc = null) {
     }));
 
     const newLastDoc =
-      querySnapshot.docs.length >= 40
+      querySnapshot.docs.length >= PAGE_SIZE
         ? querySnapshot.docs[querySnapshot.docs.length - 1]
         : null;
 
@@ -927,6 +928,47 @@ export async function getPostsByNewsfeedId(newsfeedId: string) {
   } catch (error) {
     console.error("Error fetching posts by newsfeed ID:", error);
     return []; // Or handle the error differently
+  }
+}
+
+// Paginated fetch for community posts (3 at a time)
+export async function getPostsByNewsfeedIdPaged(
+  newsfeedId: string,
+  lastDoc: DocumentSnapshot | null = null,
+  pageSize = 3
+) {
+  try {
+    let q = query(
+      collection(db, "posts"),
+      where("newsfeedId", "==", newsfeedId),
+      orderBy("createdAt", "desc"),
+      limit(pageSize)
+    );
+
+    if (lastDoc) {
+      if (!(lastDoc instanceof DocumentSnapshot) || !lastDoc.exists) {
+        throw new Error("Invalid lastDoc - not a valid DocumentSnapshot");
+      }
+      if (!lastDoc.data().createdAt) {
+        throw new Error("lastDoc missing createdAt field");
+      }
+      q = query(q, startAfter(lastDoc), limit(pageSize));
+    }
+
+    const snapshot = await getDocs(q);
+    const posts = snapshot.docs.map((d) => ({
+      id: d.id,
+      ...d.data(),
+      createdAt: d.data().createdAt?.toMillis?.() ?? d.data().createdAt,
+    }));
+    const newLastDoc =
+      snapshot.docs.length >= pageSize
+        ? snapshot.docs[snapshot.docs.length - 1]
+        : null;
+    return { posts, lastDoc: newLastDoc };
+  } catch (error) {
+    console.error("Error fetching paged posts by newsfeed ID:", error);
+    return { posts: [], lastDoc: null };
   }
 }
 
