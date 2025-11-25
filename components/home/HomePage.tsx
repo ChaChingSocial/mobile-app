@@ -23,8 +23,15 @@ import * as ImagePicker from "expo-image-picker";
 import * as MediaLibrary from "expo-media-library";
 import { useRouter } from "expo-router";
 import { useContext, useEffect, useRef, useState } from "react";
-import { Alert, Animated, Easing, TouchableOpacity, View, Platform } from "react-native";
-import { ScrollView } from "react-native-gesture-handler";
+import {
+  Alert,
+  Animated,
+  Easing,
+  TouchableOpacity,
+  View,
+  Platform,
+  ScrollView,
+} from "react-native";
 import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
 
 type PostOption = {

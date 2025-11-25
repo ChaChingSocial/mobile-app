@@ -36,7 +36,7 @@ function RootLayoutNav() {
 
   return (
     <GluestackUIProvider>
-      <GestureHandlerRootView style={{ flex: 1 }}>
+      <GestureHandlerRootView>
         <Stack>
           <StatusBar style="auto" backgroundColor="transparent" />
           <Stack.Screen
