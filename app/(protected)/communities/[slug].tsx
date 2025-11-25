@@ -2,11 +2,11 @@ import { Community } from "@/_sdk";
 import NewsfeedList from "@/components/home/NewsfeedList";
 import { Text } from "@/components/ui/text";
 import { getSingleCommunityBySlug } from "@/lib/api/communities";
-import { getPostsByNewsfeedId, subscribeToPostsByNewsfeedId } from "@/lib/api/newsfeed";
+import { getPostsByNewsfeedIdPaged } from "@/lib/api/newsfeed";
 import { useSession } from "@/lib/providers/AuthContext";
 import { stripHtml } from "@/lib/utils/stripHtml";
 import { Post } from "@/types/post";
-import { useLocalSearchParams, useNavigation, useRouter } from "expo-router";
+import { useLocalSearchParams } from "expo-router";
 import { useEffect, useState } from "react";
 import { Image, ScrollView, View, RefreshControl } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -17,26 +17,45 @@ export default function SingleCommunity() {
   const params = useLocalSearchParams();
   const { slug, communityId } = params;
   const { session } = useSession();
+  const PAGE_SIZE = 3;
   // const navigate = useNavigation();
   // const router = useRouter();
 
   // const routes = navigate.getState()?.routes;
   // const prevRoute = routes[routes.length - 2];
+
   const [communityData, setCommunityData] = useState<Community | null>(null);
   const [posts, setPosts] = useState<Post[]>([]);
-  const [visibleCount, setVisibleCount] = useState(10);
   const [isExpanded, setIsExpanded] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
-  const loadMore = () => {
-    setVisibleCount((prev) => Math.min(prev + 10, posts.length));
+  const [lastDoc, setLastDoc] = useState<any>(null);
+  const [initialLoading, setInitialLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+
+  const fetchMore = async () => {
+    if (!communityId || !lastDoc || loadingMore) return;
+    setLoadingMore(true);
+    const { posts: more, lastDoc: next } = await getPostsByNewsfeedIdPaged(
+      Array.isArray(communityId) ? communityId[0] : (communityId as string),
+      lastDoc,
+      PAGE_SIZE
+    );
+    setPosts((prev) => {
+      const seen = new Set(prev.map((p) => p.id));
+      const deduped = [...prev, ...more.filter((p) => !seen.has(p.id))];
+      return deduped;
+    });
+    setLastDoc(next);
+    setLoadingMore(false);
   };
+
   const onScrollNearBottom = (e: any) => {
     try {
       const { layoutMeasurement, contentOffset, contentSize } = e.nativeEvent || {};
       if (!layoutMeasurement || !contentOffset || !contentSize) return;
       const distanceFromBottom = contentSize.height - (contentOffset.y + layoutMeasurement.height);
-      if (distanceFromBottom < 200) {
-        loadMore();
+      if (distanceFromBottom < 200 && !loadingMore && lastDoc) {
+        fetchMore();
       }
     } catch {}
   };
@@ -66,19 +85,16 @@ export default function SingleCommunity() {
     }
 
     fetchCommunityData();
-    // Ensures latest posts when opening: fetch ordered list once
-    getPostsByNewsfeedId(Array.isArray(communityId) ? communityId[0] : (communityId as string)).then((res) => {
-      setPosts(res);
-    });
-    // Keep live updates afterwards
-    subscribeToPostsByNewsfeedId(
-      Array.isArray(communityId) ? communityId[0] : communityId,
-      (p) => {
-        setPosts(p);
-        // reset visible count when new data arrives
-        setVisibleCount((prev) => (prev < 10 ? 10 : prev));
-      }
-    );
+    // Initial page with fetched 3 posts
+    setInitialLoading(true);
+    getPostsByNewsfeedIdPaged(
+      Array.isArray(communityId) ? communityId[0] : (communityId as string),
+      null,
+      PAGE_SIZE
+    ).then(({ posts: first, lastDoc: ld }) => {
+      setPosts(first);
+      setLastDoc(ld);
+    }).finally(() => setInitialLoading(false));
   }, [communityId]);
 
   if (!communityData) {
@@ -99,10 +115,13 @@ export default function SingleCommunity() {
   const onRefresh = async () => {
     if (!communityId) return;
     setRefreshing(true);
-    const fresh = await getPostsByNewsfeedId(
-      Array.isArray(communityId) ? communityId[0] : (communityId as string)
+    const { posts: fresh, lastDoc: ld } = await getPostsByNewsfeedIdPaged(
+      Array.isArray(communityId) ? communityId[0] : (communityId as string),
+      null,
+      PAGE_SIZE
     );
     setPosts(fresh);
+    setLastDoc(ld);
     setRefreshing(false);
   };
 
@@ -170,10 +189,18 @@ export default function SingleCommunity() {
           )}
         </View>
         <NewsfeedList
-          posts={posts.slice(0, visibleCount)}
+          posts={posts}
           communityPage={true}
           isUserCommunityAdmin={session?.uid === communityData.adminUserId}
         />
+        {(initialLoading || loadingMore) && (
+          <Image
+            source={require("@/assets/images/logo-inverted.png")}
+            alt="Loading..."
+            resizeMode="contain"
+            className="w-full"
+          />
+        )}
         {/* simple spacer to make sure onScroll bottom detection triggers */}
         <View style={{ height: 24 }} />
       </ScrollView>

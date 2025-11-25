@@ -75,7 +75,10 @@ export default function useFeaturedPosts() {
       if (newPosts.length === 0) {
         setLastDoc(null); // Reached end
       } else {
-        setPosts((prev) => [...prev, ...newPosts]);
+        setPosts((prev) => {
+          const seen = new Set(prev.map((p) => p.id));
+          return [...prev, ...newPosts.filter((p) => !seen.has(p.id))];
+        });
         setLastDoc(newLastDoc);
       }
     } catch (err) {
