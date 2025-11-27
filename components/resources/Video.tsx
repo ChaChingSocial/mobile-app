@@ -1,6 +1,7 @@
 import React from "react";
 import { View, Dimensions } from "react-native";
 import { WebView } from "react-native-webview";
+import { Text } from "../ui/text";
 
 interface VideoComponentProps {
   url: string;
