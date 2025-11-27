@@ -24,7 +24,7 @@ import {
     AvatarGroup,
     AvatarImage,
 } from "@/components/ui/avatar";
-import { Button } from "@/components/ui/button";
+import { Button, ButtonGroup } from "@/components/ui/button";
 import {
     Checkbox,
     CheckboxIcon,
@@ -49,6 +49,7 @@ import {
 import type { Ticket, EventSlot } from "@/_sdk/models";
 import GetTicketModal from "@/components/events/GetTicketModal";
 import { eventApi } from "@/config/backend";
+import * as Calendar from "expo-calendar";
 
 interface EventPostProps {
     post: PostType;
@@ -309,7 +310,52 @@ export const EventPost = ({
         }
     };
 
-    const handleLinkPress = (url: string) => Linking.openURL(url);
+    const handleAddToCalendar = async () => {
+      try {
+        const { status } = await Calendar.requestCalendarPermissionsAsync();
+        if (status !== "granted") {
+          alert("Sorry, we need calendar permissions to add events.");
+          return;
+        }
+
+        const calendars = await Calendar.getCalendarsAsync(
+          Calendar.EntityTypes.EVENT
+        );
+        const defaultCalendar =
+          calendars.find((cal) => cal.allowsModifications) || calendars[0];
+
+        if (!defaultCalendar) {
+          alert("No writable calendars found");
+          return;
+        }
+
+        const eventDetails = {
+          title: eventV2?.title || "Event",
+          startDate: startDate.toISOString(),
+          endDate: endDate.toISOString(),
+          timeZone: "UTC",
+          location:
+            (selectedSlot?.address as any)?.address ||
+            (selectedSlot?.address as any) ||
+            "",
+          notes:
+            (selectedSlot?.description as any) || eventV2?.description || "",
+          alarms: [{ relativeOffset: -15 }], // 15 minute reminder
+        };
+
+        const eventId = await Calendar.createEventAsync(
+          defaultCalendar.id,
+          eventDetails
+        );
+
+        if (eventId) {
+          alert("Event added to your calendar successfully!");
+        }
+      } catch (error) {
+        console.error("Error adding event to calendar:", error);
+        alert("Failed to add event to calendar");
+      }
+    };
 
     if (editing) {
         return (
@@ -585,6 +631,17 @@ export const EventPost = ({
               </Button>
             )}
           </View>
+
+          {/* Add to calendar button */}
+          <ButtonGroup className="mt-2">
+            <Button
+              variant="outline"
+              className="flex-1 px-4 py-2 border-gray-400"
+              onPress={handleAddToCalendar}
+            >
+              <Text className="text-gray-700 font-medium">Add to Calendar</Text>
+            </Button>
+          </ButtonGroup>
 
           {/* description */}
           {!!descriptionHtml && (
