@@ -8,25 +8,6 @@ import NewsfeedList from "./NewsfeedList";
 export const MainNewsfeed = forwardRef(function MainNewsfeed(_props, ref: any) {
   const { posts, fetchMorePosts, loading } = useFeaturedPosts();
   useImperativeHandle(ref, () => ({ fetchMore: fetchMorePosts }));
-  // const [posts, setPosts] = useState<Post[]>([]);
-  // const [loading, setLoading] = useState(false);
-
-  // useEffect(() => {
-  //   async function fetchInitialPosts() {
-  //     setLoading(true);
-  //     try {
-  //       const allPosts = await newsfeedApi.getPosts();
-  //       setPosts(allPosts);
-  //       console.log("Fetched initial posts:", allPosts.length);
-  //     } catch (error) {
-  //       console.error("Error fetching initial posts:", error);
-  //     } finally {
-  //       setLoading(false);
-  //     }
-  //   }
-
-  //   fetchInitialPosts();
-  // }, []);
 
   return (
     <Box className="flex-1">

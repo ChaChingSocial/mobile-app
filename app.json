@@ -22,7 +22,7 @@
       }
     },
     "androidStatusBar": {
-      "backgroundColor": "#00000000"
+      "backgroundColor": "#000000"
     },
     "android": {
       "googleServicesFile": "./google-services.json",
@@ -65,7 +65,7 @@
           "image": "./assets/images/icon.png",
           "imageWidth": 200,
           "resizeMode": "contain",
-          "backgroundColor": "#00000000"
+          "backgroundColor": "#000000"
         }
       ],
       "expo-secure-store",
