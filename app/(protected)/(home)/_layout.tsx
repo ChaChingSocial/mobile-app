@@ -103,7 +103,7 @@ export default function TabLayout() {
             },
             default: {
               backgroundColor: Colors["light"].tint, // Android / default tab bar color
-              height: 60,
+              height: 75,
               elevation: 8, // Android shadow
             },
           }),
