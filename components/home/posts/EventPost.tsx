@@ -624,7 +624,7 @@ export const EventPost = ({
             {hasValidTickets && (
               <Button
                 variant="solid"
-                className="px-4 py-3 bg-gray-700"
+                className="px-4 bg-gray-700"
                 onPress={handleViewTicket}
               >
                 <Text className="text-white font-medium">View Ticket</Text>
