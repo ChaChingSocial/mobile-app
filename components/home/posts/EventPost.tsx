@@ -756,7 +756,7 @@ export const EventPost = ({
           )}
 
           {/* Add to calendar button */}
-          {!hasValidTickets && (<ButtonGroup className="mt-2">
+          {hasValidTickets && (<ButtonGroup className="mt-2">
             <Button
               variant="outline"
               className="flex-1 px-4 py-2 border-gray-400"
