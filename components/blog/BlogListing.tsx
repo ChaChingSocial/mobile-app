@@ -163,17 +163,6 @@ export default function BlogListing() {
         </Fab>
       )}
 
-      {/* FAB for Write Blog */}
-      <Fab
-        size="lg"
-        placement="bottom right"
-        onPress={() => Linking.openURL("https://www.chaching.social/blog/write")}
-        className="bg-[#40c057] shadow-lg"
-      >
-        <FabIcon as={Ionicons} name="create-outline" size={24} className="text-white" />
-        <FabLabel className="text-white">✏️ Write</FabLabel>
-      </Fab>
-
       <ParallaxScrollView classNames="flex-1">
         <Box className="bg-[#077f5f] flex-1">
           {loading && (
