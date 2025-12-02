@@ -7,6 +7,7 @@ import {
     ScrollView,
     Image,
     Linking,
+    Platform,
 } from "react-native";
 import { FontAwesome5 } from "@expo/vector-icons";
 import { Timestamp } from "firebase/firestore";
@@ -24,7 +25,7 @@ import {
     AvatarGroup,
     AvatarImage,
 } from "@/components/ui/avatar";
-import { Button } from "@/components/ui/button";
+import { Button, ButtonGroup } from "@/components/ui/button";
 import {
     Checkbox,
     CheckboxIcon,
@@ -33,7 +34,7 @@ import {
 } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import SelectComponent from "@/components/common/SelectInput";
-import { CheckIcon } from "@/components/ui/icon";
+import { CheckIcon, Icon } from "@/components/ui/icon";
 import HtmlRenderText from "@/components/common/HtmlRenderText";
 import TicketViewerModal from "@/components/events/TicketViewerModal";
 import PostTags from "../post-editor/PostTag";
@@ -49,6 +50,7 @@ import {
 import type { Ticket, EventSlot } from "@/_sdk/models";
 import GetTicketModal from "@/components/events/GetTicketModal";
 import { eventApi } from "@/config/backend";
+import * as Calendar from "expo-calendar";
 
 interface EventPostProps {
     post: PostType;
@@ -88,6 +90,14 @@ export const EventPost = ({
     const descRef = useRef<Text>(null);
     const [eventTickets, setEventTickets] = useState<Ticket[]>([]);
     const [newlyPurchasedTickets, setNewlyPurchasedTickets] = useState<Ticket[]>([]);
+    const [calendarModalOpen, setCalendarModalOpen] = useState(false);
+    const [editableEvent, setEditableEvent] = useState({
+      title: "",
+      startDate: new Date(),
+      endDate: new Date(),
+      location: "",
+      notes: "",
+    });
 
     const descriptionHtml = (selectedSlot?.description as any) || eventV2?.description || "";
 
@@ -309,7 +319,187 @@ export const EventPost = ({
         }
     };
 
-    const handleLinkPress = (url: string) => Linking.openURL(url);
+    const handleAddToCalendar = async () => {
+      try {
+        // Ensure end time is at least 1 minute after start time
+        const validStartDate = new Date(startDate);
+        const validEndDate = new Date(endDate);
+
+        // Fix: Ensure end date is after start date
+        if (validEndDate <= validStartDate) {
+          // Add 1 hour to end date if it's not after start date
+          validEndDate.setTime(validStartDate.getTime() + 60 * 60 * 1000); // Add 1 hour
+        }
+
+        // Add 1 minute buffer if times are the same
+        if (validEndDate.getTime() === validStartDate.getTime()) {
+          validEndDate.setTime(validEndDate.getTime() + 60 * 1000); // Add 1 minute
+        }
+
+        if (Platform.OS === "ios") {
+          // For iOS
+          const { status } = await Calendar.requestCalendarPermissionsAsync();
+          if (status !== "granted") {
+            alert("Sorry, we need calendar permissions to add events.");
+            return;
+          }
+
+          const calendars = await Calendar.getCalendarsAsync(
+            Calendar.EntityTypes.EVENT
+          );
+          const defaultCalendar =
+            calendars.find((cal) => cal.allowsModifications) || calendars[0];
+
+          if (!defaultCalendar) {
+            alert("No writable calendars found");
+            return;
+          }
+
+          // Create event with validated times
+          const eventId = await Calendar.createEventAsync(defaultCalendar.id, {
+            title: eventV2?.title || "Event",
+            startDate: validStartDate.toISOString(),
+            endDate: validEndDate.toISOString(),
+            timeZone: "UTC",
+            location:
+              (selectedSlot?.address as any)?.address ||
+              (selectedSlot?.address as any) ||
+              "",
+            notes:
+              (selectedSlot?.description as any) || eventV2?.description || "",
+            alarms: [{ relativeOffset: -15 }],
+          });
+
+          if (eventId) {
+            await Calendar.openEventInCalendar(eventId);
+          }
+        } else if (Platform.OS === "android") {
+          // For Android
+          const title = encodeURIComponent(eventV2?.title || "Event");
+          const location = encodeURIComponent(
+            (selectedSlot?.address as any)?.address ||
+              (selectedSlot?.address as any) ||
+              ""
+          );
+          const details = encodeURIComponent(
+            (selectedSlot?.description as any) || eventV2?.description || ""
+          );
+
+          const startMillis = validStartDate.getTime();
+          const endMillis = validEndDate.getTime();
+
+          // Create intent URL for Google Calendar
+          const intentUri =
+            "https://www.google.com/calendar/render?" +
+            "action=TEMPLATE&" +
+            "text=" +
+            title +
+            "&" +
+            "dates=" +
+            dayjs(validStartDate).format("YYYYMMDDTHHmmss") +
+            "/" +
+            dayjs(validEndDate).format("YYYYMMDDTHHmmss") +
+            "&" +
+            "details=" +
+            details +
+            "&" +
+            "location=" +
+            location +
+            "&" +
+            "sprop=name:Event&" +
+            "sprop=website:&" +
+            "sf=true&" +
+            "output=xml";
+
+          try {
+            await Linking.openURL(intentUri);
+          } catch (e) {
+            console.log("Failed to open calendar intent:", e);
+            // Alternative method for Android
+            const androidCalendarUri = `content://com.android.calendar/time/${startMillis}`;
+            await Linking.openURL(androidCalendarUri);
+          }
+        } else {
+          // For web or other platforms
+          const title = encodeURIComponent(eventV2?.title || "Event");
+          const location = encodeURIComponent(
+            (selectedSlot?.address as any)?.address ||
+              (selectedSlot?.address as any) ||
+              ""
+          );
+          const details = encodeURIComponent(
+            (selectedSlot?.description as any) || eventV2?.description || ""
+          );
+
+          const calendarUrl =
+            "https://www.google.com/calendar/render?" +
+            "action=TEMPLATE&" +
+            "text=" +
+            title +
+            "&" +
+            "dates=" +
+            dayjs(validStartDate).format("YYYYMMDDTHHmmss") +
+            "/" +
+            dayjs(validEndDate).format("YYYYMMDDTHHmmss") +
+            "&" +
+            "details=" +
+            details +
+            "&" +
+            "location=" +
+            location +
+            "&" +
+            "sprop=name:Event&" +
+            "sprop=website:&" +
+            "sf=true&" +
+            "output=xml";
+
+          await Linking.openURL(calendarUrl);
+        }
+      } catch (error) {
+        console.error("Error opening calendar:", error);
+
+        // Simple fallback with proper time validation
+        const validStartDate = new Date(startDate);
+        const validEndDate = new Date(endDate);
+
+        if (validEndDate <= validStartDate) {
+          validEndDate.setTime(validStartDate.getTime() + 60 * 60 * 1000);
+        }
+
+        const title = encodeURIComponent(eventV2?.title || "Event");
+        const location = encodeURIComponent(
+          (selectedSlot?.address as any)?.address ||
+            (selectedSlot?.address as any) ||
+            ""
+        );
+        const details = encodeURIComponent(
+          (selectedSlot?.description as any) || eventV2?.description || ""
+        );
+
+        const fallbackUrl =
+          "https://www.google.com/calendar/render?" +
+          "action=TEMPLATE&" +
+          "text=" +
+          title +
+          "&" +
+          "dates=" +
+          dayjs(validStartDate).format("YYYYMMDDTHHmmss") +
+          "/" +
+          dayjs(validEndDate).format("YYYYMMDDTHHmmss") +
+          "&" +
+          "details=" +
+          details +
+          "&" +
+          "location=" +
+          location +
+          "&" +
+          "trp=false&" +
+          "sf=true&" +
+          "output=xml";
+
+        await Linking.openURL(fallbackUrl);
+      }
+    };
 
     if (editing) {
         return (
@@ -564,6 +754,18 @@ export const EventPost = ({
               </Text>
             </TouchableOpacity>
           )}
+
+          {/* Add to calendar button */}
+          {!hasValidTickets && (<ButtonGroup className="mt-2">
+            <Button
+              variant="outline"
+              className="flex-1 px-4 py-2 border-gray-400"
+              onPress={handleAddToCalendar}
+            >
+              <FontAwesome5 name="calendar-plus" size={16} color="#4b5563" className="mr-2" />
+              <Text className="text-gray-700 font-medium">Add to Calendar</Text>
+            </Button>
+          </ButtonGroup>)}
 
           {/* action buttons */}
           <View className="flex-row flex-wrap gap-3 mt-2">
