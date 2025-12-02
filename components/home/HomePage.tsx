@@ -242,25 +242,6 @@ export default function HomePage() {
         <SideBar open={open} onOpenChange={setOpen} />
       </ScrollView>
 
-      {/* Floating Action Button */}
-      <Animated.View
-        style={{
-          position: "absolute",
-          bottom: fabBottom,
-          right: 12,
-          zIndex: 50,
-          transform: [{ rotate: rotation }, { scale }],
-          opacity: scaleAnim,
-        }}
-      >
-        <TouchableOpacity
-          className="p-3 h-16 w-16 bg-secondary-0 shadow-2xl rounded-full items-center justify-center"
-          onPress={() => setShowOptions(true)}
-        >
-          <AddIcon color="white" className="p-5 w-2 h-2" />
-        </TouchableOpacity>
-      </Animated.View>
-
       {/* Post Options Modal */}
       <Modal isOpen={showOptions} onClose={() => setShowOptions(false)}>
         <ModalBackdrop style={{ backgroundColor: "black" }} />

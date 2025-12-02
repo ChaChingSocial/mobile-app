@@ -10,9 +10,10 @@ import { Colors } from "@/lib/constants/Colors";
 import { useSession } from "@/lib/providers/AuthContext";
 import { DrawerContext } from "@/lib/providers/DrawerContext";
 import { FontAwesome, FontAwesome5, Ionicons } from "@expo/vector-icons";
-import { Tabs } from "expo-router";
+import { Tabs, useRouter } from "expo-router";
 import { useContext, useEffect, useState } from "react";
-import { Image, Platform, TouchableOpacity } from "react-native";
+import { Image, Platform, TouchableOpacity, View } from "react-native";
+import { BottomTabBar } from "@react-navigation/bottom-tabs";
 
 export default function TabLayout() {
   const { open, setOpen } = useContext(DrawerContext);
@@ -30,8 +31,24 @@ export default function TabLayout() {
     fetchNotifications();
   }, [session]);
 
+  const router = useRouter();
+
   return (
     <Tabs
+      tabBar={(props) => (
+        <View>
+          <BottomTabBar {...props} />
+          <View style={{ position: "absolute", left: 0, right: 0, top: -14, alignItems: "center" }}>
+            <TouchableOpacity
+              onPress={() => router.push("/(protected)/create-post")}
+              className="w-14 h-14 rounded-full bg-secondary-0 border-4 border-[#a3e4d2] items-center justify-center"
+              activeOpacity={0.85}
+            >
+              <Ionicons name="add" size={28} color="white" />
+            </TouchableOpacity>
+          </View>
+        </View>
+      )}
       screenOptions={({ navigation }) => {
         return {
           headerShadowVisible: true,
