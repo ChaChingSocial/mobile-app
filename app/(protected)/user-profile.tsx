@@ -22,7 +22,7 @@ import { useSession } from "@/lib/providers/AuthContext";
 import type { Post } from "@/types/post";
 import { AntDesign } from "@expo/vector-icons";
 import * as Linking from "expo-linking";
-import { useLocalSearchParams, useRouter } from "expo-router";
+import { useLocalSearchParams, useRouter, useNavigation } from "expo-router";
 import { DocumentSnapshot } from "firebase/firestore";
 import { useEffect, useState } from "react";
 import {
@@ -38,6 +38,7 @@ export default function UserProfile() {
   const { id: UserId } = useLocalSearchParams();
   const { session } = useSession();
   const router = useRouter();
+  const navigation = useNavigation();
   const currentUserId = Array.isArray(UserId) ? UserId[0] : UserId;
 
   const [isFinfluencer, setIsFinfluencer] = useState(false);
@@ -98,6 +99,13 @@ export default function UserProfile() {
     fetchFollowersAndFollowing();
     fetchFinfluencerStatus();
   }, [currentUserId]);
+
+  // Update header title to the viewed user's handle
+  useEffect(() => {
+    const title = userInfo?.username ? `@${userInfo.username}` : "";
+    // set header when available
+    navigation.setOptions?.({ title });
+  }, [userInfo?.username]);
 
   const fetchMorePosts = async () => {
     if (loading || !lastDoc || !currentUserId) return;
