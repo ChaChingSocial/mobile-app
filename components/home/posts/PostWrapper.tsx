@@ -179,7 +179,7 @@ export function PostWrapper({
 
       {type !== "comment" && (
         <Box className="mt-4 flex flex-row gap-5 mx-2 mb-2">
-          <Box className="flex flex-row gap-2">
+          <Box className="flex flex-row items-center gap-2">
             <TouchableOpacity
               onPress={onLike}
               className="flex flex-row items-center"
@@ -190,7 +190,6 @@ export function PostWrapper({
                 color="red"
               />
             </TouchableOpacity>
-
             <Text>{displayedLikes}</Text>
           </Box>
           {currentUserId !== post.posterUserId && (
@@ -227,7 +226,7 @@ export function PostWrapper({
             </Tooltip>
           )}
 
-          <Box className="flex flex-row gap-2">
+          <Box className="flex flex-row items-center gap-2">
             <TouchableOpacity
               onPress={viewComments}
               className="flex flex-row items-center"
