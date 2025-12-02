@@ -483,7 +483,7 @@ export const EventPost = ({
               <Image
                 source={{ uri }}
                 className="w-full h-48 rounded-lg"
-                resizeMode="cover"
+                resizeMode="contain"
               />
             ) : null;
           })()}
