@@ -122,7 +122,7 @@ export default function LoginScreen() {
   };
 
   return (
-    <Center className="flex-1 bg-white justify-between">
+    <Center className="flex-1 bg-[#7ad8bd] justify-between">
       <VStack
         space="xl"
         className="flex-1 justify-center items-center w-full px-6"

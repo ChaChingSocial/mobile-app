@@ -62,14 +62,14 @@ export default function RegisterFormScreen() {
   };
 
   return (
-    <Center className="flex-1 bg-white">
+    <Center className="flex-1 bg-[#7ad8bd]">
       <FormControl className="p-4 mx-6 flex-1 justify-between items-center">
-        <VStack space="xl">
+        <VStack space="xl" className="mt-12">
           <Heading className="text-center">Sign Up</Heading>
 
           <Input
             size="xl"
-            className="min-w-[250px] text-typography-black rounded-full pl-2"
+            className="min-w-[250px] text-typography-black rounded-full pl-2 bg-white"
           >
             <InputField
               type="text"
@@ -81,7 +81,7 @@ export default function RegisterFormScreen() {
 
           <Input
             size="xl"
-            className="text-center text-typography-black rounded-full w-full pl-2"
+            className="text-center text-typography-black rounded-full w-full pl-2 bg-white"
           >
             <InputField
               type={showPassword ? "text" : "password"}
@@ -99,17 +99,17 @@ export default function RegisterFormScreen() {
             className="mr-auto"
             onPress={() => router.push("/login/forgot-password")}
           >
-            <ButtonText className="text-primary-50">
-              Forgot Password?
-            </ButtonText>
+            <ButtonText className="text-black">Forgot Password?</ButtonText>
           </Button>
         </VStack>
         <Button
           size="xl"
-          className="w-full bg-[#40c057] rounded-full"
+          className="w-full bg-white rounded-full"
           onPress={handleLogin}
         >
-          <ButtonText className="flex-1 text-center">Sign Up</ButtonText>
+          <ButtonText className="flex-1 text-center text-black">
+            Sign Up
+          </ButtonText>
         </Button>
 
         {error && <Text className="text-red-500 mt-2">{error}</Text>}
