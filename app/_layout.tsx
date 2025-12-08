@@ -38,7 +38,6 @@ function RootLayoutNav() {
     <GluestackUIProvider>
       <GestureHandlerRootView>
         <Stack>
-          <StatusBar style="auto" backgroundColor="transparent" />
           <Stack.Screen
             name="(protected)"
             options={{
@@ -59,6 +58,7 @@ function RootLayoutNav() {
           />
           <Stack.Screen name="+not-found" />
         </Stack>
+        <StatusBar style="auto" backgroundColor="transparent" />
       </GestureHandlerRootView>
     </GluestackUIProvider>
   );
