@@ -1,5 +1,6 @@
-import { useWindowDimensions } from "react-native";
+import { useWindowDimensions, Image, TouchableOpacity, Modal, View, Text, Dimensions } from "react-native";
 import RenderHtml from "react-native-render-html";
+import React, { useState } from "react";
 
 const customStyles = {
   body: {
@@ -183,18 +184,45 @@ const customRenderers = {
 export default function HtmlRenderText({ source, inset = 32 }: { source: string; inset?: number }) {
   const { width } = useWindowDimensions();
   const contentWidth = Math.max(100, width - inset);
+
+  // lightbox state
+  const [open, setOpen] = useState(false);
+  const [imgUri, setImgUri] = useState<string | null>(null);
+
+  // wrap with TouchableOpacity and open modal
+  const imgRenderer = ({ tnode }: any) => {
+    const src = tnode?.attributes?.src;
+    if (!src) return null;
+    return (
+      <TouchableOpacity activeOpacity={0.9} onPress={() => { setImgUri(src); setOpen(true); }}>
+        <Image source={{ uri: src }} style={{ width: "100%", height: 200, borderRadius: 12 }} resizeMode="contain" />
+      </TouchableOpacity>
+    );
+  };
+  const mergedRenderers = { ...(customRenderers as any), img: imgRenderer } as any;
+
   return (
-    <RenderHtml
-      contentWidth={contentWidth}
-      source={{ html: source }}
-      tagsStyles={customStyles}
-      renderers={customRenderers}
-      defaultTextProps={{
-        selectable: true,
-      }}
-      enableExperimentalBRCollapsing={false}
-      enableExperimentalMarginCollapsing={false}
-      systemFonts={["Courier", "Courier New", "monospace"]}
-    />
+    <>
+      <RenderHtml
+        contentWidth={contentWidth}
+        source={{ html: source }}
+        tagsStyles={customStyles}
+        renderers={mergedRenderers}
+        defaultTextProps={{ selectable: true }}
+        enableExperimentalBRCollapsing={false}
+        enableExperimentalMarginCollapsing={false}
+        systemFonts={["Courier", "Courier New", "monospace"]}
+      />
+      <Modal visible={open} transparent animationType="fade" onRequestClose={() => setOpen(false)}>
+        <View style={{ flex: 1, backgroundColor: "rgba(0,0,0,0.9)", justifyContent: "center", alignItems: "center" }}>
+          {imgUri ? (
+            <Image source={{ uri: imgUri }} style={{ width: Dimensions.get("window").width, height: Dimensions.get("window").height }} resizeMode="contain" />
+          ) : null}
+          <TouchableOpacity onPress={() => setOpen(false)} style={{ position: "absolute", top: 40, right: 20, backgroundColor: "rgba(0,0,0,0.4)", borderRadius: 20, width: 40, height: 40, alignItems: "center", justifyContent: "center" }}>
+            <Text style={{ color: "white", fontSize: 20, fontWeight: "bold" }}>✕</Text>
+          </TouchableOpacity>
+        </View>
+      </Modal>
+    </>
   );
 }
