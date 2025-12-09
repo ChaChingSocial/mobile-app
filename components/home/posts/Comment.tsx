@@ -183,8 +183,8 @@ export function Comment({
                     </View>
                 </View>
             ) : (
-                <View className="mb-1">
-                    <Text className="text-base leading-relaxed mx-3">
+                <View className="mb-0">
+                    <Text className="text-base leading-relaxed ml-2 mr-3">
                         <HtmlRenderText
                             inset={96}
                             source={
@@ -206,14 +206,14 @@ export function Comment({
                 />
             )}
 
-            <View className="flex-row items-center mt-2 space-x-4">
+            <View className="flex-row items-center mt-1 space-x-3">
                 <TouchableOpacity onPress={handleLike} activeOpacity={0.7}>
                     <FontAwesome
                         name={liked ? "heart" : "heart-o"}
                         size={20}
                         solid={liked}
                         color="red"
-                        className="m-3"
+                        className="m-1"
                     />
                 </TouchableOpacity>
                 <Text className="text-gray-500">{commentLikes}</Text>
@@ -257,9 +257,9 @@ export function Comment({
                             Hide {sortedReplies.length} {sortedReplies.length === 1 ? "comment" : "comments"}
                         </Text>
                     </TouchableOpacity>
-                    <Box className="ml-6 mt-2">
+                    <Box className="ml-3 mt-1">
                         {sortedReplies.map((reply) => (
-                            <Box key={reply.id} className="mt-4">
+                            <Box key={reply.id} className="mt-2">
                                 <Comment comment={reply} post={post} />
                             </Box>
                         ))}

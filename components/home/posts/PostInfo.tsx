@@ -20,12 +20,14 @@ export const PostInfo = ({
   authorName,
   authorId,
   authorPic,
+  hideAvatar,
 }: {
   post: PostType;
   createdAt: Timestamp | Date;
   authorName?: string;
   authorId?: string;
   authorPic?: string;
+  hideAvatar?: boolean;
 }) => {
   const router = useRouter();
   const { session: user } = useSession();
@@ -48,6 +50,17 @@ export const PostInfo = ({
       fetchFinFluencerStatus();
     }
   }, [user]);
+
+  if (hideAvatar) {
+    return (
+      <Box className="flex flex-row items-center justify-between w-full pl-2 pr-4 mt-4">
+        <TouchableOpacity onPress={() => router.push(`/(protected)/user-profile?id=${displayUserId}`)}>
+          <Text size="sm" className="font-semibold">@{displayName}</Text>
+        </TouchableOpacity>
+        <Text size="xs">{formatPostDate(createdAt)}</Text>
+      </Box>
+    );
+  }
 
   return (
     <Box className="flex flex-row items-center justify-between w-full px-4">

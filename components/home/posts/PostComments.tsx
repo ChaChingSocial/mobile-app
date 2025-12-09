@@ -86,7 +86,7 @@ export const PostComments = ({
           )}
           {canViewComments && showComments ? (
             sortedComments.map((comment, index) => (
-              <Box key={index} className="mt-6 mb-6">
+              <Box key={index} className="mt-3 mb-3">
                 <Comment comment={comment} post={post} />
               </Box>
             ))

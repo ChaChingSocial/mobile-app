@@ -171,9 +171,10 @@ export function PostWrapper({
         authorName={authorName}
         authorId={authorId}
         authorPic={authorPic}
+        hideAvatar={type === "comment"}
       />
 
-      <Box className={`${type === "comment" ? "border-purple-950 border-l-2 pl-4 ml-6" : ""}`}>
+      <Box className={`${type === "comment" ? "border-purple-950 border-l-2 pl-1 ml-1" : ""}`}>
         {children}
       </Box>
 
