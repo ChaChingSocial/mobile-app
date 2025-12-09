@@ -16,7 +16,7 @@ import { useState } from "react";
 
 export default function LoginFormScreen() {
   const [_, setSession] = useStorageState("session");
-  const { session, signIn } = useSession();
+  const { session, logIn } = useSession();
   const { setUser } = useUserStore.getState();
 
   const router = useRouter();
@@ -48,7 +48,7 @@ export default function LoginFormScreen() {
         console.log("user get user but ni ID", res);
       });
 
-      signIn();
+      logIn();
     } catch (error) {
       console.log("error", error);
       const code = (error as any)?.code || "";
