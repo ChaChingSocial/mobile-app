@@ -53,7 +53,7 @@ export const PostInfo = ({
 
   if (hideAvatar) {
     return (
-      <Box className="flex flex-row items-center justify-between w-full px-4 mt-4">
+      <Box className="flex flex-row items-center justify-between w-full pl-2 pr-4 mt-4">
         <TouchableOpacity onPress={() => router.push(`/(protected)/user-profile?id=${displayUserId}`)}>
           <Text size="sm" className="font-semibold">@{displayName}</Text>
         </TouchableOpacity>
