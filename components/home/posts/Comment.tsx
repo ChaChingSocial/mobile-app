@@ -184,7 +184,7 @@ export function Comment({
                 </View>
             ) : (
                 <View className="mb-0">
-                    <Text className="text-base leading-relaxed ml-2 mr-3">
+                    <View className="ml-2 mr-3">
                         <HtmlRenderText
                             inset={96}
                             source={
@@ -193,7 +193,7 @@ export function Comment({
                                     : comment.message?.message ?? (comment as any)?.content ?? ""
                             }
                         />
-                    </Text>
+                    </View>
                 </View>
             )}
 

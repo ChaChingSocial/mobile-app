@@ -8,6 +8,7 @@ import {
     Image,
     Linking,
     Platform,
+    Modal as RNModal,
 } from "react-native";
 import { FontAwesome5 } from "@expo/vector-icons";
 import { Timestamp } from "firebase/firestore";
@@ -82,6 +83,9 @@ export const EventPost = ({
     const [ticketModalOpened, setTicketModalOpened] = useState(false);
     const [ticketViewOpened, setTicketViewOpened] = useState(false);
     const [authPromptOpen, setAuthPromptOpen] = useState(false);
+    // image lightbox state for event hero image
+    const [imgOpen, setImgOpen] = useState(false);
+    const [imgUri, setImgUri] = useState<string | null>(null);
     const [tickets, setTickets] = useState<Ticket[]>([]);
     const [allTickets, setAllTickets] = useState<Ticket[]>([]);
     const [hasValidTickets, setHasValidTickets] = useState(false);
@@ -670,11 +674,13 @@ export const EventPost = ({
             const uri =
               typeof img0 === "string" ? img0 : img0?.uri ?? img0?.url ?? "";
             return uri ? (
-              <Image
-                source={{ uri }}
-                className="w-full h-48 rounded-lg"
-                resizeMode="contain"
-              />
+              <TouchableOpacity activeOpacity={0.9} onPress={() => { setImgUri(uri); setImgOpen(true); }}>
+                <Image
+                  source={{ uri }}
+                  className="w-full h-48 rounded-lg"
+                  resizeMode="contain"
+                />
+              </TouchableOpacity>
             ) : null;
           })()}
 
@@ -954,6 +960,18 @@ export const EventPost = ({
             </View>
           )}
         </View>
+
+        {/* Simple image popup for event hero image */}
+        <RNModal visible={imgOpen} transparent animationType="fade" onRequestClose={() => setImgOpen(false)}>
+          <View style={{ flex: 1, backgroundColor: "rgba(0,0,0,0.9)", justifyContent: "center", alignItems: "center" }}>
+            {imgUri ? (
+              <Image source={{ uri: imgUri }} style={{ width: "100%", height: "100%" }} resizeMode="contain" />
+            ) : null}
+            <TouchableOpacity onPress={() => setImgOpen(false)} style={{ position: "absolute", top: 40, right: 20, backgroundColor: "rgba(0,0,0,0.4)", borderRadius: 20, width: 40, height: 40, alignItems: "center", justifyContent: "center" }}>
+              <Text style={{ color: "white", fontSize: 20, fontWeight: "bold" }}>✕</Text>
+            </TouchableOpacity>
+          </View>
+        </RNModal>
 
         {/* Get Ticket Modal */}
         {selectedSlot && (
