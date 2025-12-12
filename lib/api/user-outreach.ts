@@ -1,6 +1,6 @@
-const apiKey = process.env.NEXT_PUBLIC_AIRTABLE_API_KEY;
+const apiKey = process.env.EXPO_PUBLIC_AIRTABLE_API_KEY;
 const customerBaseId =
-  process.env.NEXT_PUBLIC_AIRTABLE_CONTACT_CUSTOMER_BASE_ID;
+  process.env.EXPO_PUBLIC_AIRTABLE_CONTACT_CUSTOMER_BASE_ID;
 
 async function sendContactForm(
   name: string,
@@ -9,7 +9,7 @@ async function sendContactForm(
   message: string
 ) {
   const contactFormTableId =
-    process.env.NEXT_PUBLIC_AIRTABLE_CONTACT_FORM_TABLE_ID;
+    process.env.EXPO_PUBLIC_AIRTABLE_CONTACT_FORM_TABLE_ID;
   const url = `https://api.airtable.com/v0/${customerBaseId}/${contactFormTableId}`;
 
   const response = await fetch(url, {
@@ -37,8 +37,8 @@ async function sendContactForm(
 
 async function subscribeNewsletter(email: string) {
   const newsletterTableId =
-    process.env.NEXT_PUBLIC_AIRTABLE_NEWSLETTER_TABLE_ID;
-  const newsletterBaseId = process.env.NEXT_PUBLIC_AIRTABLE_NEWSLETTER_BASE_ID;
+    process.env.EXPO_PUBLIC_AIRTABLE_NEWSLETTER_TABLE_ID;
+  const newsletterBaseId = process.env.EXPO_PUBLIC_AIRTABLE_NEWSLETTER_BASE_ID;
   const url = `https://api.airtable.com/v0/${newsletterBaseId}/${newsletterTableId}`;
 
   const response = await fetch(url, {
@@ -66,7 +66,7 @@ async function waitlistSignup(
   linkedIn: string,
   twitter: string
 ) {
-  const waitlistTableId = process.env.NEXT_PUBLIC_AIRTABLE_WAITLIST_TABLE_ID;
+  const waitlistTableId = process.env.EXPO_PUBLIC_AIRTABLE_WAITLIST_TABLE_ID;
   const url = `https://api.airtable.com/v0/${customerBaseId}/${waitlistTableId}`;
 
   const response = await fetch(url, {

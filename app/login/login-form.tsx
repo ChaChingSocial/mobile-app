@@ -16,7 +16,7 @@ import { useState } from "react";
 
 export default function LoginFormScreen() {
   const [_, setSession] = useStorageState("session");
-  const { session, signIn } = useSession();
+  const { session, logIn } = useSession();
   const { setUser } = useUserStore.getState();
 
   const router = useRouter();
@@ -48,13 +48,16 @@ export default function LoginFormScreen() {
         console.log("user get user but ni ID", res);
       });
 
-      signIn();
+      logIn();
     } catch (error) {
       console.log("error", error);
       const code = (error as any)?.code || "";
       let uiMessage = "Unable to log in. Please try again.";
 
-      if (code === "auth/invalid-credential" || code === "auth/wrong-password") {
+      if (
+        code === "auth/invalid-credential" ||
+        code === "auth/wrong-password"
+      ) {
         uiMessage = "Incorrect email or password.";
       } else if (code === "auth/invalid-email") {
         uiMessage = "Please enter a valid email address.";
@@ -77,12 +80,12 @@ export default function LoginFormScreen() {
   };
 
   return (
-    <Center className="flex-1 bg-white">
+    <Center className="flex-1 bg-[#7ad8bd]">
       <FormControl className="p-4 mx-6 flex-1 justify-between items-center">
-        <VStack space="xl">
+        <VStack space="xl" className="mt-12">
           <Heading className="text-center">Log in</Heading>
 
-          <Input size="xl" className="min-w-[250px] rounded-full pl-2">
+          <Input size="xl" className="min-w-[250px] rounded-full pl-2 bg-white">
             <InputField
               type="text"
               onChangeText={setEmail}
@@ -90,7 +93,7 @@ export default function LoginFormScreen() {
             />
           </Input>
 
-          <Input size="xl" className="text-center rounded-full w-full pl-2">
+          <Input size="xl" className="text-center rounded-full w-full pl-2 bg-white">
             <InputField
               type={showPassword ? "text" : "password"}
               onChangeText={setPassword}
@@ -106,17 +109,20 @@ export default function LoginFormScreen() {
             className="mr-auto"
             onPress={() => router.push("/login/forgot-password")}
           >
-            <ButtonText className="text-primary-50">
+            <ButtonText className="text-black">
               Forgot Password?
             </ButtonText>
           </Button>
         </VStack>
+
         <Button
           size="xl"
-          className="w-full bg-[#40c057] rounded-full"
+          className="w-full rounded-full bg-white" //bg-[#40c057]
           onPress={handleLogin}
         >
-          <ButtonText className="flex-1 text-center">Log in</ButtonText>
+          <ButtonText className="flex-1 text-center text-black">
+            Log in
+          </ButtonText>
         </Button>
 
         {error && <Text className="text-red-500 mt-2">{error}</Text>}

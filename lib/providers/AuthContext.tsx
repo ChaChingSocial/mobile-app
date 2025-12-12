@@ -12,12 +12,14 @@ import { GoogleSignin } from "@react-native-google-signin/google-signin";
 SplashScreen.preventAutoHideAsync();
 
 const AuthContext = createContext<{
-  signIn: () => void;
+  logIn: () => void;
+  signUp: () => void;
   signOut: () => void;
   session?: SessionValue | null;
   isLoading: boolean;
 }>({
-  signIn: () => null,
+  logIn: () => null,
+  signUp: () => null,
   signOut: () => null,
   session: null,
   isLoading: false,
@@ -54,9 +56,12 @@ export function SessionProvider({ children }: PropsWithChildren) {
   return (
     <AuthContext.Provider
       value={{
-        signIn: () => {
+        logIn: () => {
           // Perform sign-in logic here
           router.replace("/(protected)/(home)");
+        },
+        signUp: () => {
+          router.replace("/(protected)/(home)/profile/edit-profile");
         },
         signOut: async () => {
           await GoogleSignin.signOut();

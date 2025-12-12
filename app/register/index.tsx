@@ -136,7 +136,7 @@ export default function RegisterScreen() {
       >
         <Image
           source={require("@/assets/images/logo.png")}
-          className="mb-6 h-32 w-full"
+          className="mb-6 h-20 w-64"
         />
 
         <Heading className="text-2xl font-bold mb-6 text-center">
