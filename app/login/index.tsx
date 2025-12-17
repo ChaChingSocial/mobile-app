@@ -22,6 +22,7 @@ import {
 import { useRouter } from "expo-router";
 import { useState } from "react";
 import { Image, Linking } from "react-native";
+import * as AppleAuthentication from "expo-apple-authentication";
 
 export default function LoginScreen() {
   const [_, setSession] = useStorageState("session");
@@ -30,7 +31,6 @@ export default function LoginScreen() {
   const [error, setError] = useState<string | null>(null);
   const [googleResponse, setGoogleResponse] = useState<any>(null);
   const [googleLoading, setGoogleLoading] = useState(false);
-  const [emailOptIn, setEmailOptIn] = useState(true);
 
   const handleGoogleLogin = async () => {
     try {
@@ -159,6 +159,37 @@ export default function LoginScreen() {
           </ButtonText>
         </Button>
 
+        <Box className="my-4 w-full">
+          <AppleAuthentication.AppleAuthenticationButton
+            buttonType={
+              AppleAuthentication.AppleAuthenticationButtonType.CONTINUE
+            }
+            buttonStyle={
+              AppleAuthentication.AppleAuthenticationButtonStyle.WHITE_OUTLINE
+            }
+            cornerRadius={16}
+            style={{ width: 200, height: 64 }}
+            onPress={async () => {
+              try {
+                const credential = await AppleAuthentication.signInAsync({
+                  requestedScopes: [
+                    AppleAuthentication.AppleAuthenticationScope.FULL_NAME,
+                    AppleAuthentication.AppleAuthenticationScope.EMAIL,
+                  ],
+                });
+                // signed in
+                console.log("Apple Sign In Credential:", credential);
+              } catch (e) {
+                if (e.code === "ERR_REQUEST_CANCELED") {
+                  // handle that the user canceled the sign-in flow
+                } else {
+                  // handle other errors
+                }
+              }
+            }}
+          />
+        </Box>
+        
         <Box className="absolute bottom-10">
           {/* Legal Text */}
           <Text className="text-center mt-4">
@@ -182,25 +213,6 @@ export default function LoginScreen() {
             </Text>
             .
           </Text>
-          {/* Checkbox */}
-          {/* <Checkbox
-            value="email-opt-in"
-            size="md"
-            isInvalid={false}
-            isDisabled={false}
-            isChecked={emailOptIn}
-            onChange={setEmailOptIn}
-            className="mt-4"
-          >
-            <CheckboxIndicator>
-              <CheckboxIcon as={CheckIcon} />
-            </CheckboxIndicator>
-            <CheckboxLabel>
-              <Text className="text-sm italic">
-                I agree to receive emails updates on Chaching Social.
-              </Text>
-            </CheckboxLabel>
-          </Checkbox> */}
         </Box>
         {/* Error Message */}
         {error && (

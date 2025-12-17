@@ -9,6 +9,7 @@
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
     "ios": {
+      "usesAppleSignIn": true,
       "googleServicesFile": "./GoogleService-Info.plist",
       "supportsTablet": true,
       "bundleIdentifier": "com.sonylomo.chachingmobileapp",
@@ -41,6 +42,7 @@
       "favicon": "./assets/images/favicon.png"
     },
     "plugins": [
+      "expo-apple-authentication",
       [
         "expo-image-picker",
         {
