@@ -12,6 +12,9 @@ import {
   GoogleAuthProvider,
   getAuth,
   signInWithCredential,
+  AppleAuthProvider,
+  fetchSignInMethodsForEmail,
+  FirebaseAuthTypes,
 } from "@react-native-firebase/auth";
 import {
   GoogleSignin,
@@ -21,103 +24,251 @@ import {
 } from "@react-native-google-signin/google-signin";
 import { useRouter } from "expo-router";
 import { useState } from "react";
-import { Image, Linking } from "react-native";
-import * as AppleAuthentication from "expo-apple-authentication";
+import { Image, Linking, ActivityIndicator } from "react-native";
+import Toast from "react-native-toast-message";
+import { defaultProfilePic } from "@/lib/constants";
+import appleAuth, {
+  AppleButton,
+} from "@invertase/react-native-apple-authentication";
+import generateRandomUsername from "@/lib/utils/generator";
 
 export default function LoginScreen() {
   const [_, setSession] = useStorageState("session");
   const router = useRouter();
 
   const [error, setError] = useState<string | null>(null);
-  const [googleResponse, setGoogleResponse] = useState<any>(null);
   const [googleLoading, setGoogleLoading] = useState(false);
+  const [appleLoading, setAppleLoading] = useState(false);
+
+  const createOrGetBackendUser = async ({
+    firebaseUser,
+    email,
+    photoURL,
+  }: {
+    firebaseUser: FirebaseAuthTypes.User;
+    email: string;
+    photoURL: string;
+  }) => {
+    try {
+      const res = await userApi.getUserByEmail({ email });
+
+      if (res?.id) {
+        // User exists in backend
+        return {
+          uid: res.id,
+          email,
+          displayName: res.username,
+          profilePic: res.profilePic || photoURL || defaultProfilePic,
+        };
+      } else {
+        console.warn("User not found in backend during login:", email);
+
+        return {
+          uid: firebaseUser.uid,
+          email,
+          displayName: firebaseUser.displayName || generateRandomUsername(),
+          profilePic: photoURL || defaultProfilePic,
+        };
+      }
+    } catch (error) {
+      console.error("Backend user error during login:", error);
+      throw error;
+    }
+  };
 
   const handleGoogleLogin = async () => {
     try {
       setGoogleLoading(true);
+      setError(null);
+
       await GoogleSignin.hasPlayServices({
         showPlayServicesUpdateDialog: true,
-      }); // for android devices only
+      });
+
       const response = await GoogleSignin.signIn();
 
       if (isSuccessResponse(response)) {
-        setGoogleResponse(response.data);
-        const { user, idToken } = response.data;
-        console.log("Google Signed In Response:", response.data);
-
-        try {
-          const res = await userApi.getUserByEmail({
-            email: user.email,
-          });
-
-          if (!res?.id) {
-            console.log("No user ID found in response");
-            throw new Error("User ID not found");
-          }
-
-          const sessionData = {
-            uid: res.id,
-            email: user.email,
-            displayName: res?.username,
-            profilePic: res.profilePic || "",
-          };
-          console.log("Setting session with data:", sessionData);
-          setSession(sessionData);
-        } catch (err: any) {
-          console.error("Error in getUserByEmail:", err);
-          if (err.response) {
-            console.error("Error response:", err.response);
-          }
-          setError("Failed to get user data. Please try again.");
-          return; // Exit early on error
-        }
-
-        // Create a Google credential with the token
+        const { user: googleUser, idToken } = response.data;
         const googleCredential = GoogleAuthProvider.credential(idToken);
 
-        // Sign-in the user with the credential
-        signInWithCredential(getAuth(), googleCredential);
+        try {
+          const userCredential = await signInWithCredential(
+            getAuth(),
+            googleCredential
+          );
+          const firebaseUser = userCredential.user;
 
-        router.replace("/(protected)/(home)");
+          const sessionData = await createOrGetBackendUser({
+            firebaseUser,
+            email: googleUser.email,
+            photoURL: googleUser.photo || defaultProfilePic,
+          });
+
+          console.log("Setting session with data:", sessionData);
+          setSession(sessionData);
+
+          router.replace("/(protected)/(home)");
+        } catch (err: any) {
+          // Handle specific Firebase auth errors
+          if (err.code === "auth/account-exists-with-different-credential") {
+            const methods = await fetchSignInMethodsForEmail(
+              getAuth(),
+              err.email
+            );
+
+            const providerNames: Record<string, string> = {
+              password: "Email/Password",
+              "google.com": "Google",
+              "apple.com": "Apple",
+            };
+
+            const existingProvider = providerNames[methods[0]] || methods[0];
+
+            Toast.show({
+              type: "info",
+              text1: "Account Already Exists",
+              text2: `You previously signed in with ${existingProvider}. Please use that method to sign in.`,
+              visibilityTime: 5000,
+            });
+            return;
+          }
+
+          // Handle other Firebase errors
+          console.error("Firebase sign-in error:", err);
+          Toast.show({
+            type: "error",
+            text1: "Authentication Failed",
+            text2: err.message || "Please try again",
+          });
+        }
       } else {
-        setError(`Google Sign cancelled by user`);
-        console.error("Google Sign In Error:", response);
+        // User cancelled or other non-success response
+        setError("Google sign-in was cancelled or failed");
       }
-      setGoogleLoading(false);
-    } catch (error) {
+    } catch (error: unknown) {
       if (isErrorWithCode(error)) {
         switch (error.code) {
           case statusCodes.IN_PROGRESS:
-            // operation (eg. sign in) already in progress
-            setError("Google Sign In is already in progress.");
+            setError("Google sign-in is already in progress");
             break;
           case statusCodes.PLAY_SERVICES_NOT_AVAILABLE:
-            // Android only, play services not available or outdated
-            setError("Google Play Services are not available or outdated.");
+            setError("Google Play Services are not available or outdated");
+            break;
+          case statusCodes.SIGN_IN_CANCELLED:
+            setError("Google sign-in was cancelled");
             break;
           default:
-            // some other error happened
             setError(
-              `Google Sign In failed with error code ${error.code}: ${
-                error.message || "Unknown error"
-              }`
+              `Google sign-in failed: ${error.message || "Unknown error"}`
             );
         }
+      } else if (error instanceof Error) {
+        setError(`Google sign-in failed: ${error.message}`);
       } else {
-        // an error that's not related to google sign in occurred
-        setError(
-          `Google Sign In failed: ${
-            (error as Error).message || "Unknown error"
-          }`
-        );
+        setError("Google sign-in failed: Unknown error");
       }
-      console.error("Google Sign In Error:", error);
-      setError(
-        `Error during Google Sign In: ${
-          (error as Error).message || "Unknown error"
-        }`
-      );
+      console.error("Google sign-in error:", error);
+    } finally {
       setGoogleLoading(false);
+    }
+  };
+
+  const handleAppleLogin = async () => {
+    try {
+      setAppleLoading(true);
+      setError(null);
+
+      const appleAuthRequestResponse = await appleAuth.performRequest({
+        requestedOperation: appleAuth.Operation.LOGIN,
+        requestedScopes: [appleAuth.Scope.EMAIL, appleAuth.Scope.FULL_NAME],
+      });
+
+      if (!appleAuthRequestResponse.identityToken) {
+        throw new Error("Apple sign-in failed - no identity token returned");
+      }
+
+      const { identityToken, nonce, email } = appleAuthRequestResponse;
+      const appleCredential = AppleAuthProvider.credential(
+        identityToken,
+        nonce
+      );
+
+      try {
+        const userCredential = await signInWithCredential(
+          getAuth(),
+          appleCredential
+        );
+        const firebaseUser = userCredential.user;
+
+        // Use email from Firebase if Apple didn't provide it (happens on subsequent logins)
+        const userEmail = email || firebaseUser.email;
+
+        if (!userEmail) {
+          throw new Error("No email available for Apple sign-in");
+        }
+
+        const sessionData = await createOrGetBackendUser({
+          firebaseUser,
+          email: userEmail,
+          photoURL: firebaseUser.photoURL || defaultProfilePic,
+        });
+
+        console.log("Setting session with Apple data:", sessionData);
+        setSession(sessionData);
+
+        router.replace("/(protected)/(home)");
+      } catch (err: any) {
+        // Handle specific Firebase auth errors
+        if (err.code === "auth/account-exists-with-different-credential") {
+          const methods = await fetchSignInMethodsForEmail(
+            getAuth(),
+            err.email
+          );
+
+          const providerNames: Record<string, string> = {
+            password: "Email/Password",
+            "google.com": "Google",
+            "apple.com": "Apple",
+          };
+
+          const existingProvider = providerNames[methods[0]] || methods[0];
+
+          Toast.show({
+            type: "info",
+            text1: "Account Already Exists",
+            text2: `You previously signed in with ${existingProvider}. Please use that method to sign in.`,
+            visibilityTime: 5000,
+          });
+          return;
+        }
+
+        console.error("Firebase Apple sign-in error:", err);
+        Toast.show({
+          type: "error",
+          text1: "Apple Sign In Failed",
+          text2: err.message || "Please try again",
+        });
+      }
+    } catch (e: any) {
+      if (e.code === appleAuth.Error.CANCELED) {
+        // User cancelled the flow
+        setError("Apple sign-in was cancelled");
+        Toast.show({
+          type: "info",
+          text1: "Apple Sign In Cancelled",
+          text2: "You cancelled the sign-in process",
+        });
+      } else {
+        setError(`Apple sign-in failed: ${e.message || "Unknown error"}`);
+        Toast.show({
+          type: "error",
+          text1: "Apple Sign In Error",
+          text2: e.message || "Please try again",
+        });
+      }
+      console.error("Apple sign-in error:", e);
+    } finally {
+      setAppleLoading(false);
     }
   };
 
@@ -135,6 +286,7 @@ export default function LoginScreen() {
         <Heading className="text-2xl font-bold mb-6 text-center">
           Log in
         </Heading>
+
         <Button
           className="w-full flex-row items-center justify-between border rounded-full bg-white h-12"
           onPress={handleGoogleLogin}
@@ -159,37 +311,18 @@ export default function LoginScreen() {
           </ButtonText>
         </Button>
 
-        <Box className="my-4 w-full">
-          <AppleAuthentication.AppleAuthenticationButton
-            buttonType={
-              AppleAuthentication.AppleAuthenticationButtonType.CONTINUE
-            }
-            buttonStyle={
-              AppleAuthentication.AppleAuthenticationButtonStyle.WHITE_OUTLINE
-            }
-            cornerRadius={16}
-            style={{ width: 200, height: 64 }}
-            onPress={async () => {
-              try {
-                const credential = await AppleAuthentication.signInAsync({
-                  requestedScopes: [
-                    AppleAuthentication.AppleAuthenticationScope.FULL_NAME,
-                    AppleAuthentication.AppleAuthenticationScope.EMAIL,
-                  ],
-                });
-                // signed in
-                console.log("Apple Sign In Credential:", credential);
-              } catch (e) {
-                if (e.code === "ERR_REQUEST_CANCELED") {
-                  // handle that the user canceled the sign-in flow
-                } else {
-                  // handle other errors
-                }
-              }
-            }}
-          />
-        </Box>
-        
+        <AppleButton
+          buttonStyle={AppleButton.Style.WHITE_OUTLINE}
+          buttonType={AppleButton.Type.CONTINUE}
+          cornerRadius={16}
+          style={{
+            width: "100%",
+            height: 48,
+            // opacity: appleLoading ? 0.5 : 1,
+          }}
+          onPress={handleAppleLogin}
+        />
+
         <Box className="absolute bottom-10">
           {/* Legal Text */}
           <Text className="text-center mt-4">
@@ -199,6 +332,8 @@ export default function LoginScreen() {
               onPress={() =>
                 Linking.openURL("https://www.chaching.social/terms-of-service")
               }
+              accessibilityLabel="Terms of Service"
+              accessibilityRole="link"
             >
               Terms & Agreements
             </Text>{" "}
@@ -208,12 +343,15 @@ export default function LoginScreen() {
               onPress={() =>
                 Linking.openURL("https://www.chaching.social/privacy-policy")
               }
+              accessibilityLabel="Privacy Policy"
+              accessibilityRole="link"
             >
               Privacy Policy
             </Text>
             .
           </Text>
         </Box>
+
         {/* Error Message */}
         {error && (
           <Text className="text-red-500 mt-2 text-center">{error}</Text>
@@ -224,10 +362,12 @@ export default function LoginScreen() {
 
       <VStack className="mb-8 items-center">
         <Text className="text-lg">
-          Already have an account?{" "}
+          Don't have an account?{" "}
           <Text
-            className="underline text-lg text-green-600"
+            className="underline text-green-600"
             onPress={() => router.replace("/register")}
+            accessibilityLabel="Sign up"
+            accessibilityRole="link"
           >
             Sign up
           </Text>

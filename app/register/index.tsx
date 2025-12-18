@@ -16,9 +16,12 @@ import { userApi } from "@/config/backend";
 import { useStorageState } from "@/hooks/useStorageState";
 import { FontAwesome5 } from "@expo/vector-icons";
 import {
+  AppleAuthProvider,
   GoogleAuthProvider,
   getAuth,
   signInWithCredential,
+  fetchSignInMethodsForEmail,
+  FirebaseAuthTypes,
 } from "@react-native-firebase/auth";
 import {
   GoogleSignin,
@@ -29,15 +32,81 @@ import {
 import { useRouter } from "expo-router";
 import { useState } from "react";
 import { Image, Linking } from "react-native";
+import appleAuth, {
+  AppleButton,
+} from "@invertase/react-native-apple-authentication";
+import Toast from "react-native-toast-message";
+import { defaultProfilePic } from "@/lib/constants";
+import { Status } from "@/_sdk";
+import generateRandomUsername from "@/lib/utils/generator";
 
 export default function RegisterScreen() {
   const [_, setSession] = useStorageState("session");
   const router = useRouter();
 
   const [error, setError] = useState<string | null>(null);
-  const [googleResponse, setGoogleResponse] = useState<any>(null);
   const [googleLoading, setGoogleLoading] = useState(false);
+  const [appleLoading, setAppleLoading] = useState(false);
   const [emailOptIn, setEmailOptIn] = useState(true);
+
+  const createOrGetBackendUser = async ({
+    firebaseUser,
+    email,
+    photoURL,
+  }: {
+    firebaseUser: FirebaseAuthTypes.User;
+    email: string;
+    photoURL: string;
+  }) => {
+    try {
+      // Try to get existing user
+      let res = await userApi.getUserByEmail({ email });
+      const username = generateRandomUsername();
+
+      if (res?.id) {
+        // User exists in backend
+        return {
+          uid: res.id,
+          email,
+          displayName: res.username || username,
+          profilePic: res.profilePic || photoURL || defaultProfilePic,
+        };
+      } else {
+        // Create new user in backend
+        const newUser = {
+          id: firebaseUser.uid,
+          username,
+          email,
+          profilePic: photoURL || defaultProfilePic,
+          interests: [],
+          bio: "",
+          socials: {
+            twitter: "",
+            instagram: "",
+            linkedin: "",
+            youtube: "",
+            website: "",
+          },
+          persona: [""],
+          industry: "",
+          status: Status.Pending,
+          finfluencer: false,
+        };
+
+        await userApi.updateUser({ user: newUser });
+
+        return {
+          uid: firebaseUser.uid,
+          email,
+          displayName: username,
+          profilePic: photoURL || defaultProfilePic,
+        };
+      }
+    } catch (error) {
+      console.error("Backend user error:", error);
+      throw error;
+    }
+  };
 
   const handleGoogleSignIn = async () => {
     try {
@@ -48,62 +117,72 @@ export default function RegisterScreen() {
       const response = await GoogleSignin.signIn();
 
       if (isSuccessResponse(response)) {
-        setGoogleResponse(response.data);
-        const { user, idToken } = response.data;
+        const { user: googleUser, idToken } = response.data;
+        const googleCredential = GoogleAuthProvider.credential(idToken);
         console.log("Google Signed In Response:", response.data);
 
         try {
-          const res = await userApi.getUserByEmail({
-            email: user.email,
+          const userCredential = await signInWithCredential(
+            getAuth(),
+            googleCredential
+          );
+          const firebaseUser = userCredential.user;
+
+          // Create/get backend user
+          const sessionData = await createOrGetBackendUser({
+            firebaseUser,
+            email: googleUser.email,
+            photoURL: googleUser.photo || defaultProfilePic,
           });
 
-          if (!res?.id) {
-            console.log("No user ID found in response");
-            throw new Error("User ID not found");
-          }
-
-          const sessionData = {
-            uid: res.id,
-            email: user.email,
-            displayName: res?.username,
-            profilePic: res.profilePic || "",
-          };
-          console.log("Setting session with data:", sessionData);
           setSession(sessionData);
+          router.replace("/(protected)/(home)");
         } catch (err: any) {
-          console.error("Error in getUserByEmail:", err);
-          if (err.response) {
-            console.error("Error response:", err.response);
+          // Handle account exists with different credential
+          if (err.code === "auth/account-exists-with-different-credential") {
+            const methods = await fetchSignInMethodsForEmail(
+              getAuth(),
+              err.email
+            );
+
+            const providerNames = {
+              password: "Email/Password",
+              "google.com": "Google",
+              "apple.com": "Apple",
+            };
+
+            const existingProvider = providerNames[methods[0]] || methods[0];
+
+            Toast.show({
+              type: "info",
+              text1: "Account Already Exists",
+              text2: `You previously signed in with ${existingProvider}. Please use that method to sign in.`,
+              visibilityTime: 5000,
+            });
+            return;
           }
-          setError("Failed to get user data. Please try again.");
-          return; // Exit early on error
+          console.error("Error in Firebase sign-in:", err);
+          setError("Failed to authenticate. Please try again.");
+          Toast.show({
+            type: "error",
+            text1: "Authentication Failed",
+            text2: err.message || "Please try again",
+          });
         }
-
-        // Create a Google credential with the token
-        const googleCredential = GoogleAuthProvider.credential(idToken);
-
-        // Sign-in the user with the credential
-        signInWithCredential(getAuth(), googleCredential);
-
-        router.replace("/(protected)/(home)");
       } else {
         setError(`Google Sign cancelled by user`);
         console.error("Google Sign In Error:", response);
       }
-      setGoogleLoading(false);
     } catch (error) {
       if (isErrorWithCode(error)) {
         switch (error.code) {
           case statusCodes.IN_PROGRESS:
-            // operation (eg. sign in) already in progress
             setError("Google Sign In is already in progress.");
             break;
           case statusCodes.PLAY_SERVICES_NOT_AVAILABLE:
-            // Android only, play services not available or outdated
             setError("Google Play Services are not available or outdated.");
             break;
           default:
-            // some other error happened
             setError(
               `Google Sign In failed with error code ${error.code}: ${
                 error.message || "Unknown error"
@@ -111,7 +190,6 @@ export default function RegisterScreen() {
             );
         }
       } else {
-        // an error that's not related to google sign in occurred
         setError(
           `Google Sign In failed: ${
             (error as Error).message || "Unknown error"
@@ -119,12 +197,135 @@ export default function RegisterScreen() {
         );
       }
       console.error("Google Sign In Error:", error);
-      setError(
-        `Error during Google Sign In: ${
-          (error as Error).message || "Unknown error"
-        }`
-      );
+    } finally {
       setGoogleLoading(false);
+    }
+  };
+
+  const handleAppleSignIn = async () => {
+    try {
+      setAppleLoading(true);
+
+      const appleAuthRequestResponse = await appleAuth.performRequest({
+        requestedOperation: appleAuth.Operation.LOGIN,
+        requestedScopes: [appleAuth.Scope.EMAIL],
+      });
+
+      if (!appleAuthRequestResponse.identityToken) {
+        throw new Error("Apple Sign-In failed - no identity token returned");
+      }
+
+      const { identityToken, nonce, email } = appleAuthRequestResponse;
+
+      // Note: Apple may not return email on subsequent logins
+      // In that case, we need to get it from Firebase after authentication
+      let userEmail = email;
+
+      // Create Apple credential for Firebase
+      const appleCredential = AppleAuthProvider.credential(
+        identityToken,
+        nonce
+      );
+
+      try {
+        // Sign in to Firebase with Apple credential
+        const userCredential = await signInWithCredential(
+          getAuth(),
+          appleCredential
+        );
+        const firebaseUser = userCredential.user;
+
+        // If email wasn't provided by Apple, get it from Firebase user
+        if (!userEmail && firebaseUser.email) {
+          userEmail = firebaseUser.email;
+        }
+
+        // Create/get backend user
+        const sessionData = await createOrGetBackendUser({
+          firebaseUser,
+          email: userEmail,
+          photoURL: firebaseUser.photoURL || defaultProfilePic,
+        });
+
+        setSession(sessionData);
+        console.log("Apple Sign-In successful, session set:", sessionData);
+
+        router.replace("/(protected)/(home)");
+      } catch (err: any) {
+        // Handle account exists with different credential (same as Google)
+        if (err.code === "auth/account-exists-with-different-credential") {
+          const methods = await fetchSignInMethodsForEmail(
+            getAuth(),
+            err.email
+          );
+
+          const providerNames = {
+            password: "Email/Password",
+            "google.com": "Google",
+            "apple.com": "Apple",
+          };
+
+          const existingProvider = providerNames[methods[0]] || methods[0];
+
+          Toast.show({
+            type: "info",
+            text1: "Account Already Exists",
+            text2: `You previously signed in with ${existingProvider}. Please use that method to sign in.`,
+            visibilityTime: 5000,
+          });
+          return;
+        }
+
+        console.error("Error in Firebase Apple sign-in:", err);
+        setError("Failed to authenticate with Apple. Please try again.");
+        Toast.show({
+          type: "error",
+          text1: "Apple Sign In Failed",
+          text2: err.message || "Please try again",
+        });
+      }
+    } catch (e: any) {
+      if (e.code === appleAuth.Error.CANCELED) {
+        // User canceled the Apple Sign In flow
+        setError("Apple Sign In was cancelled by the user.");
+        Toast.show({
+          type: "info",
+          text1: "Apple Sign In Cancelled",
+          text2: "You cancelled the Apple Sign In process.",
+        });
+      } else if (e.code === appleAuth.Error.FAILED) {
+        setError("Apple Sign In failed. Please try again.");
+        Toast.show({
+          type: "error",
+          text1: "Apple Sign In Error",
+          text2: "Authentication failed. Please try again.",
+        });
+      } else if (e.code === appleAuth.Error.INVALID_RESPONSE) {
+        setError("Invalid response from Apple. Please try again.");
+        Toast.show({
+          type: "error",
+          text1: "Apple Sign In Error",
+          text2: "Invalid response received. Please try again.",
+        });
+      } else if (e.code === appleAuth.Error.NOT_HANDLED) {
+        setError("Apple Sign In not handled. Please try again.");
+        Toast.show({
+          type: "error",
+          text1: "Apple Sign In Error",
+          text2: "Sign in request was not handled. Please try again.",
+        });
+      } else {
+        // Generic error handling
+        setError(`Apple Sign In failed: ${e.message || "Unknown error"}`);
+        Toast.show({
+          type: "error",
+          text1: "Apple Sign In Error",
+          text2: `Error: ${e.message || "Unknown error occurred"}`,
+        });
+      }
+      console.error("Apple Sign In Error:", e);
+    } finally {
+      setAppleLoading(false);
     }
   };
 
@@ -142,6 +343,8 @@ export default function RegisterScreen() {
         <Heading className="text-2xl font-bold mb-6 text-center">
           Sign up
         </Heading>
+
+        {/* Google Sign In Button */}
         <Button
           className="w-full flex-row items-center justify-between border rounded-full bg-white h-12"
           onPress={handleGoogleSignIn}
@@ -152,10 +355,11 @@ export default function RegisterScreen() {
             className="h-6 w-6"
           />
           <ButtonText className="text-lg items-center font-bold w-full text-center text-typography-black">
-            Continue with Google
+            {googleLoading ? "Signing in..." : "Continue with Google"}
           </ButtonText>
         </Button>
 
+        {/* Email/Username Button */}
         <Button
           className="w-full flex-row items-center border rounded-full bg-white h-12"
           onPress={() => router.push("/register/register-form")}
@@ -165,6 +369,18 @@ export default function RegisterScreen() {
             Use email or username
           </ButtonText>
         </Button>
+
+        {/* Apple Sign In Button */}
+        <AppleButton
+          buttonStyle={AppleButton.Style.WHITE_OUTLINE}
+          buttonType={AppleButton.Type.SIGN_IN}
+          cornerRadius={16}
+          style={{
+            width: "100%",
+            height: 48,
+          }}
+          onPress={handleAppleSignIn}
+        />
 
         <Box className="absolute bottom-10">
           {/* Legal Text */}
@@ -209,6 +425,7 @@ export default function RegisterScreen() {
             </CheckboxLabel>
           </Checkbox>
         </Box>
+
         {/* Error Message */}
         {error && (
           <Text className="text-red-500 mt-2 text-center">{error}</Text>
