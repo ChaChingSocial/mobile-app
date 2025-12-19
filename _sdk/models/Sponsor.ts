@@ -24,71 +24,85 @@ import {
 /**
  * 
  * @export
- * @interface EventSponsor
+ * @interface Sponsor
  */
-export interface EventSponsor {
+export interface Sponsor {
     /**
      * 
      * @type {string}
-     * @memberof EventSponsor
+     * @memberof Sponsor
      */
     eventSlotId?: string;
     /**
      * 
      * @type {string}
-     * @memberof EventSponsor
+     * @memberof Sponsor
+     */
+    id?: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof Sponsor
      */
     title?: string;
     /**
      * 
      * @type {string}
-     * @memberof EventSponsor
+     * @memberof Sponsor
      */
     description?: string;
     /**
      * 
      * @type {SponsorImage}
-     * @memberof EventSponsor
+     * @memberof Sponsor
      */
     image?: SponsorImage;
     /**
      * 
      * @type {string}
-     * @memberof EventSponsor
+     * @memberof Sponsor
      */
     link?: string;
+    /**
+     * 
+     * @type {boolean}
+     * @memberof Sponsor
+     */
+    featured?: boolean;
 }
 
 /**
- * Check if a given object implements the EventSponsor interface.
+ * Check if a given object implements the Sponsor interface.
  */
-export function instanceOfEventSponsor(value: object): value is EventSponsor {
+export function instanceOfSponsor(value: object): value is Sponsor {
     return true;
 }
 
-export function EventSponsorFromJSON(json: any): EventSponsor {
-    return EventSponsorFromJSONTyped(json, false);
+export function SponsorFromJSON(json: any): Sponsor {
+    return SponsorFromJSONTyped(json, false);
 }
 
-export function EventSponsorFromJSONTyped(json: any, ignoreDiscriminator: boolean): EventSponsor {
+export function SponsorFromJSONTyped(json: any, ignoreDiscriminator: boolean): Sponsor {
     if (json == null) {
         return json;
     }
     return {
         
         'eventSlotId': json['eventSlotId'] == null ? undefined : json['eventSlotId'],
+        'id': json['id'] == null ? undefined : json['id'],
         'title': json['title'] == null ? undefined : json['title'],
         'description': json['description'] == null ? undefined : json['description'],
         'image': json['image'] == null ? undefined : SponsorImageFromJSON(json['image']),
         'link': json['link'] == null ? undefined : json['link'],
+        'featured': json['featured'] == null ? undefined : json['featured'],
     };
 }
 
-export function EventSponsorToJSON(json: any): EventSponsor {
-    return EventSponsorToJSONTyped(json, false);
+export function SponsorToJSON(json: any): Sponsor {
+    return SponsorToJSONTyped(json, false);
 }
 
-export function EventSponsorToJSONTyped(value?: EventSponsor | null, ignoreDiscriminator: boolean = false): any {
+export function SponsorToJSONTyped(value?: Sponsor | null, ignoreDiscriminator: boolean = false): any {
     if (value == null) {
         return value;
     }
@@ -96,10 +110,12 @@ export function EventSponsorToJSONTyped(value?: EventSponsor | null, ignoreDiscr
     return {
         
         'eventSlotId': value['eventSlotId'],
+        'id': value['id'],
         'title': value['title'],
         'description': value['description'],
         'image': SponsorImageToJSON(value['image']),
         'link': value['link'],
+        'featured': value['featured'],
     };
 }
 

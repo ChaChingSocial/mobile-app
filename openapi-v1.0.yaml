@@ -19,7 +19,9 @@ info:
 servers:
   - url: http://localhost:8080
     description: Local Server
-  - url: https://chachingsocial-20694693160.us-central1.run.app
+  - url: https://chachingsocial-staging-ewcaba3jya-uc.a.run.app
+    description: Staging Server
+  - url: https://chachingsocial-staging-615685871214.us-central1.run.app
     description: DEV Server
   - url: https://chachingsocial-615685871214.us-central1.run.app
     description: PROD Server
@@ -84,6 +86,25 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/Transaction"
+        default:
+          $ref: "#/components/responses/UnexpectedError"
+  "/blogs/blog/{blog-id}":
+    get:
+      summary: Get blog by id
+      operationId: getBlogById
+      tags:
+        - Blog
+      parameters:
+        - $ref: "#/components/parameters/blog-id"
+      responses:
+        "200":
+          description: Expected response to a valid request
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Blog"
         default:
           $ref: "#/components/responses/UnexpectedError"
   /blogs/published-blogs:
@@ -206,6 +227,10 @@ paths:
                       type: string
                       description: The IPFS hash of the blog.
                       example: QmTzQ1iW4g9z8Z2Z2Z2Z2Z2Z2Z2Z2Z2Z2Z2Z2Z2Z2Z
+                    id:
+                      type: string
+                      format: uuid
+                      description: The unique identifier for the blog.
         default:
           $ref: "#/components/responses/UnexpectedError"
   /blogs/upload-ipfs:
@@ -398,6 +423,29 @@ paths:
                 example: Ticket created successfully
         default:
           $ref: "#/components/responses/UnexpectedError"
+  /events/update-ticket:
+    put:
+      summary: Update Ticket
+      operationId: updateTicket
+      tags:
+        - Event
+      requestBody:
+        description: Create a new ticket for an event
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Ticket"
+      responses:
+        "201":
+          description: Expected response to a valid request
+          content:
+            application/json:
+              schema:
+                type: string
+                example: Ticket created successfully
+        default:
+          $ref: "#/components/responses/UnexpectedError"
   "/events/get-ticket/{ticket-id}":
     get:
       summary: Get all events that fit the query
@@ -492,6 +540,26 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Ticket"
+        default:
+          $ref: "#/components/responses/UnexpectedError"
+  "/events/get-event-by-id/{post-id}/{event-id}":
+    get:
+      summary: Get event by id
+      operationId: getEventById
+      tags:
+        - Event
+      parameters:
+        - $ref: "#/components/parameters/post-id"
+        - $ref: "#/components/parameters/event-id"
+      responses:
+        "200":
+          description: Expected response to a valid request
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Event"
         default:
           $ref: "#/components/responses/UnexpectedError"
   /events/add-promo-code:
@@ -596,6 +664,274 @@ paths:
           description: Invalid input
         "500":
           description: Internal server error
+  /events/v2/check-reminders:
+    post:
+      tags:
+        - event
+      summary: Check for eventsV2 that need 24-hour reminder emails
+      description: Called by Google Cloud Scheduler to check for eventsV2 that need 24-hour
+        reminder emails and send them to attendees
+      operationId: checkEventsV2Reminders
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  eventsProcessed:
+                    type: integer
+                  totalEmailsSent:
+                    type: integer
+                  message:
+                    type: string
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                title: Client error
+                type: object
+                x-box-resource-id: client_error
+                description: A generic error
+                properties:
+                  type:
+                    description: "`error`"
+                    example: error
+                    type: string
+                    enum:
+                      - error
+                    nullable: false
+                  status:
+                    description: The HTTP status of the response.
+                    example: 400
+                    type: integer
+                    format: int32
+                    nullable: false
+                  code:
+                    description: A Box-specific error code
+                    example: item_name_invalid
+                    type: string
+                    enum:
+                      - created
+                      - accepted
+                      - no_content
+                      - redirect
+                      - not_modified
+                      - bad_request
+                      - unauthorized
+                      - forbidden
+                      - not_found
+                      - method_not_allowed
+                      - conflict
+                      - precondition_failed
+                      - too_many_requests
+                      - internal_server_error
+                      - unavailable
+                      - item_name_invalid
+                      - insufficient_scope
+                  message:
+                    description: A short message describing the error.
+                    example: Method Not Allowed
+                    type: string
+                    nullable: false
+                  context_info:
+                    description: |-
+                      A free-form object that contains additional context
+                      about the error. The possible fields are defined on
+                      a per-endpoint basis. `message` is only one example.
+                    type: object
+                    properties:
+                      message:
+                        type: string
+                        description: More details on the error.
+                        example: Something went wrong.
+                  help_url:
+                    description: A URL that links to more information about why this error
+                      occurred.
+                    example: https://developer.box.com/guides/api-calls/permissions-and-errors/common-errors/
+                    type: string
+                    nullable: false
+                  request_id:
+                    description: |-
+                      A unique identifier for this response, which can be used
+                      when contacting Box support.
+                    type: string
+                    example: abcdef123456
+                    nullable: false
+  /events/v2/check-thankyous:
+    post:
+      tags:
+        - event
+      summary: Check for eventsV2 that need post-event thank you emails
+      description: Called by Google Cloud Scheduler to check for eventsV2 that have ended
+        and send thank you emails to attendees
+      operationId: checkEventsV2ThankYous
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  eventsProcessed:
+                    type: integer
+                  totalEmailsSent:
+                    type: integer
+                  message:
+                    type: string
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/paths/~1events~1v2~1check-reminders/post/responses/500/con\
+                  tent/application~1json/schema"
+  /events/v2/send-weekly-events-digest:
+    post:
+      tags:
+        - event
+      summary: Send weekly events digest emails to all users
+      description: Called by Google Cloud Scheduler every Sunday to send users a digest of
+        events happening in their communities in the next 7 days
+      operationId: sendWeeklyEventsDigest
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  usersProcessed:
+                    type: integer
+                  emailsSent:
+                    type: integer
+                  message:
+                    type: string
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/paths/~1events~1v2~1check-reminders/post/responses/500/con\
+                  tent/application~1json/schema"
+  /events/v2/send-weekly-events-digest-to-users:
+    post:
+      tags:
+        - event
+      summary: Send weekly events digest emails to specific users
+      description: Send weekly digest of upcoming events to a specific list of user IDs.
+        For testing purposes.
+      operationId: sendWeeklyEventsDigestToUsers
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - userIds
+              properties:
+                userIds:
+                  type: array
+                  items:
+                    type: string
+                  description: Array of user IDs to send the digest to
+                  example:
+                    - user123
+                    - user456
+                    - user789
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  usersProcessed:
+                    type: integer
+                  emailsSent:
+                    type: integer
+                  message:
+                    type: string
+        "400":
+          description: Bad request - no user IDs provided
+          content:
+            application/json:
+              schema:
+                $ref: "#/paths/~1events~1v2~1check-reminders/post/responses/500/con\
+                  tent/application~1json/schema"
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/paths/~1events~1v2~1check-reminders/post/responses/500/con\
+                  tent/application~1json/schema"
+  /events/send-bulk-email:
+    post:
+      summary: Send custom bulk email to event attendees
+      description: Send a custom email message to all attendees of a specific event slot
+      operationId: sendBulkEmail
+      tags:
+        - Event
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BulkEmailRequest"
+      responses:
+        "200":
+          description: Bulk email sent successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BulkEmailResponse"
+        "400":
+          description: Bad request - invalid input data
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: Invalid eventSlotId or missing required fields
+        "404":
+          description: Event slot not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: Event slot not found
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: Failed to send bulk email
+        default:
+          $ref: "#/components/responses/UnexpectedError"
   "/community/{community-id}":
     get:
       summary: Get a community by its ID
@@ -810,6 +1146,26 @@ paths:
                       example: San Francisco
         default:
           $ref: "#/components/responses/UnexpectedError"
+  "/community/detailed-community-members/{community-id}":
+    get:
+      summary: Get all members of a community with more detailed information
+      operationId: getDetailedCommunityMembers
+      tags:
+        - Community
+      parameters:
+        - $ref: "#/components/parameters/community-id"
+      responses:
+        "200":
+          description: Expected response to a valid request
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/paths/~1community~1community-members~1%7Bcommunity-id%7D\
+                    /get/responses/200/content/application~1json/schema/items"
+        default:
+          $ref: "#/components/responses/UnexpectedError"
   "/community/community-rules/{community-id}":
     get:
       summary: Get community rules
@@ -965,6 +1321,12 @@ paths:
                         type: string
                         description: A note or comment about the wallet.
                   description: The list of cryptocurrency wallets for the community.
+                venmo:
+                  type: string
+                  description: The Venmo username for the community.
+                zelle:
+                  type: string
+                  description: The Zelle email or phone number for the community.
                 bankAccounts:
                   type: array
                   items:
@@ -1013,6 +1375,89 @@ paths:
               schema:
                 type: string
                 example: Community Payment info created successfully
+        default:
+          $ref: "#/components/responses/UnexpectedError"
+  "/community/manage-sponsors/{community-id}":
+    post:
+      summary: Manage community sponsors for a community
+      operationId: manageCommunitySponsors
+      tags:
+        - Community
+      parameters:
+        - $ref: "#/components/parameters/community-id"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: "#/components/schemas/Sponsor"
+      responses:
+        "201":
+          description: Expected response to a valid request
+          content:
+            application/json:
+              schema:
+                type: string
+                example: Sponsor updated successfully
+        default:
+          $ref: "#/components/responses/UnexpectedError"
+  "/community/delete-sponsor/{community-id}/{sponsor-id}":
+    delete:
+      summary: Delete Sponsor from a community
+      operationId: deleteCommunitySponsor
+      tags:
+        - Community
+      parameters:
+        - $ref: "#/components/parameters/community-id"
+        - $ref: "#/components/parameters/sponsor-id"
+      responses:
+        "200":
+          description: Expected response to a valid request
+          content:
+            application/json:
+              schema:
+                type: string
+                example: Sponsor successfully deleted from community
+        default:
+          $ref: "#/components/responses/UnexpectedError"
+  "/community/get-sponsors/{community-id}":
+    get:
+      summary: Get community sponsors
+      operationId: getCommunitySponsors
+      tags:
+        - Community
+      parameters:
+        - $ref: "#/components/parameters/community-id"
+      responses:
+        "200":
+          description: Expected response to a valid request
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Sponsor"
+        default:
+          $ref: "#/components/responses/UnexpectedError"
+  "/community/get-community-funding-info/{community-id}":
+    get:
+      summary: Get community funding info
+      operationId: getCommunityFundingInfo
+      tags:
+        - Community
+      parameters:
+        - $ref: "#/components/parameters/community-id"
+      responses:
+        "200":
+          description: Expected response to a valid request
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/CommunityPaymentInfo"
         default:
           $ref: "#/components/responses/UnexpectedError"
   /notifications/notify:
@@ -1659,6 +2104,14 @@ paths:
           $ref: "#/components/responses/UnexpectedError"
 components:
   parameters:
+    blog-id:
+      name: blog-id
+      in: path
+      required: true
+      description: badge to filter by
+      schema:
+        type: string
+        example: 123e4567-e89b-12d3-a456-426614174000
     ticket-id:
       name: ticket-id
       in: path
@@ -1680,6 +2133,14 @@ components:
       in: path
       required: true
       description: post id to filter by
+      schema:
+        type: string
+        example: 123e4567-e89b-12d3-a456-426614174000
+    sponsor-id:
+      name: sponsor-id
+      in: path
+      required: true
+      description: sponsor id to filter by
       schema:
         type: string
         example: 123e4567-e89b-12d3-a456-426614174000
@@ -2123,6 +2584,7 @@ components:
           description: The timestamp when the notification was created.
         expiryDate:
           type: string
+          format: date-time
           description: The timestamp when the notification expires.
         emailSent:
           type: boolean
@@ -2459,6 +2921,47 @@ components:
           type: string
           description: The IPFS hash of the blog.
           example: QmTzQ1iW4g9z8Z2Z2Z2Z2Z2Z2Z2Z2Z2Z2Z2Z2Z2Z2Z
+        id:
+          type: string
+          format: uuid
+          description: The unique identifier for the blog.
+    Sponsor:
+      title: Sponsor
+      type: object
+      properties:
+        eventSlotId:
+          type: string
+          example: 123e4567-e89b-12d3-a456-426614174000
+        id:
+          type: string
+          format: uuid
+          example: 123e4567-e89b-12d3-a456-426614174000
+        title:
+          type: string
+          example: Event Sponsor
+        description:
+          type: string
+          example: This is a description of the event sponsor.
+        image:
+          type: object
+          properties:
+            uri:
+              type: string
+              format: uri
+              example: https://example.com/sponsor-image.jpg
+            name:
+              type: string
+              example: Sponsor Logo
+            type:
+              type: string
+              example: image/jpeg
+        link:
+          type: string
+          format: uri
+          example: https://example.com/sponsor-link
+        featured:
+          type: boolean
+          example: false
     Error:
       title: Error
       type: object
@@ -2523,6 +3026,31 @@ components:
         - 401K_ACCOUNT
         - RETIREMENT_ACCOUNT
         - MISC
+    CommunityGoals:
+      title: CommunityGoals
+      type: object
+      description: The goals of the community.
+      properties:
+        deadline:
+          type: string
+          example: 2025-09-16T21:43:37.420Z
+          description: The deadline for the goal.
+        title:
+          type: string
+          example: Create Metamask Wallet
+          description: The title of the goal.
+        group:
+          type: string
+          description: The group of the goal.
+        impact:
+          type: string
+          description: The impact of the goal.
+        kpis:
+          type: string
+          description: The key performance indicators of the goal.
+        source:
+          type: string
+          description: The source of the goal.
     Address:
       type: object
       title: Address
@@ -2531,72 +3059,14 @@ components:
         address:
           type: string
           example: 123 Blockchain Blvd
-        address_2:
-          type: string
-          example: "1232"
-        city:
-          type: string
-          example: Chicago
-        state:
-          type: string
-          enum:
-            - AL
-            - AK
-            - AZ
-            - AR
-            - CA
-            - CO
-            - CT
-            - DE
-            - FL
-            - GA
-            - HI
-            - ID
-            - IL
-            - IN
-            - IA
-            - KS
-            - KY
-            - LA
-            - ME
-            - MD
-            - MA
-            - MI
-            - MN
-            - MS
-            - MO
-            - MT
-            - NE
-            - NV
-            - NH
-            - NJ
-            - NM
-            - NY
-            - NC
-            - ND
-            - OH
-            - OK
-            - OR
-            - PA
-            - RI
-            - SC
-            - SD
-            - TN
-            - TX
-            - UT
-            - VT
-            - VA
-            - WA
-            - WV
-            - WI
-            - WY
-          example: CA
-        zip_code:
-          type: string
-          example: "94312"
-        country:
-          type: string
-          example: U.S.A.
+        lat:
+          type: number
+          format: float
+          example: 37.7749
+        lng:
+          type: number
+          format: float
+          example: -122.4194
     PreferredLanguage:
       title: PreferredLanguage
       type: string
@@ -3051,6 +3521,14 @@ components:
         requiresPaidSubscription:
           type: boolean
           description: Whether the community requires a paid subscription.
+        meetingType:
+          type: string
+          enum:
+            - VIRTUAL
+            - IRL
+          description: The type of meetings the community holds - virtual or in-person
+            (IRL).
+          example: VIRTUAL
         onboardingQuestions:
           type: array
           items:
@@ -3095,7 +3573,7 @@ components:
         ipfsHash:
           type: string
           description: The IPFS hash of the community.
-          example: QmTzQ1c6v4g7sZ8z8z8z8z8z8z8z8z8z8z8z8z8z8
+          example: QmTzQ1c6v4g7sZ8z8z8z8z8z8z8z8z8z8z8z8z8
         firstVisit:
           type: boolean
           description: Whether the user has never visited the community before.
@@ -3108,30 +3586,17 @@ components:
           type: string
           description: The destination of the community funding.
         goals:
-          type: object
+          type: array
+          items:
+            $ref: "#/components/schemas/CommunityGoals"
           description: The goals of the community.
-          properties:
-            deadline:
-              type: string
-              format: date-time
-              example: 2025-09-16T21:43:37.420Z
-              description: The deadline for the goal.
-            title:
-              type: string
-              example: Create Metamask Wallet
-              description: The title of the goal.
-            group:
-              type: string
-              description: The group of the goal.
-            impact:
-              type: string
-              description: The impact of the goal.
-            kpis:
-              type: string
-              description: The key performance indicators of the goal.
-            source:
-              type: string
-              description: The source of the goal.
+          nullable: true
+        sponsors:
+          type: array
+          items:
+            $ref: "#/components/schemas/Sponsor"
+          description: The sponsors of the community.
+          nullable: true
     CommunityPaymentInfo:
       title: CommunityPaymentInfo
       type: object
@@ -3151,6 +3616,12 @@ components:
           items:
             $ref: "#/components/schemas/CryptoWallet"
           description: The list of cryptocurrency wallets for the community.
+        venmo:
+          type: string
+          description: The Venmo username for the community.
+        zelle:
+          type: string
+          description: The Zelle email or phone number for the community.
         bankAccounts:
           type: array
           items:
@@ -3314,6 +3785,58 @@ components:
       enum:
         - GOING
         - NOT_GOING
+    TicketAnswers:
+      title: TicketAnswer
+      type: object
+      properties:
+        questionId:
+          type: string
+          example: 123e4567-e89b-12d3-a456-426614174000
+        questionText:
+          type: string
+          example: What is the main topic of the event?
+        answer:
+          type: string
+          example: The main topic of the event is blockchain technology.
+    BulkEmailRequest:
+      type: object
+      required:
+        - eventSlotId
+        - subject
+        - message
+      properties:
+        eventSlotId:
+          type: string
+          description: The ID of the event slot to send emails to attendees
+          example: event_slot_123
+        subject:
+          type: string
+          description: Email subject line
+          maxLength: 200
+          example: Important update about our upcoming event
+        message:
+          type: string
+          description: Email message content (HTML supported)
+          maxLength: 5000
+          example: Hello everyone! We have an exciting update about our upcoming
+            event...
+        senderName:
+          type: string
+          description: Optional sender name (defaults to event organizer)
+          maxLength: 100
+          example: John Doe
+        testMode:
+          type: boolean
+          description: If true, sends only to testUserEmail for testing
+          default: false
+        testUserEmail:
+          type: string
+          description: Email address to send test emails to when testMode is true
+          example: user@example.com
+        postId:
+          type: string
+          description: Optional post ID for enhanced event details
+          example: post_123
     EventPrivacy:
       title: EventPrivacy
       type: string
@@ -3368,8 +3891,6 @@ components:
       required:
         - title
         - startTimeDate
-        - endTimeDate
-        - eventType
       properties:
         id:
           type: string
@@ -3387,13 +3908,13 @@ components:
             type: string
             format: uri
             example: https://example.com/image.jpg
-        address:
-          $ref: "#/components/schemas/Address"
         timezone:
           type: string
           example: America/New_York
         recurrence:
-          $ref: "#/components/schemas/Recurrence"
+          oneOf:
+            - type: string
+            - $ref: "#/components/schemas/Recurrence"
         eventType:
           $ref: "#/components/schemas/EventType"
         eventPrivacy:
@@ -3401,12 +3922,20 @@ components:
         sponsors:
           type: array
           items:
-            $ref: "#/components/schemas/EventSponsor"
+            $ref: "#/components/schemas/Sponsor"
         commentsEnabled:
           type: boolean
           example: true
         lumaWidget:
           type: string
+        redirectLink:
+          type: string
+          format: uri
+          example: https://example.com/ticket
+        questions:
+          type: array
+          items:
+            type: string
         links:
           type: array
           items:
@@ -3468,24 +3997,28 @@ components:
         eventId:
           type: string
           example: 123e4567-e89b-12d3-a456-426614174000
+        postId:
+          type: string
+          example: 123e4567-e89b-12d3-a456-426614174000
         ticketOption:
           $ref: "#/components/schemas/Amount"
         qrCode:
           type: string
           format: uri
           example: https://example.com/qr-code.png
+        ticketAnswers:
+          type: array
+          items:
+            $ref: "#/components/schemas/TicketAnswers"
         createdAt:
           type: string
           format: date-time
         expiresAt:
           type: string
           format: date-time
-        userId:
-          type: string
-          example: 123e4567-e89b-12d3-a456-426614174000
         username:
           type: string
-          example: John Doe
+          example: john_doe
         profilePic:
           type: string
           format: uri
@@ -3493,6 +4026,9 @@ components:
         email:
           type: string
           format: email
+        userId:
+          type: string
+          example: 123e4567-e89b-12d3-a456-426614174000
         phoneNumber:
           type: string
           example: 14155552671
@@ -3507,6 +4043,8 @@ components:
             - CHECKED_IN
             - CANCELLED
             - PENDING
+            - APPROVED
+            - REJECTED
     EventSlot:
       title: EventSlot
       type: object
@@ -3559,8 +4097,13 @@ components:
         fundGoal:
           type: number
           format: float
+        meetingLink:
+          type: string
+          format: uri
         address:
-          $ref: "#/components/schemas/Address"
+          oneOf:
+            - type: string
+            - $ref: "#/components/schemas/Address"
         donations:
           type: array
           items:
@@ -3569,6 +4112,12 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/Ticket"
+        eventSlotQuestions:
+          type: array
+          items:
+            $ref: "#/components/schemas/EventSlotQuestions"
+        approvalRequired:
+          type: boolean
         hosts:
           type: array
           items:
@@ -3625,6 +4174,65 @@ components:
         sponsorId:
           type: string
           example: 123e4567-e89b-12d3-a456-426614174000
+    BulkEmailResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          description: Whether the bulk email operation was successful
+          example: true
+        message:
+          type: string
+          description: Success or error message
+          example: Bulk email sent successfully
+        emailsSent:
+          type: integer
+          description: Number of emails successfully sent
+          example: 25
+        totalAttendees:
+          type: integer
+          description: Total number of attendees found for the event
+          example: 27
+        failedEmails:
+          type: array
+          description: List of email addresses that failed to send
+          items:
+            type: string
+            format: email
+          example:
+            - invalid@example.com
+        eventSlotId:
+          type: string
+          description: The event slot ID that emails were sent for
+          example: event_slot_123
+    EventSlotQuestions:
+      title: EventSlotQuestions
+      type: object
+      properties:
+        id:
+          type: string
+          example: 123e4567-e89b-12d3-a456-426614174000
+        text:
+          type: string
+          example: What is your T-shirt size?
+        required:
+          type: boolean
+        type:
+          type: string
+          enum:
+            - text
+            - textarea
+            - select
+            - multiselect
+          example: select
+        options:
+          type: array
+          items:
+            type: string
+          example:
+            - Small
+            - Medium
+            - Large
     Option:
       title: Option
       type: object
@@ -3700,114 +4308,102 @@ components:
         imageUrl:
           type: string
           example: https://example.com/image.jpg
+    Like:
+      title: Like
+      type: object
+      properties:
+        userId:
+          type: string
+          example: 123e4567-e89b-12d3-a456-426614174000
+        reaction:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
     Comment:
       title: Comment
       type: object
       required:
-        - author_id
-        - content
-        - post_id
-        - created_at
-        - updated_at
+        - id
+        - user_id
+        - message
+        - timestamp
       properties:
         id:
           type: string
           format: uuid
           example: 123e4567-e89b-12d3-a456-426614174000
-        post_id:
+        user_id:
           type: string
           format: uuid
           example: 123e4567-e89b-12d3-a456-426614174000
-        author_id:
-          type: string
-          format: uuid
-          example: 123e4567-e89b-12d3-a456-426614174000
-        content:
-          type: string
-        picture_url:
-          type: string
-        link_url:
-          type: string
-        tags:
-          type: array
-          items:
-            type: string
-            format: uuid
-            example: 123e4567-e89b-12d3-a456-426614174000
-        users_liked:
-          type: array
-          items:
-            type: string
-            format: uuid
-            example: 123e4567-e89b-12d3-a456-426614174000
-        users_commented:
-          type: array
-          items:
-            type: string
-            format: uuid
-            example: 123e4567-e89b-12d3-a456-426614174000
-        created_at:
+        message:
+          type: object
+          properties:
+            message:
+              type: string
+            mentions:
+              type: array
+              items:
+                type: string
+          required:
+            - message
+            - mentions
+        timestamp:
           type: string
           format: date-time
-        updated_at:
-          type: string
-          format: date-time
-        deleted_at:
-          type: string
-          format: date-time
-    Post:
-      title: Post
-      type: object
-      required:
-        - community_id
-        - author_id
-        - content
-        - created_at
-        - updated_at
-      properties:
-        id:
-          type: string
-          format: uuid
-          example: 123e4567-e89b-12d3-a456-426614174000
-        author_id:
-          type: string
-        content:
-          type: string
-        picture_url:
-          type: string
-        link_url:
-          type: string
-        tags:
+        likes:
           type: array
           items:
-            type: string
-            format: uuid
-            example: 123e4567-e89b-12d3-a456-426614174000
-        users_liked:
-          type: array
-          items:
-            type: string
-            format: uuid
-            example: 123e4567-e89b-12d3-a456-426614174000
-        users_commented:
-          type: array
-          items:
-            type: string
-            format: uuid
-            example: 123e4567-e89b-12d3-a456-426614174000
-        users_shared:
-          type: array
-          items:
-            type: string
-            format: uuid
-            example: 123e4567-e89b-12d3-a456-426614174000
+            $ref: "#/components/schemas/Like"
         comments:
           type: array
           items: {}
-        created_at:
+        postReference:
+          type: string
+          format: uuid
+        commentReference:
+          type: string
+          format: uuid
+    Post:
+      title: Post
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: 123e4567-e89b-12d3-a456-426614174000
+        category:
+          type: string
+        newsfeedId:
+          type: string
+          example: 123e4567-e89b-12d3-a456-426614174000
+        posterUserId:
+          type: string
+          example: 123e4567-e89b-12d3-a456-426614174000
+        eventV2:
+          type: object
+          items:
+            $ref: "#/components/schemas/Event"
+        posterName:
+          type: string
+        tags:
+          type: array
+          items:
+            type: string
+        likes:
+          type: array
+          items:
+            $ref: "#/components/schemas/Like"
+        comments:
+          type: array
+          items:
+            type: array
+            $ref: "#/components/schemas/Comment"
+        createdAt:
           type: string
           format: date-time
-        updated_at:
+        modifiedAt:
           type: string
           format: date-time
   responses:

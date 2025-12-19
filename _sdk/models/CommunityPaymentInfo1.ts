@@ -53,6 +53,18 @@ export interface CommunityPaymentInfo1 {
      */
     cryptoWallets?: Array<CryptoWallets>;
     /**
+     * The Venmo username for the community.
+     * @type {string}
+     * @memberof CommunityPaymentInfo1
+     */
+    venmo?: string;
+    /**
+     * The Zelle email or phone number for the community.
+     * @type {string}
+     * @memberof CommunityPaymentInfo1
+     */
+    zelle?: string;
+    /**
      * The list of bank accounts for the community.
      * @type {Array<BankAccount1>}
      * @memberof CommunityPaymentInfo1
@@ -81,6 +93,8 @@ export function CommunityPaymentInfo1FromJSONTyped(json: any, ignoreDiscriminato
         'id': json['id'] == null ? undefined : json['id'],
         'communityId': json['communityId'],
         'cryptoWallets': json['cryptoWallets'] == null ? undefined : ((json['cryptoWallets'] as Array<any>).map(CryptoWalletsFromJSON)),
+        'venmo': json['venmo'] == null ? undefined : json['venmo'],
+        'zelle': json['zelle'] == null ? undefined : json['zelle'],
         'bankAccounts': json['bankAccounts'] == null ? undefined : ((json['bankAccounts'] as Array<any>).map(BankAccount1FromJSON)),
     };
 }
@@ -99,6 +113,8 @@ export function CommunityPaymentInfo1ToJSONTyped(value?: CommunityPaymentInfo1 |
         'id': value['id'],
         'communityId': value['communityId'],
         'cryptoWallets': value['cryptoWallets'] == null ? undefined : ((value['cryptoWallets'] as Array<any>).map(CryptoWalletsToJSON)),
+        'venmo': value['venmo'],
+        'zelle': value['zelle'],
         'bankAccounts': value['bankAccounts'] == null ? undefined : ((value['bankAccounts'] as Array<any>).map(BankAccount1ToJSON)),
     };
 }

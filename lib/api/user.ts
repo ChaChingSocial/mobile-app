@@ -8,6 +8,7 @@ import {
   getDoc,
   deleteDoc,
   collectionGroup,
+  addDoc,
 } from "firebase/firestore";
 import { UserPreference } from "@/types/user";
 import { useSession } from "../providers/AuthContext";
@@ -324,6 +325,98 @@ async function sendEmailInvites(emails: string[], userName: string) {
   }
 }
 
+async function blockUser(
+  userId: string,
+  blockedUserId: string,
+  reason?: string,
+  abuseReportId?: string
+) {
+  const blockedUserDoc = doc(db, "users", userId, "blockedUsers", blockedUserId);
+  const blockedByDoc = doc(db, "users", blockedUserId, "blockedBy", userId);
+
+  try {
+    const blockData = {
+      userId: blockedUserId,
+      blockedAt: new Date(),
+      ...(reason && { reason }),
+      ...(abuseReportId && { abuseReportId }),
+    };
+
+    await setDoc(blockedUserDoc, blockData);
+    await setDoc(blockedByDoc, { userId, blockedAt: new Date() });
+
+    return true;
+  } catch (error) {
+    console.error("Error blocking user:", error);
+    return false;
+  }
+}
+
+async function unblockUser(userId: string, blockedUserId: string) {
+  const blockedUserDoc = doc(db, "users", userId, "blockedUsers", blockedUserId);
+  const blockedByDoc = doc(db, "users", blockedUserId, "blockedBy", userId);
+
+  try {
+    await deleteDoc(blockedUserDoc);
+    await deleteDoc(blockedByDoc);
+    return true;
+  } catch (error) {
+    console.error("Error unblocking user:", error);
+    return false;
+  }
+}
+
+async function isUserBlocked(userId: string, targetUserId: string) {
+  try {
+    const docSnap = await getDoc(
+      doc(db, "users", userId, "blockedUsers", targetUserId)
+    );
+    return docSnap.exists();
+  } catch (error) {
+    console.error("Error checking if user is blocked:", error);
+    return false;
+  }
+}
+
+async function getBlockedUsers(userId: string) {
+  try {
+    const snapshot = await getDocs(
+      collection(db, "users", userId, "blockedUsers")
+    );
+    return snapshot.docs.map((doc) => doc.id);
+  } catch (error) {
+    console.error("Error fetching blocked users:", error);
+    return [];
+  }
+}
+
+async function createAbuseReport(
+  reporterId: string,
+  reportedUserId: string,
+  reason: string,
+  reportedPostId?: string,
+  evidence?: string
+) {
+  try {
+    const abuseReportRef = collection(db, "abuseReports");
+    const docRef = await addDoc(abuseReportRef, {
+      reporterId,
+      reportedUserId,
+      reason,
+      createdAt: new Date(),
+      status: "pending",
+      ...(reportedPostId && { reportedPostId }),
+      ...(evidence && { evidence }),
+    });
+
+    console.log("Abuse report created with ID:", docRef.id);
+    return docRef.id;
+  } catch (error) {
+    console.error("Error creating abuse report:", error);
+    throw error;
+  }
+}
+
 export {
   updateUserPreferences,
   getAllUsers,
@@ -341,4 +434,9 @@ export {
   checkIfFinFluencer,
   saveUserSettings,
   sendEmailInvites,
+  blockUser,
+  unblockUser,
+  isUserBlocked,
+  getBlockedUsers,
+  createAbuseReport,
 };

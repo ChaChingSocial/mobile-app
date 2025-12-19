@@ -13,6 +13,28 @@
  */
 
 import { mapValues } from '../runtime';
+import type { Comment } from './Comment';
+import {
+    CommentFromJSON,
+    CommentFromJSONTyped,
+    CommentToJSON,
+    CommentToJSONTyped,
+} from './Comment';
+import type { Like } from './Like';
+import {
+    LikeFromJSON,
+    LikeFromJSONTyped,
+    LikeToJSON,
+    LikeToJSONTyped,
+} from './Like';
+import type { Event } from './Event';
+import {
+    EventFromJSON,
+    EventFromJSONTyped,
+    EventToJSON,
+    EventToJSONTyped,
+} from './Event';
+
 /**
  * 
  * @export
@@ -30,25 +52,31 @@ export interface Post {
      * @type {string}
      * @memberof Post
      */
-    authorId: string;
+    category?: string;
     /**
      * 
      * @type {string}
      * @memberof Post
      */
-    content: string;
+    newsfeedId?: string;
     /**
      * 
      * @type {string}
      * @memberof Post
      */
-    pictureUrl?: string;
+    posterUserId?: string;
+    /**
+     * 
+     * @type {Array<Event>}
+     * @memberof Post
+     */
+    eventV2?: Array<Event>;
     /**
      * 
      * @type {string}
      * @memberof Post
      */
-    linkUrl?: string;
+    posterName?: string;
     /**
      * 
      * @type {Array<string>}
@@ -57,50 +85,34 @@ export interface Post {
     tags?: Array<string>;
     /**
      * 
-     * @type {Array<string>}
+     * @type {Array<Like>}
      * @memberof Post
      */
-    usersLiked?: Array<string>;
+    likes?: Array<Like>;
     /**
      * 
-     * @type {Array<string>}
+     * @type {Array<Comment>}
      * @memberof Post
      */
-    usersCommented?: Array<string>;
-    /**
-     * 
-     * @type {Array<string>}
-     * @memberof Post
-     */
-    usersShared?: Array<string>;
-    /**
-     * 
-     * @type {Array<any>}
-     * @memberof Post
-     */
-    comments?: Array<any>;
+    comments?: Array<Comment>;
     /**
      * 
      * @type {Date}
      * @memberof Post
      */
-    createdAt: Date;
+    createdAt?: Date;
     /**
      * 
      * @type {Date}
      * @memberof Post
      */
-    updatedAt: Date;
+    modifiedAt?: Date;
 }
 
 /**
  * Check if a given object implements the Post interface.
  */
 export function instanceOfPost(value: object): value is Post {
-    if (!('authorId' in value) || value['authorId'] === undefined) return false;
-    if (!('content' in value) || value['content'] === undefined) return false;
-    if (!('createdAt' in value) || value['createdAt'] === undefined) return false;
-    if (!('updatedAt' in value) || value['updatedAt'] === undefined) return false;
     return true;
 }
 
@@ -115,17 +127,16 @@ export function PostFromJSONTyped(json: any, ignoreDiscriminator: boolean): Post
     return {
         
         'id': json['id'] == null ? undefined : json['id'],
-        'authorId': json['author_id'],
-        'content': json['content'],
-        'pictureUrl': json['picture_url'] == null ? undefined : json['picture_url'],
-        'linkUrl': json['link_url'] == null ? undefined : json['link_url'],
+        'category': json['category'] == null ? undefined : json['category'],
+        'newsfeedId': json['newsfeedId'] == null ? undefined : json['newsfeedId'],
+        'posterUserId': json['posterUserId'] == null ? undefined : json['posterUserId'],
+        'eventV2': json['eventV2'] == null ? undefined : ((json['eventV2'] as Array<any>).map(EventFromJSON)),
+        'posterName': json['posterName'] == null ? undefined : json['posterName'],
         'tags': json['tags'] == null ? undefined : json['tags'],
-        'usersLiked': json['users_liked'] == null ? undefined : json['users_liked'],
-        'usersCommented': json['users_commented'] == null ? undefined : json['users_commented'],
-        'usersShared': json['users_shared'] == null ? undefined : json['users_shared'],
-        'comments': json['comments'] == null ? undefined : json['comments'],
-        'createdAt': (new Date(json['created_at'])),
-        'updatedAt': (new Date(json['updated_at'])),
+        'likes': json['likes'] == null ? undefined : ((json['likes'] as Array<any>).map(LikeFromJSON)),
+        'comments': json['comments'] == null ? undefined : ((json['comments'] as Array<any>).map(CommentFromJSON)),
+        'createdAt': json['createdAt'] == null ? undefined : (new Date(json['createdAt'])),
+        'modifiedAt': json['modifiedAt'] == null ? undefined : (new Date(json['modifiedAt'])),
     };
 }
 
@@ -141,17 +152,16 @@ export function PostToJSONTyped(value?: Post | null, ignoreDiscriminator: boolea
     return {
         
         'id': value['id'],
-        'author_id': value['authorId'],
-        'content': value['content'],
-        'picture_url': value['pictureUrl'],
-        'link_url': value['linkUrl'],
+        'category': value['category'],
+        'newsfeedId': value['newsfeedId'],
+        'posterUserId': value['posterUserId'],
+        'eventV2': value['eventV2'] == null ? undefined : ((value['eventV2'] as Array<any>).map(EventToJSON)),
+        'posterName': value['posterName'],
         'tags': value['tags'],
-        'users_liked': value['usersLiked'],
-        'users_commented': value['usersCommented'],
-        'users_shared': value['usersShared'],
-        'comments': value['comments'],
-        'created_at': ((value['createdAt']).toISOString()),
-        'updated_at': ((value['updatedAt']).toISOString()),
+        'likes': value['likes'] == null ? undefined : ((value['likes'] as Array<any>).map(LikeToJSON)),
+        'comments': value['comments'] == null ? undefined : ((value['comments'] as Array<any>).map(CommentToJSON)),
+        'createdAt': value['createdAt'] == null ? undefined : ((value['createdAt']).toISOString()),
+        'modifiedAt': value['modifiedAt'] == null ? undefined : ((value['modifiedAt']).toISOString()),
     };
 }
 

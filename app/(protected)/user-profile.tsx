@@ -11,16 +11,19 @@ import { Heading } from "@/components/ui/heading";
 import { HStack } from "@/components/ui/hstack";
 import { Text } from "@/components/ui/text";
 import { VStack } from "@/components/ui/vstack";
+import { Button, ButtonText } from "@/components/ui/button";
 import { userApi } from "@/config/backend";
 import { getPostsByUser } from "@/lib/api/newsfeed";
 import {
     checkIfFinFluencer,
     fetchFollowers,
     fetchFollowing,
+    createAbuseReport,
 } from "@/lib/api/user";
 import { useSession } from "@/lib/providers/AuthContext";
+import { useBlockedUsers } from "@/lib/providers/BlockedUsersContext";
 import type { Post } from "@/types/post";
-import { AntDesign } from "@expo/vector-icons";
+import { AntDesign, FontAwesome5 } from "@expo/vector-icons";
 import * as Linking from "expo-linking";
 import { useLocalSearchParams, useRouter, useNavigation } from "expo-router";
 import { DocumentSnapshot } from "firebase/firestore";
@@ -33,6 +36,13 @@ import {
     ScrollView,
     TouchableOpacity,
 } from "react-native";
+import BlockUserModal from "@/components/BlockUserModal";
+import { sendNotificationEmail } from "@/lib/api/notifications";
+import {
+  NotificationEntityTypeEnum,
+  NotificationNotificationTypeEnum,
+} from "@/_sdk";
+import Toast from "react-native-toast-message";
 
 export default function UserProfile() {
   const { id: UserId } = useLocalSearchParams();
@@ -50,6 +60,10 @@ export default function UserProfile() {
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [showAllInterests, setShowAllInterests] = useState(false);
+  const [showBlockModal, setShowBlockModal] = useState(false);
+  const [blocking, setBlocking] = useState(false);
+  const { blockUser, unblockUser, isBlocked } = useBlockedUsers();
+  const userIsBlocked = currentUserId ? isBlocked(currentUserId) : false;
 
   const fetchUserInfo = async () => {
     try {
@@ -153,6 +167,103 @@ export default function UserProfile() {
     }
   };
 
+  const handleBlockUser = async (reason?: string, alsoReport?: boolean) => {
+    if (!session?.uid || !currentUserId) return;
+
+    setBlocking(true);
+    try {
+      let abuseReportId: string | undefined;
+
+      // Create abuse report if requested
+      if (alsoReport && reason) {
+        abuseReportId = await createAbuseReport(
+          session.uid,
+          currentUserId,
+          reason
+        );
+
+        // Send notification to developers
+        const reporterName = session?.displayName || session?.email || "Unknown User";
+        const message = `User Block & Report\n\nReporter: ${reporterName} (${session.uid})\nReported User: ${userInfo?.username} (${currentUserId})\nReason: ${reason}\nReport ID: ${abuseReportId}`;
+
+        // Developer emails to notify
+        const developerEmails = [
+          "rushikesh.joshi@chachingsocial.io",
+          "sonia.lomo@fatfiresocial.com",
+          "mabel.oza@chachingsocial.io",
+        ];
+
+        await sendNotificationEmail(
+          NotificationNotificationTypeEnum.Reported,
+          "",
+          "User Blocked & Reported",
+          "",
+          message,
+          NotificationEntityTypeEnum.User,
+          developerEmails,
+          session.uid
+        );
+      }
+
+      // Block the user
+      const success = await blockUser(currentUserId, reason, abuseReportId);
+
+      if (success) {
+        Toast.show({
+          type: "success",
+          text1: "User blocked successfully",
+          text2: "You won't see their content anymore.",
+        });
+        setShowBlockModal(false);
+        // Navigate back after blocking
+        router.back();
+      } else {
+        Toast.show({
+          type: "error",
+          text1: "Failed to block user",
+          text2: "Please try again.",
+        });
+      }
+    } catch (error) {
+      console.error("Error blocking user:", error);
+      Toast.show({
+        type: "error",
+        text1: "Failed to block user",
+        text2: "Please try again.",
+      });
+    } finally {
+      setBlocking(false);
+    }
+  };
+
+  const handleUnblockUser = async () => {
+    if (!session?.uid || !currentUserId) return;
+
+    try {
+      const success = await unblockUser(currentUserId);
+      if (success) {
+        Toast.show({
+          type: "success",
+          text1: "User unblocked",
+          text2: "You can now see their content.",
+        });
+      } else {
+        Toast.show({
+          type: "error",
+          text1: "Failed to unblock user",
+          text2: "Please try again.",
+        });
+      }
+    } catch (error) {
+      console.error("Error unblocking user:", error);
+      Toast.show({
+        type: "error",
+        text1: "Failed to unblock user",
+        text2: "Please try again.",
+      });
+    }
+  };
+
   return (
     <ScrollView
       className="bg-[#077f5f] flex-1"
@@ -182,6 +293,32 @@ export default function UserProfile() {
         >
           @{userInfo?.username}
         </Heading>
+        
+        {/* Block/Unblock button - only show if viewing another user's profile */}
+        {session?.uid && currentUserId && session.uid !== currentUserId && (
+          <Box className="mt-2">
+            {userIsBlocked ? (
+              <Button
+                size="sm"
+                variant="outline"
+                className="bg-white"
+                onPress={handleUnblockUser}
+              >
+                <FontAwesome5 name="check" size={14} color="#077f5f" style={{ marginRight: 8 }} />
+                <ButtonText className="text-[#077f5f]">Unblock User</ButtonText>
+              </Button>
+            ) : (
+              <Button
+                size="sm"
+                action="negative"
+                onPress={() => setShowBlockModal(true)}
+              >
+                <FontAwesome5 name="ban" size={14} color="white" style={{ marginRight: 8 }} />
+                <ButtonText>Block User</ButtonText>
+              </Button>
+            )}
+          </Box>
+        )}
         <Box
           style={{
             width: "100%",
@@ -350,6 +487,14 @@ export default function UserProfile() {
           className="w-full"
         />
       )}
+      
+      <BlockUserModal
+        isOpen={showBlockModal}
+        onClose={() => setShowBlockModal(false)}
+        onConfirm={handleBlockUser}
+        userName={userInfo?.username}
+        loading={blocking}
+      />
     </ScrollView>
   );
 }

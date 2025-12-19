@@ -20,13 +20,13 @@ import {
     TicketToJSON,
     TicketToJSONTyped,
 } from './Ticket';
-import type { Address } from './Address';
+import type { EventSlotQuestions } from './EventSlotQuestions';
 import {
-    AddressFromJSON,
-    AddressFromJSONTyped,
-    AddressToJSON,
-    AddressToJSONTyped,
-} from './Address';
+    EventSlotQuestionsFromJSON,
+    EventSlotQuestionsFromJSONTyped,
+    EventSlotQuestionsToJSON,
+    EventSlotQuestionsToJSONTyped,
+} from './EventSlotQuestions';
 import type { PromoCode } from './PromoCode';
 import {
     PromoCodeFromJSON,
@@ -55,6 +55,13 @@ import {
     EventSponsorToJSON,
     EventSponsorToJSONTyped,
 } from './EventSponsor';
+import type { EventSlotAddress } from './EventSlotAddress';
+import {
+    EventSlotAddressFromJSON,
+    EventSlotAddressFromJSONTyped,
+    EventSlotAddressToJSON,
+    EventSlotAddressToJSONTyped,
+} from './EventSlotAddress';
 import type { Host } from './Host';
 import {
     HostFromJSON,
@@ -167,10 +174,16 @@ export interface EventSlot {
     fundGoal?: number;
     /**
      * 
-     * @type {Address}
+     * @type {string}
      * @memberof EventSlot
      */
-    address?: Address;
+    meetingLink?: string;
+    /**
+     * 
+     * @type {EventSlotAddress}
+     * @memberof EventSlot
+     */
+    address?: EventSlotAddress;
     /**
      * 
      * @type {Array<Donation>}
@@ -183,6 +196,18 @@ export interface EventSlot {
      * @memberof EventSlot
      */
     tickets?: Array<Ticket>;
+    /**
+     * 
+     * @type {Array<EventSlotQuestions>}
+     * @memberof EventSlot
+     */
+    eventSlotQuestions?: Array<EventSlotQuestions>;
+    /**
+     * 
+     * @type {boolean}
+     * @memberof EventSlot
+     */
+    approvalRequired?: boolean;
     /**
      * 
      * @type {Array<Host>}
@@ -242,9 +267,12 @@ export function EventSlotFromJSONTyped(json: any, ignoreDiscriminator: boolean):
         'locationPartnership': json['locationPartnership'] == null ? undefined : json['locationPartnership'],
         'fundsNeeded': json['fundsNeeded'] == null ? undefined : json['fundsNeeded'],
         'fundGoal': json['fundGoal'] == null ? undefined : json['fundGoal'],
-        'address': json['address'] == null ? undefined : AddressFromJSON(json['address']),
+        'meetingLink': json['meetingLink'] == null ? undefined : json['meetingLink'],
+        'address': json['address'] == null ? undefined : EventSlotAddressFromJSON(json['address']),
         'donations': json['donations'] == null ? undefined : ((json['donations'] as Array<any>).map(DonationFromJSON)),
         'tickets': json['tickets'] == null ? undefined : ((json['tickets'] as Array<any>).map(TicketFromJSON)),
+        'eventSlotQuestions': json['eventSlotQuestions'] == null ? undefined : ((json['eventSlotQuestions'] as Array<any>).map(EventSlotQuestionsFromJSON)),
+        'approvalRequired': json['approvalRequired'] == null ? undefined : json['approvalRequired'],
         'hosts': json['hosts'] == null ? undefined : ((json['hosts'] as Array<any>).map(HostFromJSON)),
         'ticketOptions': json['ticketOptions'] == null ? undefined : ((json['ticketOptions'] as Array<any>).map(TicketOptionsFromJSON)),
     };
@@ -277,9 +305,12 @@ export function EventSlotToJSONTyped(value?: EventSlot | null, ignoreDiscriminat
         'locationPartnership': value['locationPartnership'],
         'fundsNeeded': value['fundsNeeded'],
         'fundGoal': value['fundGoal'],
-        'address': AddressToJSON(value['address']),
+        'meetingLink': value['meetingLink'],
+        'address': EventSlotAddressToJSON(value['address']),
         'donations': value['donations'] == null ? undefined : ((value['donations'] as Array<any>).map(DonationToJSON)),
         'tickets': value['tickets'] == null ? undefined : ((value['tickets'] as Array<any>).map(TicketToJSON)),
+        'eventSlotQuestions': value['eventSlotQuestions'] == null ? undefined : ((value['eventSlotQuestions'] as Array<any>).map(EventSlotQuestionsToJSON)),
+        'approvalRequired': value['approvalRequired'],
         'hosts': value['hosts'] == null ? undefined : ((value['hosts'] as Array<any>).map(HostToJSON)),
         'ticketOptions': value['ticketOptions'] == null ? undefined : ((value['ticketOptions'] as Array<any>).map(TicketOptionsToJSON)),
     };

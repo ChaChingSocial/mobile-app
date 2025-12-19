@@ -25,6 +25,10 @@ import {
     Blog1ToJSON,
 } from '../models/index';
 
+export interface GetBlogByIdRequest {
+    blogId: string;
+}
+
 export interface GetPublishedBlogsRequest {
     communityIds?: Array<string>;
     userIds?: Array<string>;
@@ -44,6 +48,39 @@ export interface UploadToIPFSRequest {
  * 
  */
 export class BlogApi extends runtime.BaseAPI {
+
+    /**
+     * Get blog by id
+     */
+    async getBlogByIdRaw(requestParameters: GetBlogByIdRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<Blog>>> {
+        if (requestParameters['blogId'] == null) {
+            throw new runtime.RequiredError(
+                'blogId',
+                'Required parameter "blogId" was null or undefined when calling getBlogById().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        const response = await this.request({
+            path: `/blogs/blog/{blog-id}`.replace(`{${"blog-id"}}`, encodeURIComponent(String(requestParameters['blogId']))),
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(BlogFromJSON));
+    }
+
+    /**
+     * Get blog by id
+     */
+    async getBlogById(requestParameters: GetBlogByIdRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<Blog>> {
+        const response = await this.getBlogByIdRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
 
     /**
      * Get all published blogs that fit the query

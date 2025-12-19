@@ -50,14 +50,27 @@ export async function sendNotificationEmail(
       emails,
       userId,
     };
+
     const response = await notificationApi.notifyEmail({ notification });
 
-    // if (!response.ok) {
-    //   throw new Error(`HTTP error! status: ${response.status}`);
-    // }
+    if (!response["ok"]) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
 
     console.log("Notification sent successfully:", response);
+    return response; // Return the response for further checking
   } catch (error) {
     console.error("Error sending notification:", error);
+    console.log("Payload sent sendNotificationEmail", {
+      notificationType,
+      notificationImage,
+      notificationTitle,
+      notificationLink,
+      notificationMessage,
+      entityType,
+      emails,
+      userId,
+    });
+    throw error; // Re-throw to handle in calling function
   }
 }

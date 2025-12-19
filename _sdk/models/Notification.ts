@@ -87,10 +87,10 @@ export interface Notification {
     createdAt?: string;
     /**
      * The timestamp when the notification expires.
-     * @type {string}
+     * @type {Date}
      * @memberof Notification
      */
-    expiryDate?: string;
+    expiryDate?: Date;
     /**
      * Indicates whether the email has been sent.
      * @type {boolean}
@@ -179,7 +179,7 @@ export function NotificationFromJSONTyped(json: any, ignoreDiscriminator: boolea
         'notificationMessage': json['notificationMessage'] == null ? undefined : json['notificationMessage'],
         'entityType': json['entityType'],
         'createdAt': json['createdAt'] == null ? undefined : json['createdAt'],
-        'expiryDate': json['expiryDate'] == null ? undefined : json['expiryDate'],
+        'expiryDate': json['expiryDate'] == null ? undefined : (new Date(json['expiryDate'])),
         'emailSent': json['emailSent'] == null ? undefined : json['emailSent'],
         'read': json['read'] == null ? undefined : json['read'],
     };
@@ -207,7 +207,7 @@ export function NotificationToJSONTyped(value?: Notification | null, ignoreDiscr
         'notificationMessage': value['notificationMessage'],
         'entityType': value['entityType'],
         'createdAt': value['createdAt'],
-        'expiryDate': value['expiryDate'],
+        'expiryDate': value['expiryDate'] == null ? undefined : ((value['expiryDate']).toISOString()),
         'emailSent': value['emailSent'],
         'read': value['read'],
     };

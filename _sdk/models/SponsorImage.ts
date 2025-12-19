@@ -14,68 +14,68 @@
 
 import { mapValues } from '../runtime';
 /**
- * An object describing an address
+ * 
  * @export
- * @interface Address
+ * @interface SponsorImage
  */
-export interface Address {
+export interface SponsorImage {
     /**
      * 
      * @type {string}
-     * @memberof Address
+     * @memberof SponsorImage
      */
-    address?: string;
+    uri?: string;
     /**
      * 
-     * @type {number}
-     * @memberof Address
+     * @type {string}
+     * @memberof SponsorImage
      */
-    lat?: number;
+    name?: string;
     /**
      * 
-     * @type {number}
-     * @memberof Address
+     * @type {string}
+     * @memberof SponsorImage
      */
-    lng?: number;
+    type?: string;
 }
 
 /**
- * Check if a given object implements the Address interface.
+ * Check if a given object implements the SponsorImage interface.
  */
-export function instanceOfAddress(value: object): value is Address {
+export function instanceOfSponsorImage(value: object): value is SponsorImage {
     return true;
 }
 
-export function AddressFromJSON(json: any): Address {
-    return AddressFromJSONTyped(json, false);
+export function SponsorImageFromJSON(json: any): SponsorImage {
+    return SponsorImageFromJSONTyped(json, false);
 }
 
-export function AddressFromJSONTyped(json: any, ignoreDiscriminator: boolean): Address {
+export function SponsorImageFromJSONTyped(json: any, ignoreDiscriminator: boolean): SponsorImage {
     if (json == null) {
         return json;
     }
     return {
         
-        'address': json['address'] == null ? undefined : json['address'],
-        'lat': json['lat'] == null ? undefined : json['lat'],
-        'lng': json['lng'] == null ? undefined : json['lng'],
+        'uri': json['uri'] == null ? undefined : json['uri'],
+        'name': json['name'] == null ? undefined : json['name'],
+        'type': json['type'] == null ? undefined : json['type'],
     };
 }
 
-export function AddressToJSON(json: any): Address {
-    return AddressToJSONTyped(json, false);
+export function SponsorImageToJSON(json: any): SponsorImage {
+    return SponsorImageToJSONTyped(json, false);
 }
 
-export function AddressToJSONTyped(value?: Address | null, ignoreDiscriminator: boolean = false): any {
+export function SponsorImageToJSONTyped(value?: SponsorImage | null, ignoreDiscriminator: boolean = false): any {
     if (value == null) {
         return value;
     }
 
     return {
         
-        'address': value['address'],
-        'lat': value['lat'],
-        'lng': value['lng'],
+        'uri': value['uri'],
+        'name': value['name'],
+        'type': value['type'],
     };
 }
 
