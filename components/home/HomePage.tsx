@@ -76,11 +76,11 @@ export default function HomePage() {
       icon: <FontAwesome5 name="spotify" size={18} color="white" />,
       route: "/(protected)/create-post/new-podcast-post",
     },
-    {
+    /*{
       title: "Event",
       icon: <Ionicons name="ticket-outline" size={20} color="white" />,
       route: "/(protected)/create-post/new-event-post",
-    },
+    },*/
   ];
 
   useEffect(() => {
