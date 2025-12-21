@@ -160,16 +160,16 @@ export default function RegisterFormScreen() {
               <FontAwesome5 name={showPassword ? "eye" : "eye-slash"} />
             </InputSlot>
           </Input>
+          <Button
+            size="xl"
+            className="w-full bg-white rounded-full"
+            onPress={handleRegister}
+          >
+            <ButtonText className="flex-1 text-center text-black">
+              Register
+            </ButtonText>
+          </Button>
         </VStack>
-        <Button
-          size="xl"
-          className="w-full bg-white rounded-full"
-          onPress={handleRegister}
-        >
-          <ButtonText className="flex-1 text-center text-black">
-            Register
-          </ButtonText>
-        </Button>
 
         {error && <Text className="text-red-500 mt-2">{error}</Text>}
       </FormControl>
