@@ -30,32 +30,32 @@ export default function ForgotPasswordScreen() {
   };
 
   return (
-    <Center className="flex-1 bg-white">
+    <Center className="flex-1 bg-[#7ad8bd]">
       <FormControl className="p-4 mx-6 flex-1 justify-between items-center">
         <VStack space="xl">
-          <Heading className="text-typography-900 text-center">
+          <Heading className="text-black text-center">
             Reset your Password
           </Heading>
-          <Text className="text-typography-500 text-center">
+          <Text className="text-black text-center">
             Enter your email and we'll send you a link to reset your password
           </Text>
 
-          <Input size="xl" className="min-w-[250px] rounded-full pl-2">
+<Input size="xl" className="min-w-[250px] rounded-full pl-2 bg-white">
             <InputField
               type="text"
               onChangeText={setEmail}
               placeholder="jane.doe@hotmail.com"
             />
           </Input>
-        </VStack>
 
-        <Button
-          size="xl"
-          className="w-full bg-[#40c057] rounded-full"
-          onPress={handleReset}
-        >
-          <ButtonText className="flex-1 text-center">Reset Password</ButtonText>
-        </Button>
+          <Button
+            size="xl"
+            className="w-full rounded-full bg-white mt-3"
+            onPress={handleReset}
+          >
+            <ButtonText className="flex-1 text-center text-black">Reset Password</ButtonText>
+          </Button>
+        </VStack>
 
         {error && <Text className="text-red-500 mt-2">{error}</Text>}
       </FormControl>
