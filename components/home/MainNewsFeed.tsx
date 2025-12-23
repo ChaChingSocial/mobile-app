@@ -21,6 +21,7 @@ export const MainNewsfeed = forwardRef(function MainNewsfeed(_props, ref: any) {
             className="w-full"
           />
         )}
+        {/*
         <TouchableOpacity
           className="bg-[#00bf63] rounded-lg p-2 w-36 mx-auto my-6"
           onPress={() => fetchMorePosts()}
@@ -30,6 +31,7 @@ export const MainNewsfeed = forwardRef(function MainNewsfeed(_props, ref: any) {
             Load More
           </Text>
         </TouchableOpacity>
+        */}
       </Box>
     </Box>
   );
