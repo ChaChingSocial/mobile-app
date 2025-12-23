@@ -23,7 +23,7 @@ import {
 import { useSession } from "@/lib/providers/AuthContext";
 import { useScoreStore } from "@/lib/store/score";
 import type { Post } from "@/types/post";
-import { AntDesign } from "@expo/vector-icons";
+import { AntDesign, FontAwesome5 } from "@expo/vector-icons";
 import * as Linking from "expo-linking";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { DocumentSnapshot } from "firebase/firestore";
@@ -247,7 +247,7 @@ export default function Profile() {
                   }}
                   accessibilityLabel="Instagram"
                 >
-                  <AntDesign name="instagram" size={32} color="#fff" />
+<FontAwesome5 name="instagram" size={32} color="#fff" />
                 </TouchableOpacity>
               )}
               {userInfo?.socials?.linkedin && (
@@ -262,7 +262,7 @@ export default function Profile() {
                   }}
                   accessibilityLabel="LinkedIn"
                 >
-                  <AntDesign name="linkedin-square" size={24} color="#fff" />
+<FontAwesome5 name="linkedin" size={24} color="#fff" />
                 </TouchableOpacity>
               )}
               {userInfo?.socials?.tiktok && (
@@ -277,7 +277,7 @@ export default function Profile() {
                   }}
                   accessibilityLabel="TikTok"
                 >
-                  <AntDesign name="tiktok" size={24} color="#fff" />
+<FontAwesome5 name="tiktok" size={24} color="#fff" />
                 </TouchableOpacity>
               )}
               {userInfo.socials.website && (
@@ -292,7 +292,7 @@ export default function Profile() {
                   }}
                   accessibilityLabel="Website"
                 >
-                  <AntDesign name="earth" size={24} color="#fff" />
+<FontAwesome5 name="globe" size={24} color="#fff" />
                 </TouchableOpacity>
               )}
             </Box>
