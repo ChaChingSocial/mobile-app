@@ -3,7 +3,7 @@ import EditProfileComponent from "@/components/profile/EditProfile";
 
 export default function EditComponentScreen() {
   return (
-    <ParallaxScrollView classNames="p-6">
+    <ParallaxScrollView classNames="p-6 bg-[#077f5f]">
       <EditProfileComponent />
     </ParallaxScrollView>
   );

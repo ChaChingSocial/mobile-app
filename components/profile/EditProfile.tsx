@@ -129,7 +129,7 @@ export default function EditProfileComponent() {
 
   return (
     <Box className="">
-      <Heading size="xl" className="mb-6 text-typography-black">
+<Heading size="xl" className="mb-6 text-white">
         Edit Profile
       </Heading>
 
@@ -177,11 +177,11 @@ export default function EditProfileComponent() {
         <VStack space="xs">
           <FormControl>
             <FormControlLabel>
-              <FormControlLabelText className="text-typography-black">
+<FormControlLabelText className="text-white">
                 Username
               </FormControlLabelText>
             </FormControlLabel>
-            <Input className="my-1 w-full" size="sm">
+<Input className="my-1 w-full bg-white" size="sm">
               <InputField
                 className="text-typography-black"
                 type="text"
@@ -196,9 +196,9 @@ export default function EditProfileComponent() {
         <VStack space="xs">
           <FormControl>
             <FormControlLabel>
-              <FormControlLabelText>Bio</FormControlLabelText>
+<FormControlLabelText className="text-white">Bio</FormControlLabelText>
             </FormControlLabel>
-            <Textarea className="">
+<Textarea className="bg-white">
               <TextareaInput
                 placeholder="Tell us about yourself"
                 value={formData.bio}
@@ -211,9 +211,9 @@ export default function EditProfileComponent() {
         <VStack space="xs">
           <FormControl>
             <FormControlLabel>
-              <FormControlLabelText>Industry</FormControlLabelText>
+<FormControlLabelText className="text-white">Industry</FormControlLabelText>
             </FormControlLabel>
-            <Input className="my-1 w-full" size="sm">
+<Input className="my-1 w-full bg-white" size="sm">
               <InputField
                 type="text"
                 placeholder="Industry"
@@ -224,16 +224,16 @@ export default function EditProfileComponent() {
           </FormControl>
         </VStack>
 
-        <Heading size="md" className="mt-4">
+<Heading size="md" className="mt-4 text-white">
           Social Links
         </Heading>
 
         <VStack space="xs">
           <FormControl>
             <FormControlLabel>
-              <FormControlLabelText>Facebook</FormControlLabelText>
+<FormControlLabelText className="text-white">Facebook</FormControlLabelText>
             </FormControlLabel>
-            <Input className="my-1 w-full" size="sm">
+<Input className="my-1 w-full bg-white" size="sm">
               <InputField
                 type="text"
                 placeholder="Facebook profile URL"
@@ -247,9 +247,9 @@ export default function EditProfileComponent() {
         <VStack space="xs">
           <FormControl>
             <FormControlLabel>
-              <FormControlLabelText>Twitter</FormControlLabelText>
+<FormControlLabelText className="text-white">Twitter</FormControlLabelText>
             </FormControlLabel>
-            <Input className="my-1 w-full" size="sm">
+<Input className="my-1 w-full bg-white" size="sm">
               <InputField
                 type="text"
                 placeholder="Twitter profile URL"
@@ -263,9 +263,9 @@ export default function EditProfileComponent() {
         <VStack space="xs">
           <FormControl>
             <FormControlLabel>
-              <FormControlLabelText>Instagram</FormControlLabelText>
+<FormControlLabelText className="text-white">Instagram</FormControlLabelText>
             </FormControlLabel>
-            <Input className="my-1 w-full" size="sm">
+<Input className="my-1 w-full bg-white" size="sm">
               <InputField
                 type="text"
                 placeholder="Instagram profile URL"
@@ -279,9 +279,9 @@ export default function EditProfileComponent() {
         <VStack space="xs">
           <FormControl>
             <FormControlLabel>
-              <FormControlLabelText>LinkedIn</FormControlLabelText>
+<FormControlLabelText className="text-white">LinkedIn</FormControlLabelText>
             </FormControlLabel>
-            <Input className="my-1 w-full" size="sm">
+<Input className="my-1 w-full bg-white" size="sm">
               <InputField
                 type="text"
                 placeholder="LinkedIn profile URL"
@@ -295,9 +295,9 @@ export default function EditProfileComponent() {
         <VStack space="xs">
           <FormControl>
             <FormControlLabel>
-              <FormControlLabelText>TikTok</FormControlLabelText>
+<FormControlLabelText className="text-white">TikTok</FormControlLabelText>
             </FormControlLabel>
-            <Input className="my-1 w-full" size="sm">
+<Input className="my-1 w-full bg-white" size="sm">
               <InputField
                 type="text"
                 placeholder="TikTok profile URL"
@@ -311,9 +311,9 @@ export default function EditProfileComponent() {
         <VStack space="xs">
           <FormControl>
             <FormControlLabel>
-              <FormControlLabelText>YouTube</FormControlLabelText>
+<FormControlLabelText className="text-white">YouTube</FormControlLabelText>
             </FormControlLabel>
-            <Input className="my-1 w-full" size="sm">
+<Input className="my-1 w-full bg-white" size="sm">
               <InputField
                 type="text"
                 placeholder="YouTube channel URL"
@@ -327,9 +327,9 @@ export default function EditProfileComponent() {
         <VStack space="xs">
           <FormControl>
             <FormControlLabel>
-              <FormControlLabelText>Twitch</FormControlLabelText>
+<FormControlLabelText className="text-white">Twitch</FormControlLabelText>
             </FormControlLabel>
-            <Input className="my-1 w-full" size="sm">
+<Input className="my-1 w-full bg-white" size="sm">
               <InputField
                 type="text"
                 placeholder="Twitch profile URL"
@@ -343,9 +343,9 @@ export default function EditProfileComponent() {
         <VStack space="xs">
           <FormControl>
             <FormControlLabel>
-              <FormControlLabelText>Snapchat</FormControlLabelText>
+<FormControlLabelText className="text-white">Snapchat</FormControlLabelText>
             </FormControlLabel>
-            <Input className="my-1 w-full" size="sm">
+<Input className="my-1 w-full bg-white" size="sm">
               <InputField
                 type="text"
                 placeholder="Snapchat profile URL"
@@ -359,9 +359,9 @@ export default function EditProfileComponent() {
         <VStack space="xs">
           <FormControl>
             <FormControlLabel>
-              <FormControlLabelText>Discord</FormControlLabelText>
+<FormControlLabelText className="text-white">Discord</FormControlLabelText>
             </FormControlLabel>
-            <Input className="my-1 w-full" size="sm">
+<Input className="my-1 w-full bg-white" size="sm">
               <InputField
                 type="text"
                 placeholder="Discord profile URL"
@@ -375,9 +375,9 @@ export default function EditProfileComponent() {
         <VStack space="xs">
           <FormControl>
             <FormControlLabel>
-              <FormControlLabelText>Medium</FormControlLabelText>
+<FormControlLabelText className="text-white">Medium</FormControlLabelText>
             </FormControlLabel>
-            <Input className="my-1 w-full" size="sm">
+<Input className="my-1 w-full bg-white" size="sm">
               <InputField
                 type="text"
                 placeholder="Medium profile URL"
@@ -391,9 +391,9 @@ export default function EditProfileComponent() {
         <VStack space="xs">
           <FormControl>
             <FormControlLabel>
-              <FormControlLabelText>Website</FormControlLabelText>
+<FormControlLabelText className="text-white">Website</FormControlLabelText>
             </FormControlLabel>
-            <Input className="my-1 w-full" size="sm">
+<Input className="my-1 w-full bg-white" size="sm">
               <InputField
                 type="text"
                 placeholder="Primary website URL"
@@ -407,9 +407,9 @@ export default function EditProfileComponent() {
         <VStack space="xs">
           <FormControl>
             <FormControlLabel>
-              <FormControlLabelText>Website 2</FormControlLabelText>
+<FormControlLabelText className="text-white">Website 2</FormControlLabelText>
             </FormControlLabel>
-            <Input className="my-1 w-full" size="sm">
+<Input className="my-1 w-full bg-white" size="sm">
               <InputField
                 type="text"
                 placeholder="Secondary website URL"
@@ -423,9 +423,9 @@ export default function EditProfileComponent() {
         <VStack space="xs">
           <FormControl>
             <FormControlLabel>
-              <FormControlLabelText>Website 3</FormControlLabelText>
+<FormControlLabelText className="text-white">Website 3</FormControlLabelText>
             </FormControlLabel>
-            <Input className="my-1 w-full" size="sm">
+<Input className="my-1 w-full bg-white" size="sm">
               <InputField
                 type="text"
                 placeholder="Tertiary website URL"
@@ -437,10 +437,10 @@ export default function EditProfileComponent() {
         </VStack>
 
         <Button
-          className="bg-[#077f5f] rounded-lg mt-4"
+className="bg-white rounded-lg mt-4"
           onPress={() => setShowModal(true)}
         >
-          <ButtonText className="text-center text-white font-semibold">
+<ButtonText className="text-center text-black font-semibold">
             Save Changes
           </ButtonText>
         </Button>
