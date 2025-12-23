@@ -35,7 +35,7 @@ function RootLayoutNav() {
   console.log("session layout", session, pathname);
 
   return (
-    <GluestackUIProvider>
+    <GluestackUIProvider mode="light">
       <GestureHandlerRootView>
         <Stack>
           <Stack.Screen
@@ -58,7 +58,7 @@ function RootLayoutNav() {
           />
           <Stack.Screen name="+not-found" />
         </Stack>
-        <StatusBar style="auto" backgroundColor="transparent" />
+        <StatusBar style="dark" backgroundColor="transparent" />
       </GestureHandlerRootView>
     </GluestackUIProvider>
   );
