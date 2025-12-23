@@ -113,17 +113,16 @@ export default function LoginFormScreen() {
               Forgot Password?
             </ButtonText>
           </Button>
+          <Button
+            size="xl"
+            className="w-full rounded-full bg-white"
+            onPress={handleLogin}
+          >
+            <ButtonText className="flex-1 text-center text-black">
+              Log in
+            </ButtonText>
+          </Button>
         </VStack>
-
-        <Button
-          size="xl"
-          className="w-full rounded-full bg-white" //bg-[#40c057]
-          onPress={handleLogin}
-        >
-          <ButtonText className="flex-1 text-center text-black">
-            Log in
-          </ButtonText>
-        </Button>
 
         {error && <Text className="text-red-500 mt-2">{error}</Text>}
       </FormControl>
