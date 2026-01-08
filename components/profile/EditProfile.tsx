@@ -23,6 +23,8 @@ import { ScrollView, TouchableOpacity, View } from "react-native";
 import NotifyModal from "../NotifyModal";
 import { Button, ButtonText } from "../ui/button";
 import { useSession } from "@/lib/providers/AuthContext";
+import * as ImagePicker from "expo-image-picker";
+import { Ionicons } from "@expo/vector-icons";
 
 async function fetchAllAvatars() {
   try {
@@ -128,6 +130,25 @@ export default function EditProfileComponent() {
     setShowAvatarCarousel(false);
   };
 
+  const uploadCustomAvatar = async () => {
+    try {
+      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (status !== "granted") return;
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 0.9,
+      });
+      if (!result.canceled && result.assets?.length) {
+        setFormData((prev) => ({ ...prev, profilePic: result.assets[0].uri }));
+        setShowAvatarCarousel(false);
+      }
+    } catch (e) {
+      console.error("Error picking custom avatar:", e);
+    }
+  };
+
   return (
     <Box className="">
 <Heading size="xl" className="mb-6 text-white">
@@ -161,6 +182,12 @@ export default function EditProfileComponent() {
           contentContainerStyle={{ paddingHorizontal: 10 }}
         >
           <View className="flex-row space-x-4">
+            {/* Custom upload option as first circle */}
+            <TouchableOpacity onPress={uploadCustomAvatar} className="p-1">
+              <Avatar size="xl" className="bg-gray-200 border border-gray-300">
+                <Ionicons name="cloud-upload-outline" size={28} color="#111827" />
+              </Avatar>
+            </TouchableOpacity>
             {avatars.map((avatar, index) => (
               <TouchableOpacity
                 key={index}
