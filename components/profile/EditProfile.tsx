@@ -14,6 +14,7 @@ import { Heading } from "@/components/ui/heading";
 import { Input, InputField } from "@/components/ui/input";
 import { Textarea, TextareaInput } from "@/components/ui/textarea";
 import { VStack } from "@/components/ui/vstack";
+import { Text } from "@/components/ui/text";
 import { userApi } from "@/config/backend";
 import { useLocalSearchParams } from "expo-router";
 import { getDownloadURL, getStorage, listAll, ref } from "firebase/storage";
@@ -135,15 +136,21 @@ export default function EditProfileComponent() {
 
       {/* Profile Picture Section */}
       <TouchableOpacity onPress={pickImage} className="mb-6 self-center">
-        <Avatar size="2xl" className="border-2 border-black rounded-full">
-          <AvatarFallbackText>{formData?.username}</AvatarFallbackText>
-          <AvatarImage
-            key={formData?.profilePic}
-            source={{
-              uri: formData?.profilePic,
-            }}
-          />
-        </Avatar>
+        <View className="relative rounded-full overflow-hidden">
+          <Avatar size="2xl" className="border-2 border-black rounded-full">
+            <AvatarFallbackText>{formData?.username}</AvatarFallbackText>
+            <AvatarImage
+              key={formData?.profilePic}
+              source={{
+                uri: formData?.profilePic,
+              }}
+            />
+          </Avatar>
+          {/* Bottom banner overlay to indicate change action */}
+          <View className="absolute bottom-0 left-0 right-0 bg-black/60 py-2 rounded-b-full items-center">
+            <Text size="sm" className="text-white font-semibold">Change</Text>
+          </View>
+        </View>
       </TouchableOpacity>
 
       {showAvatarCarousel && (
