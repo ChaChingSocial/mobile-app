@@ -73,6 +73,7 @@ export default function EditProfileComponent() {
   const [showModal, setShowModal] = useState(false);
   const [avatars, setAvatars] = useState<string[]>([]);
   const [showAvatarCarousel, setShowAvatarCarousel] = useState(false);
+  const [showSocialLinks, setShowSocialLinks] = useState(false);
 
   useEffect(() => {
     loadAvatars();
@@ -258,10 +259,19 @@ export default function EditProfileComponent() {
           </FormControl>
         </VStack>
 
-<Heading size="md" className="mt-4 text-white">
-          Social Links
-        </Heading>
+<View className="mt-4 flex-row items-center justify-between">
+          <Heading size="md" className="text-white">Social Links</Heading>
+          <TouchableOpacity onPress={() => setShowSocialLinks((prev) => !prev)}>
+            <Ionicons
+              name={showSocialLinks ? "chevron-down" : "chevron-up"}
+              size={22}
+              color="white"
+            />
+          </TouchableOpacity>
+        </View>
 
+        {showSocialLinks && (
+          <>
         <VStack space="xs">
           <FormControl>
             <FormControlLabel>
@@ -470,14 +480,19 @@ export default function EditProfileComponent() {
           </FormControl>
         </VStack>
 
+        </>
+        )}
+        
         <Button
-className="bg-white rounded-lg mt-4"
+className={`bg-white rounded-lg ${showSocialLinks ? "mt-4" : "mt-16"}`}
           onPress={() => setShowModal(true)}
         >
 <ButtonText className="text-center text-black font-semibold">
             Save Changes
           </ButtonText>
         </Button>
+        {/* Filler space to push content and ensure background fills to tab bar when links are hidden */}
+        {!showSocialLinks && <View className="h-24" />}
       </VStack>
       <NotifyModal
         isOpen={showModal}
