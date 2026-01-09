@@ -1,5 +1,5 @@
 import AboutDescription from "@/components/about/AboutDescripition";
-import AccountDeletion from "@/components/about/AccountDeletion";
+// import AccountDeletion from "@/components/about/AccountDeletion";
 import ContactForm from "@/components/about/ContactForm";
 import Faq from "@/components/about/Faq";
 import { PartnerProgramIntro } from "@/components/about/PartnerProgramIntro";
@@ -12,7 +12,7 @@ export default function AboutScreen() {
       <ContactForm />
       {/*<PartnerProgramIntro />*/}
       <Faq />
-      <AccountDeletion />
+      {/* <AccountDeletion /> */}
     </ParallaxScrollView>
   );
 }
