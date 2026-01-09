@@ -16,8 +16,8 @@ import { Textarea, TextareaInput } from "@/components/ui/textarea";
 import { VStack } from "@/components/ui/vstack";
 import { Text } from "@/components/ui/text";
 import { userApi } from "@/config/backend";
-import { useLocalSearchParams } from "expo-router";
-import { getDownloadURL, getStorage, listAll, ref } from "firebase/storage";
+import { useLocalSearchParams, useRouter } from "expo-router";
+import { getDownloadURL, getStorage, listAll, ref, uploadBytes } from "firebase/storage";
 import { useEffect, useState } from "react";
 import { ScrollView, TouchableOpacity, View } from "react-native";
 import NotifyModal from "../NotifyModal";
@@ -49,8 +49,8 @@ export default function EditProfileComponent() {
   const userInfo = params?.userInfo
     ? (JSON.parse(params.userInfo) as User)
     : undefined;
-  const { session } = useSession();
-
+  const { session, updateSession } = useSession();
+  const router = useRouter();
   const [formData, setFormData] = useState({
     profilePic: session?.profilePic,
     username: userInfo?.username,
@@ -113,6 +113,13 @@ export default function EditProfileComponent() {
         },
       };
       await userApi.updateUser({ user });
+      // Update in-memory session so avatar/header and posts refresh immediately
+      if (session) {
+        updateSession({
+          displayName: formData.username ?? session.displayName,
+          profilePic: formData.profilePic ?? session.profilePic,
+        });
+      }
     } catch (error) {
       console.error("Error updating profile:", error);
     }
@@ -131,6 +138,17 @@ export default function EditProfileComponent() {
     setShowAvatarCarousel(false);
   };
 
+  const uploadImageToStorage = async (localUri: string) => {
+    const storage = getStorage();
+    const filename = `/app-images/avatars/custom/${session?.uid ?? "anon"}_${Date.now()}.jpg`;
+    const storageRef = ref(storage, filename);
+    const resp = await fetch(localUri);
+    const blob = await resp.blob();
+    await uploadBytes(storageRef, blob);
+    const url = await getDownloadURL(storageRef);
+    return url;
+  };
+
   const uploadCustomAvatar = async () => {
     try {
       const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -142,7 +160,9 @@ export default function EditProfileComponent() {
         quality: 0.9,
       });
       if (!result.canceled && result.assets?.length) {
-        setFormData((prev) => ({ ...prev, profilePic: result.assets[0].uri }));
+        const uri = result.assets[0].uri;
+        const downloadUrl = await uploadImageToStorage(uri);
+        setFormData((prev) => ({ ...prev, profilePic: downloadUrl }));
         setShowAvatarCarousel(false);
       }
     } catch (e) {
@@ -485,7 +505,10 @@ export default function EditProfileComponent() {
         
         <Button
 className={`bg-white rounded-lg ${showSocialLinks ? "mt-4" : "mt-16"}`}
-          onPress={() => setShowModal(true)}
+          onPress={async () => {
+            await handleSubmit();
+            router.back();
+          }}
         >
 <ButtonText className="text-center text-black font-semibold">
             Save Changes

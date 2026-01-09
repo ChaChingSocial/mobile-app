@@ -178,7 +178,10 @@ export default function Profile() {
           </AvatarFallbackText>
           <AvatarImage
             source={{
-              uri: userInfo?.profilePic || session?.profilePic,
+              uri:
+                (currentUserId && session?.uid && currentUserId === session.uid && session.profilePic)
+                  ? session.profilePic
+                  : (userInfo?.profilePic || session?.profilePic),
             }}
           />
         </Avatar>

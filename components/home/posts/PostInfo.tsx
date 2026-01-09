@@ -34,7 +34,10 @@ export const PostInfo = ({
 
   const displayName = authorName ?? post.posterName;
   const displayUserId = authorId ?? post.posterUserId;
-  const displayPic = authorPic ?? post.posterPic;
+  // Prefers current session avatar when the post belongs to the logged-in user to update it instantly
+  const displayPic = (displayUserId && user?.uid && displayUserId === user.uid && user.profilePic)
+    ? user.profilePic
+    : (authorPic ?? post.posterPic);
 
   const [isFinfluencer, setIsFinfluencer] = useState(false);
 
