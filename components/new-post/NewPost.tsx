@@ -43,6 +43,18 @@ export default function NewPost() {
   const createdPostCommunityId = usePostStore(
     (state) => state.createdPostCommunityId
   );
+  const lockCommunitySelection = usePostStore(
+    (state) => state.lockCommunitySelection
+  );
+  const setLockCommunitySelection = usePostStore(
+    (state) => state.setLockCommunitySelection
+  );
+  const setCreatedPostCommunityData = usePostStore(
+    (state) => state.setCreatedPostCommunityData
+  );
+  const setCreatedPostCommunityId = usePostStore(
+    (state) => state.setCreatedPostCommunityId
+  );
   const setCreatedPost = usePostStore((state) => state.setCreatedPost);
 
   const navigation = useNavigation();
@@ -62,6 +74,11 @@ export default function NewPost() {
   console.log("Tgot tag", tags);
 
   useEffect(() => {
+    // If we did NOT come from community FAB, ensure no community is preselected
+    if (!lockCommunitySelection) {
+      setCreatedPostCommunityData(null);
+      setCreatedPostCommunityId("");
+    }
     const showSubscription = Keyboard.addListener("keyboardDidShow", (e) => {
       setKeyboardHeight(e.endCoordinates.height);
     });
@@ -72,6 +89,8 @@ export default function NewPost() {
     return () => {
       showSubscription.remove();
       hideSubscription.remove();
+      // Always unlock on exit so homepage flow remains unchanged
+      setLockCommunitySelection(false);
     };
   }, []);
 
@@ -159,7 +178,10 @@ export default function NewPost() {
 
         <TouchableOpacity
           className="bg-gray-300 rounded-full px-4 flex-row items-center gap-1"
-          onPress={() => router.push("/(protected)/search-community")}
+          disabled={lockCommunitySelection}
+          onPress={() => {
+            if (!lockCommunitySelection) router.push("/(protected)/search-community");
+          }}
         >
           {createdPostCommunityData ? (
             <HStack space="md" className="py-1 flex items-center w-fit">
@@ -183,7 +205,9 @@ export default function NewPost() {
                 🐷Select a community
             </Text>
           )}
-          <Ionicons name="chevron-expand-outline" size={24} color="black" />
+          {!lockCommunitySelection && (
+            <Ionicons name="chevron-expand-outline" size={24} color="black" />
+          )}
         </TouchableOpacity>
 
         <TextInput

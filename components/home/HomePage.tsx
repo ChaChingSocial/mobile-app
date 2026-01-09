@@ -62,6 +62,11 @@ export default function HomePage() {
 
   const postOptions: PostOption[] = [
     {
+      title: "Article",
+      icon: <FontAwesome5 name="newspaper" size={18} color="white" />,
+      route: "/(protected)/create-post/new-article-post",
+    },
+    {
       title: "Video Link",
       icon: <FontAwesome5 name="video" size={18} color="white" />,
       route: "/(protected)/create-post/new-link-post",
@@ -201,6 +206,7 @@ export default function HomePage() {
 
   const handleOptionPress = async (
     route:
+      | "/(protected)/create-post/new-article-post"
       | "/(protected)/create-post/new-link-post"
       | "/(protected)/create-post/new-image-post"
       | "/(protected)/create-post/new-podcast-post"

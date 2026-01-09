@@ -13,15 +13,18 @@ interface PostState {
   posts: Post[];
   pinPost: { id: string; order: number } | null;
   pinnedPosts: Post[];
+  // When true, the create-post screens should not allow changing community
+  lockCommunitySelection: boolean;
   setCreatedPost: (createdPost: Post) => void;
   setDeletedPostId: (deletedPostId: string) => void;
   setCreatedPostCommunityId: (createdPostCommunityId: string) => void;
-  setCreatedPostCommunityData: (createdPostCommunityData: Community) => void;
+  setCreatedPostCommunityData: (createdPostCommunityData: Community | null) => void;
   setCreatedPostImage: (createdPostImage: Picture[]) => void;
   setCreatedPostVideo: (createdPostVideo: LinkPreview) => void;
   setPosts: (posts: Post[]) => void;
   setPinPost: (pinPost: { id: string; order: number }) => void;
   setPinnedPosts: (pinnedPosts: Post[]) => void;
+  setLockCommunitySelection: (lock: boolean) => void;
 }
 
 export const usePostStore = create<PostState>((set) => ({
@@ -34,6 +37,7 @@ export const usePostStore = create<PostState>((set) => ({
   posts: [],
   pinPost: null,
   pinnedPosts: [],
+  lockCommunitySelection: false,
   setCreatedPost: (createdPost) => set({ createdPost }),
   setDeletedPostId: (deletedPostId) => set({ deletedPostId }),
   setCreatedPostCommunityId: (createdPostCommunityId) =>
@@ -45,4 +49,5 @@ export const usePostStore = create<PostState>((set) => ({
   setPosts: (posts) => set({ posts }),
   setPinPost: (pinPost) => set({ pinPost }),
   setPinnedPosts: (pinnedPosts) => set({ pinnedPosts: pinnedPosts ?? [] }),
+  setLockCommunitySelection: (lock: boolean) => set({ lockCommunitySelection: lock }),
 }));

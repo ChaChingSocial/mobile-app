@@ -14,6 +14,7 @@ import { updatePost } from "@/lib/api/newsfeed";
 import { Post as PostType } from "@/types/post";
 import HtmlRenderText from "@/components/common/HtmlRenderText";
 import PostTags from "../post-editor/PostTag";
+import { stripHtml } from "@/lib/utils/stripHtml";
 
 const TagsInput = ({
   value,
@@ -130,7 +131,7 @@ export function ArticlePost({
             </Text>
             {post.linkPreview?.description && (
               <Text className="text-gray-500">
-                {post.linkPreview.description.slice(0, 120)}...
+                {stripHtml(post.linkPreview.description).slice(0, 100)}...
               </Text>
             )}
             <Text className="text-green-600 font-bold mt-1">Read more</Text>

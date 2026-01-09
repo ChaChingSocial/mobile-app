@@ -1,25 +1,94 @@
 import { Community } from "@/_sdk";
 import NewsfeedList from "@/components/home/NewsfeedList";
+import { Box } from "@/components/ui/box";
+import { AddIcon } from "@/components/ui/icon";
 import { Text } from "@/components/ui/text";
+import {
+  Modal,
+  ModalBackdrop,
+  ModalBody,
+  ModalContent,
+} from "@/components/ui/modal";
+import { VStack } from "@/components/ui/vstack";
 import { getSingleCommunityBySlug } from "@/lib/api/communities";
 import { getPostsByNewsfeedIdPaged } from "@/lib/api/newsfeed";
 import { useSession } from "@/lib/providers/AuthContext";
+import { usePostStore } from "@/lib/store/post";
 import { stripHtml } from "@/lib/utils/stripHtml";
 import { Post } from "@/types/post";
-import { useLocalSearchParams } from "expo-router";
-import { useEffect, useState } from "react";
-import { Image, ScrollView, View, RefreshControl } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { useLocalSearchParams, useRouter } from "expo-router";
+import { useEffect, useRef, useState } from "react";
+import {
+  Image,
+  ScrollView,
+  View,
+  RefreshControl,
+  Animated,
+  Easing,
+  TouchableOpacity,
+  Platform,
+  Alert,
+} from "react-native";
 import { Center } from "@/components/ui/center";
 import { Spinner } from "@/components/ui/spinner";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import {
+  Entypo,
+  FontAwesome5,
+  MaterialCommunityIcons,
+} from "@expo/vector-icons";
+import * as ImagePicker from "expo-image-picker";
+import * as MediaLibrary from "expo-media-library";
 
 export default function SingleCommunity() {
   const params = useLocalSearchParams();
   const { slug, communityId } = params;
   const { session } = useSession();
+  const router = useRouter();
   const PAGE_SIZE = 3;
-  // const navigate = useNavigation();
-  // const router = useRouter();
+
+  // FAB state/animation copied from HomePage for consistency
+  const [showOptions, setShowOptions] = useState(false);
+  const insets = useSafeAreaInsets();
+  const fabBottom = Platform.OS === "ios" ? insets.bottom + 16 : 28;
+
+  const rotationAnim = useRef(new Animated.Value(0)).current;
+  const scaleAnim = useRef(new Animated.Value(1)).current;
+  const opacityAnim = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    const animations = [
+      Animated.timing(rotationAnim, {
+        toValue: showOptions ? 1 : 0,
+        duration: 200,
+        easing: Easing.linear,
+        useNativeDriver: true,
+      }),
+      Animated.timing(scaleAnim, {
+        toValue: showOptions ? 0 : 1,
+        duration: 200,
+        easing: Easing.linear,
+        useNativeDriver: true,
+      }),
+      Animated.timing(opacityAnim, {
+        toValue: showOptions ? 1 : 0,
+        duration: 200,
+        useNativeDriver: true,
+      }),
+    ];
+
+    Animated.parallel(animations).start();
+  }, [showOptions]);
+
+  const rotation = rotationAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: ["0deg", "45deg"],
+  });
+
+  const scale = scaleAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0, 1],
+  });
 
   // const routes = navigate.getState()?.routes;
   // const prevRoute = routes[routes.length - 2];
@@ -31,6 +100,19 @@ export default function SingleCommunity() {
   const [lastDoc, setLastDoc] = useState<any>(null);
   const [initialLoading, setInitialLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
+
+  // Post store setters for preselecting/locking community and passing media
+  const setCreatedPostImage = usePostStore((state) => state.setCreatedPostImage);
+  const setCreatedPostVideo = usePostStore((state) => state.setCreatedPostVideo);
+  const setCreatedPostCommunityData = usePostStore(
+    (state) => state.setCreatedPostCommunityData
+  );
+  const setCreatedPostCommunityId = usePostStore(
+    (state) => state.setCreatedPostCommunityId
+  );
+  const setLockCommunitySelection = usePostStore(
+    (state) => state.setLockCommunitySelection
+  );
 
   const fetchMore = async () => {
     if (!communityId || !lastDoc || loadingMore) return;
@@ -125,9 +207,147 @@ export default function SingleCommunity() {
     setRefreshing(false);
   };
 
+  // Helper: media permissions + pickers (same as HomePage)
+  const requestMediaPermissions = async (mediaType: "photo" | "video") => {
+    const [mediaLibraryStatus, imagePickerStatus] = await Promise.all([
+      MediaLibrary.requestPermissionsAsync(),
+      ImagePicker.requestMediaLibraryPermissionsAsync(),
+    ]);
+
+    if (
+      mediaLibraryStatus.status !== "granted" ||
+      imagePickerStatus.status !== "granted"
+    ) {
+      Alert.alert(
+        "Permission required",
+        `Sorry, we need access to your media library to select ${
+          mediaType === "photo" ? "images" : "videos"
+        }!`
+      );
+      return false;
+    }
+    return true;
+  };
+
+  const pickVideo = async () => {
+    if (!(await requestMediaPermissions("video"))) return;
+    try {
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Videos,
+        allowsEditing: false,
+        allowsMultipleSelection: false,
+        quality: 1,
+      });
+      if (!result.canceled && result.assets) {
+        const pickedVideo = result.assets[0];
+        const video = {
+          url: pickedVideo.uri,
+          description: pickedVideo.fileName ?? "",
+          title: pickedVideo.fileName ?? "Untitled Video",
+          image: pickedVideo.uri,
+          tags: [],
+          publisher: session?.displayName || "Anonymous",
+          publisherPicUrl: session?.profilePic || "",
+        };
+        setCreatedPostVideo(video as any);
+      }
+    } catch (error) {
+      console.error("Error picking video:", error);
+    }
+  };
+
+  const pickImage = async () => {
+    if (!(await requestMediaPermissions("photo"))) return;
+    try {
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.All,
+        allowsEditing: false,
+        allowsMultipleSelection: true,
+        quality: 1,
+        selectionLimit: 10,
+      });
+      if (!result.canceled && result.assets) {
+        const pictures = result.assets.map((asset, idx) => ({
+          id: asset.assetId ?? `${idx}-${asset.fileName}`,
+          url: asset.uri,
+          description: asset.fileName ?? "",
+          createdAt: new Date(),
+          modifiedAt: new Date(),
+        }));
+        if (pictures.length > 0) {
+          setCreatedPostImage(pictures as any);
+        }
+      }
+    } catch (error) {
+      console.error("Error picking images:", error);
+    }
+  };
+
+  const postOptions = [
+    {
+      title: "Article",
+      icon: <FontAwesome5 name="newspaper" size={18} color="white" />,
+      route: "/(protected)/create-post/new-article-post" as const,
+    },
+    {
+      title: "Video Link",
+      icon: <FontAwesome5 name="video" size={18} color="white" />,
+      route: "/(protected)/create-post/new-link-post" as const,
+    },
+    {
+      title: "Images",
+      icon: <Entypo name="image" size={20} color="white" />,
+      route: "/(protected)/create-post/new-image-post" as const,
+    },
+    {
+      title: "Podcast",
+      icon: <FontAwesome5 name="spotify" size={18} color="white" />,
+      route: "/(protected)/create-post/new-podcast-post" as const,
+    },
+    // Event option intentionally commented out to match HomePage
+  ];
+
+  const selectedCommunityId = Array.isArray(communityId)
+    ? (communityId[0] as string)
+    : (communityId as string);
+
+  const prepareCommunitySelection = () => {
+    if (communityData?.id) {
+      setCreatedPostCommunityData(communityData);
+    }
+    if (selectedCommunityId) setCreatedPostCommunityId(selectedCommunityId);
+    setLockCommunitySelection(true);
+  };
+
+  const handleOptionPress = async (
+    route:
+      | "/(protected)/create-post/new-article-post"
+      | "/(protected)/create-post/new-link-post"
+      | "/(protected)/create-post/new-image-post"
+      | "/(protected)/create-post/new-podcast-post"
+      | "/(protected)/create-post/new-event-post"
+  ) => {
+    setShowOptions(false);
+    prepareCommunitySelection();
+
+    if (route === "/(protected)/create-post/new-image-post") {
+      await pickImage();
+    } else if (route === "/(protected)/create-post/new-link-post") {
+      await pickVideo();
+    }
+
+    router.push(route);
+  };
+
   return (
-    // <SafeAreaView>
-      <ScrollView className="bg-[#077f5f] flex-1" refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />} onScroll={onScrollNearBottom} scrollEventThrottle={32}>
+    <Box className="flex-1 relative">
+      {/* Content */}
+      <ScrollView
+        className="bg-[#077f5f] flex-1"
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+        onScroll={onScrollNearBottom}
+        scrollEventThrottle={32}
+      >
         {communityData.image && (
           <View className="w-full h-60 overflow-hidden">
             <Image
@@ -142,11 +362,6 @@ export default function SingleCommunity() {
             <Text className="text-2xl font-bold flex-1 mr-2 text-white">
               {communityData.title}
             </Text>
-            {/*<View className="bg-green-100 px-2 py-1 rounded-full">*/}
-            {/*  <Text className="text-white text-xs font-medium">*/}
-            {/*    {communityData.status}*/}
-            {/*  </Text>*/}
-            {/*</View>*/}
           </View>
           {communityData.featured && (
             <View className="bg-amber-400 self-start px-2 py-1 rounded-full mb-3">
@@ -155,26 +370,21 @@ export default function SingleCommunity() {
               </Text>
             </View>
           )}
-          <Text className="text-gray-500 text-sm mb-4">
-            {/* Created on {createdAt} */}
-          </Text>
-            <View className="mb-6">
-                <Text className="text-base text-white" numberOfLines={isExpanded ? undefined : 3}>
-                    {stripHtml(communityData?.description ?? "")}
-                </Text>
-                <Text
-                    className="text-white mt-2 underline"
-                    onPress={() => setIsExpanded(!isExpanded)}
-                >
-                    {isExpanded ? "Show less" : "Show more"}
-                </Text>
-            </View>
+          <Text className="text-gray-500 text-sm mb-4"></Text>
+          <View className="mb-6">
+            <Text className="text-base text-white" numberOfLines={isExpanded ? undefined : 3}>
+              {stripHtml(communityData?.description ?? "")}
+            </Text>
+            <Text
+              className="text-white mt-2 underline"
+              onPress={() => setIsExpanded(!isExpanded)}
+            >
+              {isExpanded ? "Show less" : "Show more"}
+            </Text>
+          </View>
 
           {communityData.interests && communityData.interests.length > 0 && (
             <View className="mb-6">
-              {/*<Text className="font-bold text-lg mb-2 text-white">*/}
-              {/*  Community Interests*/}
-              {/*</Text>*/}
               <View className="flex-row flex-wrap">
                 {communityData.interests.map((interest, index) => (
                   <View
@@ -201,9 +411,68 @@ export default function SingleCommunity() {
             className="w-full"
           />
         )}
-        {/* simple spacer to make sure onScroll bottom detection triggers */}
         <View style={{ height: 24 }} />
       </ScrollView>
-    // </SafeAreaView>
+
+      {/* Floating Action Button (same as HomePage) */}
+      <Animated.View
+        style={{
+          position: "absolute",
+          bottom: fabBottom,
+          right: 12,
+          zIndex: 50,
+          transform: [{ rotate: rotation }, { scale }],
+          opacity: scaleAnim,
+        }}
+      >
+        <TouchableOpacity
+          className="p-3 h-16 w-16 bg-secondary-0 shadow-2xl rounded-full items-center justify-center"
+          onPress={() => setShowOptions(true)}
+        >
+          <AddIcon color="white" className="p-5 w-2 h-2" />
+        </TouchableOpacity>
+      </Animated.View>
+
+      {/* Post Options Modal */}
+      <Modal isOpen={showOptions} onClose={() => setShowOptions(false)}>
+        <ModalBackdrop style={{ backgroundColor: "black" }} />
+        <ModalContent className="w-fit absolute bg-transparent -right-4 bottom-10 border-0">
+          <ModalBody className="p-0">
+            <VStack className="space-y-2 mr-2">
+              {postOptions.map((option, index) => (
+                <Box key={index} className="flex-row-reverse items-center pl-2 py-2">
+                  <TouchableOpacity onPress={() => handleOptionPress(option.route)}>
+                    <View className="w-12 h-12 bg-blue-500 rounded-full justify-center items-center ml-2">
+                      {option.icon}
+                    </View>
+                  </TouchableOpacity>
+                  <Text size="sm" className="text-white font-medium">
+                    {option.title}
+                  </Text>
+                </Box>
+              ))}
+            </VStack>
+
+            <Animated.View style={{ opacity: opacityAnim }}>
+              <TouchableOpacity
+                className="flex-row-reverse items-center rounded-full pl-2 py-2 mr-1"
+                onPress={() => {
+                  setShowOptions(false);
+                  prepareCommunitySelection();
+                  router.push("/(protected)/create-post");
+                }}
+              >
+                <View className="h-16 w-16 bg-secondary-0 rounded-full justify-center items-center ml-2">
+                  <MaterialCommunityIcons name="feather" size={24} color="white" />
+                </View>
+                <Text size="md" className="text-white font-semibold">
+                  Create a Post
+                </Text>
+              </TouchableOpacity>
+            </Animated.View>
+          </ModalBody>
+        </ModalContent>
+      </Modal>
+    </Box>
   );
 }

@@ -6,7 +6,7 @@ import { usePostStore } from "@/lib/store/post";
 import { LinkPreview, Post as PostType } from "@/types/post";
 import { AntDesign, FontAwesome5, Ionicons } from "@expo/vector-icons";
 import { useNavigation, useRouter } from "expo-router";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   Image,
   Keyboard,
@@ -36,7 +36,45 @@ import { Heading } from "../ui/heading";
 import { HStack } from "../ui/hstack";
 import { Input, InputField } from "../ui/input";
 
-export default function NewImagePost() {
+// Lightweight OpenGraph scraper for RN (this has no DOMParser needed)
+function parseMeta(html: string, names: string[]): string | null {
+  for (const name of names) {
+    const pattern = new RegExp(
+      `<meta[^>]+(?:property|name)=["']${name}["'][^>]*content=["']([^"']+)["'][^>]*>`,
+      "i"
+    );
+    const m = html.match(pattern);
+    if (m && m[1]) return m[1];
+  }
+  return null;
+}
+
+function parseTitle(html: string): string | null {
+  const og = parseMeta(html, ["og:title", "twitter:title"]); 
+  if (og) return og;
+  const m = html.match(/<title[^>]*>([^<]+)<\/title>/i);
+  return m?.[1] ?? null;
+}
+
+function parseDescription(html: string): string | null {
+  const d = parseMeta(html, [
+    "og:description",
+    "twitter:description",
+    "description",
+  ]);
+  return d ?? null;
+}
+
+function parseImage(html: string): string | null {
+  const i = parseMeta(html, [
+    "og:image:secure_url",
+    "og:image",
+    "twitter:image",
+  ]);
+  return i ?? null;
+}
+
+export default function NewArticlePost() {
   const { session: user } = useSession();
 
   const createdPostCommunityData = usePostStore(
@@ -58,7 +96,6 @@ export default function NewImagePost() {
     (state) => state.setCreatedPostCommunityId
   );
   const setCreatedPost = usePostStore((state) => state.setCreatedPost);
-  const createdPostVideo = usePostStore((state) => state.createdPostVideo);
 
   const navigation = useNavigation();
   const router = useRouter();
@@ -69,12 +106,12 @@ export default function NewImagePost() {
   const [keyboardHeight, setKeyboardHeight] = useState(0);
   const [tags, setTags] = useState<string[]>([]);
   const [tagDrawerVisible, setTagDrawerVisible] = useState(false);
-  const [videoLink, setVideoLink] = useState("");
 
-  // Get the navigation state
-  const state = navigation.getState();
-  console.log("Navigation state:", state);
-  console.log("Tgot tag", tags);
+  const [articleLink, setArticleLink] = useState("");
+  const [preview, setPreview] = useState<
+    { title?: string; description?: string; image?: string } | null
+  >(null);
+  const debounceRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     // If we did NOT come from community FAB, ensure no community is preselected
@@ -96,26 +133,63 @@ export default function NewImagePost() {
     };
   }, []);
 
+  // Fetch OG metadata when link changes (debounced)
+  useEffect(() => {
+    if (!articleLink || !/^https?:\/\//i.test(articleLink)) return;
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(async () => {
+      try {
+        const res = await fetch(articleLink, {
+          headers: {
+            // Uses a common UA to prevent gatekeeping (blocks)
+            "User-Agent":
+              "Mozilla/5.0 (iPhone; CPU iPhone OS 15_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/15.0 Mobile/15E148 Safari/604.1",
+          },
+        });
+        const html = await res.text();
+        const t = parseTitle(html) ?? undefined;
+        const d = parseDescription(html) ?? undefined;
+        const i = parseImage(html) ?? undefined;
+        const truncated = d ? (d.length > 300 ? d.slice(0, 300) : d) : undefined;
+        const next = { title: t, description: truncated, image: i };
+        setPreview(next);
+        // Only prefill if fields are empty to avoid overwriting user edits
+        if (!newPostTitle && t) setNewPostTitle(t);
+        if (!newPostContent && truncated) setNewPostContent(truncated);
+      } catch (err) {
+        // Silently ignore so no prefill if it can't fetch
+        setPreview(null);
+      }
+    }, 500);
+
+    return () => {
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+    };
+  }, [articleLink]);
+
   const handlePost = async () => {
     try {
       const contentHtml = await richText.current?.getContentHtml();
 
-      const LinkPreview: LinkPreview = {
-        url: videoLink,
-        title: newPostTitle,
-        description: newPostContent,
-        image: "",
-        tags,
-        publisher: user?.displayName || "Anonymous",
-        publisherPicUrl: user?.profilePic || "",
-      };
+      const linkPreview: LinkPreview | null = articleLink
+        ? {
+            url: articleLink,
+            title: newPostTitle || preview?.title || "",
+            // Uses the article's description only (avoid user's thoughts/HTML here)
+            description: (preview?.description || "").slice(0, 300),
+            image: preview?.image || "",
+            tags,
+            publisher: user?.displayName || "Anonymous",
+            publisherPicUrl: user?.profilePic || "",
+          }
+        : null;
 
-      if (user?.uid && contentHtml) {
+      if (user?.uid) {
         const post: PostType = {
           posterUserId: user?.uid,
           posterName: user?.displayName || "Anonymous",
           posterPic: user?.profilePic || "",
-          post: contentHtml,
+          post: contentHtml || "",
           title: newPostTitle,
           createdAt: new Date(),
           modifiedAt: new Date(),
@@ -124,20 +198,16 @@ export default function NewImagePost() {
           tags,
           pictures: [],
           documents: [],
-          linkPreview:
-            createdPostVideo !== null ? createdPostVideo : LinkPreview,
-          category: "video",
+          linkPreview,
+          category: "link",
           newsfeedId:
             (createdPostCommunityId as string) ||
             ((createdPostCommunityData as any)?.id as string | undefined),
         };
 
-        console.log("Post object created:", post);
         setCreatedPost(post);
         createPost(post)
           .then((createdPost) => {
-            console.log("Post created successfully:", createdPost);
-
             // Redirect to the community the post was created in
             const slug = createdPostCommunityData?.slug as string | undefined;
             const communityId =
@@ -154,7 +224,7 @@ export default function NewImagePost() {
             }
           })
           .catch((error) => {
-            console.error("Error creating video post:", error);
+            console.error("Error creating article post:", error);
           });
       }
     } catch (e) {
@@ -162,8 +232,6 @@ export default function NewImagePost() {
     }
   };
 
-  console.log("New Community ID:", createdPostCommunityData?.id);
-  console.log("New Post Title:", newPostTitle);
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === "ios" ? "padding" : "height"}
@@ -175,13 +243,8 @@ export default function NewImagePost() {
           <TouchableOpacity onPress={() => navigation.goBack()}>
             <AntDesign name="close" size={30} color="black" />
           </TouchableOpacity>
-          <TouchableOpacity
-            className="bg-blue-500 rounded-full"
-            onPress={handlePost}
-          >
-            <Text className="px-5 py-2 text-white font-bold text-base">
-              Post
-            </Text>
+          <TouchableOpacity className="bg-blue-500 rounded-full" onPress={handlePost}>
+            <Text className="px-5 py-2 text-white font-bold text-base">Post</Text>
           </TouchableOpacity>
         </Box>
 
@@ -210,9 +273,7 @@ export default function NewImagePost() {
               </Heading>
             </HStack>
           ) : (
-            <Text className="text-gray-900 my-2.5 font-bold w-fit">
-                🐷Select a community
-            </Text>
+            <Text className="text-gray-900 my-2.5 font-bold w-fit">🐷Select a community</Text>
           )}
           {!lockCommunitySelection && (
             <Ionicons name="chevron-expand-outline" size={24} color="black" />
@@ -228,26 +289,20 @@ export default function NewImagePost() {
           placeholder="Title"
         />
 
-        {createdPostVideo && (
+        {preview?.image && (
           <Box className="flex-row flex-wrap gap-2 mt-5">
             <Image
-              key={createdPostVideo.url}
-              source={{ uri: createdPostVideo.url }}
+              source={{ uri: preview.image }}
               className="w-[100px] h-[100px] rounded-lg"
             />
           </Box>
         )}
 
-        <Input
-          variant="outline"
-          size="md"
-          isInvalid={false}
-          className="mt-3 rounded-3xl"
-        >
+        <Input variant="outline" size="md" isInvalid={false} className="mt-3 rounded-3xl">
           <InputField
-            placeholder="Enter Video Link (optional)"
-            value={videoLink}
-            onChangeText={(value) => setVideoLink(value)}
+            placeholder="Paste article link"
+            value={articleLink}
+            onChangeText={(value) => setArticleLink(value)}
           />
         </Input>
 
@@ -261,9 +316,7 @@ export default function NewImagePost() {
               <FontAwesome5 name="edit" size={16} color="black" />
             </HStack>
           ) : (
-            <Text className="text-gray-900 my-2.5 font-bold w-fit">
-              Add a tag (optional)
-            </Text>
+            <Text className="text-gray-900 my-2.5 font-bold w-fit">Add a tag (optional)</Text>
           )}
         </TouchableOpacity>
 
@@ -275,7 +328,7 @@ export default function NewImagePost() {
             <RichEditor
               ref={richText}
               onChange={(text) => setNewPostContent(text)}
-              placeholder="What's on your mind?"
+              placeholder="Say something about this article (optional)"
               initialContentHTML={newPostContent}
               editorStyle={{
                 backgroundColor: "transparent",
@@ -305,8 +358,6 @@ export default function NewImagePost() {
           actions.insertBulletsList,
           actions.insertOrderedList,
           actions.insertLink,
-          // actions.insertImage,
-          // actions.insertVideo,
         ]}
         iconMap={{
           [actions.heading1]: ({ tintColor }: { tintColor?: string }) => (
@@ -324,6 +375,7 @@ export default function NewImagePost() {
           marginRight: -10,
         }}
       />
+
       <Drawer
         isOpen={tagDrawerVisible}
         onClose={() => {

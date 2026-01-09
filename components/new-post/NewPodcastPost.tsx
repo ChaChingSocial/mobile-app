@@ -44,6 +44,18 @@ export default function NewPodcastPost() {
   const createdPostCommunityId = usePostStore(
     (state) => state.createdPostCommunityId
   );
+  const lockCommunitySelection = usePostStore(
+    (state) => state.lockCommunitySelection
+  );
+  const setLockCommunitySelection = usePostStore(
+    (state) => state.setLockCommunitySelection
+  );
+  const setCreatedPostCommunityData = usePostStore(
+    (state) => state.setCreatedPostCommunityData
+  );
+  const setCreatedPostCommunityId = usePostStore(
+    (state) => state.setCreatedPostCommunityId
+  );
   const setCreatedPost = usePostStore((state) => state.setCreatedPost);
 
   const navigation = useNavigation();
@@ -67,6 +79,11 @@ export default function NewPodcastPost() {
   console.log("Previous route:", previousRoute?.name);
 
   useEffect(() => {
+    // If we did NOT come from community FAB, ensure no community is preselected
+    if (!lockCommunitySelection) {
+      setCreatedPostCommunityData(null);
+      setCreatedPostCommunityId("");
+    }
     const showSubscription = Keyboard.addListener("keyboardDidShow", (e) => {
       setKeyboardHeight(e.endCoordinates.height);
     });
@@ -77,6 +94,7 @@ export default function NewPodcastPost() {
     return () => {
       showSubscription.remove();
       hideSubscription.remove();
+      setLockCommunitySelection(false);
     };
   }, []);
 
@@ -195,7 +213,10 @@ export default function NewPodcastPost() {
 
         <TouchableOpacity
           className="bg-gray-300 rounded-full px-4 flex-row items-center gap-1 "
-          onPress={() => router.push("/(protected)/search-community")}
+          disabled={lockCommunitySelection}
+          onPress={() => {
+            if (!lockCommunitySelection) router.push("/(protected)/search-community");
+          }}
         >
           {createdPostCommunityData ? (
             <HStack space="md" className="py-1 flex items-center w-fit">
@@ -217,7 +238,9 @@ export default function NewPodcastPost() {
                 🐷Select a community
             </Text>
           )}
-          <Ionicons name="chevron-expand-outline" size={24} color="black" />
+          {!lockCommunitySelection && (
+            <Ionicons name="chevron-expand-outline" size={24} color="black" />
+          )}
         </TouchableOpacity>
 
         <Box className="w-full">
