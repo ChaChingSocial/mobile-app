@@ -16,8 +16,8 @@
         "NSAppTransportSecurity": {
           "NSAllowsArbitraryLoads": true
         },
-        "NSPhotoLibraryUsageDescription": "Allow this app to access your photos to upload images.",
-        "NSPhotoLibraryAddUsageDescription": "Allow this app to save images to your library.",
+        "NSPhotoLibraryUsageDescription": "ChaChing Social needs access to your photo library so you can choose photos or videos to upload to posts, events, and your profile. We only access items you select.",
+        "NSPhotoLibraryAddUsageDescription": "ChaChing Social uses this permission to save images you choose (for example, a photo you download or export from the app) to your photo library.",
         "ITSAppUsesNonExemptEncryption": false
       }
     },
@@ -44,7 +44,7 @@
       [
         "expo-image-picker",
         {
-          "photosPermission": "Allow this app to access your photos to upload images."
+          "photosPermission": "Allow ChaChing Social to access only the photos or videos you select so you can upload them to posts, events, or your profile."
         }
       ],
       "@react-native-google-signin/google-signin",
