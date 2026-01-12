@@ -103,6 +103,12 @@ export interface Blog1 {
      * @memberof Blog1
      */
     ipfsHash?: string;
+    /**
+     * The unique identifier for the blog.
+     * @type {string}
+     * @memberof Blog1
+     */
+    id?: string;
 }
 
 /**
@@ -141,6 +147,7 @@ export function Blog1FromJSONTyped(json: any, ignoreDiscriminator: boolean): Blo
         'postId': json['postId'] == null ? undefined : json['postId'],
         'authorProfilePic': json['authorProfilePic'] == null ? undefined : json['authorProfilePic'],
         'ipfsHash': json['ipfsHash'] == null ? undefined : json['ipfsHash'],
+        'id': json['id'] == null ? undefined : json['id'],
     };
 }
 
@@ -169,6 +176,7 @@ export function Blog1ToJSONTyped(value?: Blog1 | null, ignoreDiscriminator: bool
         'postId': value['postId'],
         'authorProfilePic': value['authorProfilePic'],
         'ipfsHash': value['ipfsHash'],
+        'id': value['id'],
     };
 }
 

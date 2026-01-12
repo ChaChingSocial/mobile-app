@@ -1,4 +1,5 @@
 import { DrawerProvider } from "@/lib/providers/DrawerContext";
+import { BlockedUsersProvider } from "@/lib/providers/BlockedUsersContext";
 import {
   getAuth,
   onAuthStateChanged,
@@ -27,12 +28,13 @@ export default function ProtectedLayout() {
 
   return (
     <DrawerProvider>
-      <Stack
-        initialRouteName="(home)"
-        screenOptions={() => ({
-          headerShown: false,
-        })}
-      >
+      <BlockedUsersProvider>
+        <Stack
+          initialRouteName="(home)"
+          screenOptions={() => ({
+            headerShown: false,
+          })}
+        >
         <Stack.Screen name="(home)" />
         <Stack.Screen
           name="notifications"
@@ -97,7 +99,15 @@ export default function ProtectedLayout() {
             headerShown: true,
           }}
         />
-      </Stack>
+        <Stack.Screen
+          name="blocked-users"
+          options={{
+            title: "Blocked Users",
+            headerShown: false,
+          }}
+        />
+        </Stack>
+      </BlockedUsersProvider>
     </DrawerProvider>
   );
 }

@@ -14,68 +14,68 @@
 
 import { mapValues } from '../runtime';
 /**
- * An object describing an address
+ * 
  * @export
- * @interface Address
+ * @interface Like
  */
-export interface Address {
+export interface Like {
     /**
      * 
      * @type {string}
-     * @memberof Address
+     * @memberof Like
      */
-    address?: string;
+    userId?: string;
     /**
      * 
-     * @type {number}
-     * @memberof Address
+     * @type {string}
+     * @memberof Like
      */
-    lat?: number;
+    reaction?: string;
     /**
      * 
-     * @type {number}
-     * @memberof Address
+     * @type {Date}
+     * @memberof Like
      */
-    lng?: number;
+    timestamp?: Date;
 }
 
 /**
- * Check if a given object implements the Address interface.
+ * Check if a given object implements the Like interface.
  */
-export function instanceOfAddress(value: object): value is Address {
+export function instanceOfLike(value: object): value is Like {
     return true;
 }
 
-export function AddressFromJSON(json: any): Address {
-    return AddressFromJSONTyped(json, false);
+export function LikeFromJSON(json: any): Like {
+    return LikeFromJSONTyped(json, false);
 }
 
-export function AddressFromJSONTyped(json: any, ignoreDiscriminator: boolean): Address {
+export function LikeFromJSONTyped(json: any, ignoreDiscriminator: boolean): Like {
     if (json == null) {
         return json;
     }
     return {
         
-        'address': json['address'] == null ? undefined : json['address'],
-        'lat': json['lat'] == null ? undefined : json['lat'],
-        'lng': json['lng'] == null ? undefined : json['lng'],
+        'userId': json['userId'] == null ? undefined : json['userId'],
+        'reaction': json['reaction'] == null ? undefined : json['reaction'],
+        'timestamp': json['timestamp'] == null ? undefined : (new Date(json['timestamp'])),
     };
 }
 
-export function AddressToJSON(json: any): Address {
-    return AddressToJSONTyped(json, false);
+export function LikeToJSON(json: any): Like {
+    return LikeToJSONTyped(json, false);
 }
 
-export function AddressToJSONTyped(value?: Address | null, ignoreDiscriminator: boolean = false): any {
+export function LikeToJSONTyped(value?: Like | null, ignoreDiscriminator: boolean = false): any {
     if (value == null) {
         return value;
     }
 
     return {
         
-        'address': value['address'],
-        'lat': value['lat'],
-        'lng': value['lng'],
+        'userId': value['userId'],
+        'reaction': value['reaction'],
+        'timestamp': value['timestamp'] == null ? undefined : ((value['timestamp']).toISOString()),
     };
 }
 

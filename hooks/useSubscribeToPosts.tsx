@@ -5,7 +5,7 @@ import {
   subscribeToPostsByUserId,
   getFeaturedPosts,
 } from "@/lib/api/newsfeed";
-
+import { useBlockedUsers } from "@/lib/providers/BlockedUsersContext";
 import { DocumentSnapshot } from "firebase/firestore";
 import { Post } from "@/types/post";
 
@@ -42,6 +42,7 @@ export default function useFeaturedPosts() {
   const [posts, setPosts] = useState<Post[]>([]);
   const [lastDoc, setLastDoc] = useState<DocumentSnapshot | null>(null);
   const [loading, setLoading] = useState(false);
+  const { blockedUsers } = useBlockedUsers();
 
   // Initial fetch
   useEffect(() => {
@@ -50,7 +51,11 @@ export default function useFeaturedPosts() {
       try {
         const { posts: initialPosts, lastDoc: initialLastDoc } =
           await getFeaturedPosts();
-        setPosts(initialPosts as Post[]);
+        // Filter out posts from blocked users
+        const filteredPosts = (initialPosts as Post[]).filter(
+          (post) => !blockedUsers.includes(post.posterUserId)
+        );
+        setPosts(filteredPosts);
         setLastDoc(initialLastDoc);
       } catch (err) {
         console.error("Error fetching initial posts:", err);
@@ -60,7 +65,7 @@ export default function useFeaturedPosts() {
     };
 
     fetchInitialPosts();
-  }, []);
+  }, [blockedUsers]);
 
   // Fetch more posts
   const fetchMorePosts = async () => {
@@ -72,12 +77,17 @@ export default function useFeaturedPosts() {
         lastDoc
       );
 
-      if (newPosts.length === 0) {
+      // Filter out posts from blocked users
+      const filteredNewPosts = (newPosts as Post[]).filter(
+        (post) => !blockedUsers.includes(post.posterUserId)
+      );
+
+      if (filteredNewPosts.length === 0) {
         setLastDoc(null); // Reached end
       } else {
         setPosts((prev) => {
           const seen = new Set(prev.map((p) => p.id));
-          return [...prev, ...newPosts.filter((p) => !seen.has(p.id))];
+          return [...prev, ...filteredNewPosts.filter((p) => !seen.has(p.id))];
         });
         setLastDoc(newLastDoc);
       }

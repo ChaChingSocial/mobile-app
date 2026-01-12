@@ -21,10 +21,10 @@ import { mapValues } from '../runtime';
 export interface CommunityGoals {
     /**
      * The deadline for the goal.
-     * @type {Date}
+     * @type {string}
      * @memberof CommunityGoals
      */
-    deadline?: Date;
+    deadline?: string;
     /**
      * The title of the goal.
      * @type {string}
@@ -74,7 +74,7 @@ export function CommunityGoalsFromJSONTyped(json: any, ignoreDiscriminator: bool
     }
     return {
         
-        'deadline': json['deadline'] == null ? undefined : (new Date(json['deadline'])),
+        'deadline': json['deadline'] == null ? undefined : json['deadline'],
         'title': json['title'] == null ? undefined : json['title'],
         'group': json['group'] == null ? undefined : json['group'],
         'impact': json['impact'] == null ? undefined : json['impact'],
@@ -94,7 +94,7 @@ export function CommunityGoalsToJSONTyped(value?: CommunityGoals | null, ignoreD
 
     return {
         
-        'deadline': value['deadline'] == null ? undefined : ((value['deadline']).toISOString()),
+        'deadline': value['deadline'],
         'title': value['title'],
         'group': value['group'],
         'impact': value['impact'],

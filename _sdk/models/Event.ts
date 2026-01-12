@@ -20,20 +20,13 @@ import {
     EventPrivacyToJSON,
     EventPrivacyToJSONTyped,
 } from './EventPrivacy';
-import type { Recurrence } from './Recurrence';
+import type { EventRecurrence } from './EventRecurrence';
 import {
-    RecurrenceFromJSON,
-    RecurrenceFromJSONTyped,
-    RecurrenceToJSON,
-    RecurrenceToJSONTyped,
-} from './Recurrence';
-import type { Address } from './Address';
-import {
-    AddressFromJSON,
-    AddressFromJSONTyped,
-    AddressToJSON,
-    AddressToJSONTyped,
-} from './Address';
+    EventRecurrenceFromJSON,
+    EventRecurrenceFromJSONTyped,
+    EventRecurrenceToJSON,
+    EventRecurrenceToJSONTyped,
+} from './EventRecurrence';
 import type { EventType } from './EventType';
 import {
     EventTypeFromJSON,
@@ -48,13 +41,13 @@ import {
     EventSlotToJSON,
     EventSlotToJSONTyped,
 } from './EventSlot';
-import type { EventSponsor } from './EventSponsor';
+import type { Sponsor } from './Sponsor';
 import {
-    EventSponsorFromJSON,
-    EventSponsorFromJSONTyped,
-    EventSponsorToJSON,
-    EventSponsorToJSONTyped,
-} from './EventSponsor';
+    SponsorFromJSON,
+    SponsorFromJSONTyped,
+    SponsorToJSON,
+    SponsorToJSONTyped,
+} from './Sponsor';
 
 /**
  * 
@@ -88,28 +81,22 @@ export interface Event {
     images?: Array<string>;
     /**
      * 
-     * @type {Address}
-     * @memberof Event
-     */
-    address?: Address;
-    /**
-     * 
      * @type {string}
      * @memberof Event
      */
     timezone?: string;
     /**
      * 
-     * @type {Recurrence}
+     * @type {EventRecurrence}
      * @memberof Event
      */
-    recurrence?: Recurrence;
+    recurrence?: EventRecurrence;
     /**
      * 
      * @type {EventType}
      * @memberof Event
      */
-    eventType: EventType;
+    eventType?: EventType;
     /**
      * 
      * @type {EventPrivacy}
@@ -118,10 +105,10 @@ export interface Event {
     eventPrivacy?: EventPrivacy;
     /**
      * 
-     * @type {Array<EventSponsor>}
+     * @type {Array<Sponsor>}
      * @memberof Event
      */
-    sponsors?: Array<EventSponsor>;
+    sponsors?: Array<Sponsor>;
     /**
      * 
      * @type {boolean}
@@ -134,6 +121,18 @@ export interface Event {
      * @memberof Event
      */
     lumaWidget?: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof Event
+     */
+    redirectLink?: string;
+    /**
+     * 
+     * @type {Array<string>}
+     * @memberof Event
+     */
+    questions?: Array<string>;
     /**
      * 
      * @type {Array<string>}
@@ -161,7 +160,6 @@ export interface Event {
  */
 export function instanceOfEvent(value: object): value is Event {
     if (!('title' in value) || value['title'] === undefined) return false;
-    if (!('eventType' in value) || value['eventType'] === undefined) return false;
     return true;
 }
 
@@ -179,14 +177,15 @@ export function EventFromJSONTyped(json: any, ignoreDiscriminator: boolean): Eve
         'title': json['title'],
         'description': json['description'] == null ? undefined : json['description'],
         'images': json['images'] == null ? undefined : json['images'],
-        'address': json['address'] == null ? undefined : AddressFromJSON(json['address']),
         'timezone': json['timezone'] == null ? undefined : json['timezone'],
-        'recurrence': json['recurrence'] == null ? undefined : RecurrenceFromJSON(json['recurrence']),
-        'eventType': EventTypeFromJSON(json['eventType']),
+        'recurrence': json['recurrence'] == null ? undefined : EventRecurrenceFromJSON(json['recurrence']),
+        'eventType': json['eventType'] == null ? undefined : EventTypeFromJSON(json['eventType']),
         'eventPrivacy': json['eventPrivacy'] == null ? undefined : EventPrivacyFromJSON(json['eventPrivacy']),
-        'sponsors': json['sponsors'] == null ? undefined : ((json['sponsors'] as Array<any>).map(EventSponsorFromJSON)),
+        'sponsors': json['sponsors'] == null ? undefined : ((json['sponsors'] as Array<any>).map(SponsorFromJSON)),
         'commentsEnabled': json['commentsEnabled'] == null ? undefined : json['commentsEnabled'],
         'lumaWidget': json['lumaWidget'] == null ? undefined : json['lumaWidget'],
+        'redirectLink': json['redirectLink'] == null ? undefined : json['redirectLink'],
+        'questions': json['questions'] == null ? undefined : json['questions'],
         'links': json['links'] == null ? undefined : json['links'],
         'eventSlots': json['eventSlots'] == null ? undefined : ((json['eventSlots'] as Array<any>).map(EventSlotFromJSON)),
         'sameSlotDetails': json['sameSlotDetails'] == null ? undefined : json['sameSlotDetails'],
@@ -208,14 +207,15 @@ export function EventToJSONTyped(value?: Event | null, ignoreDiscriminator: bool
         'title': value['title'],
         'description': value['description'],
         'images': value['images'],
-        'address': AddressToJSON(value['address']),
         'timezone': value['timezone'],
-        'recurrence': RecurrenceToJSON(value['recurrence']),
+        'recurrence': EventRecurrenceToJSON(value['recurrence']),
         'eventType': EventTypeToJSON(value['eventType']),
         'eventPrivacy': EventPrivacyToJSON(value['eventPrivacy']),
-        'sponsors': value['sponsors'] == null ? undefined : ((value['sponsors'] as Array<any>).map(EventSponsorToJSON)),
+        'sponsors': value['sponsors'] == null ? undefined : ((value['sponsors'] as Array<any>).map(SponsorToJSON)),
         'commentsEnabled': value['commentsEnabled'],
         'lumaWidget': value['lumaWidget'],
+        'redirectLink': value['redirectLink'],
+        'questions': value['questions'],
         'links': value['links'],
         'eventSlots': value['eventSlots'] == null ? undefined : ((value['eventSlots'] as Array<any>).map(EventSlotToJSON)),
         'sameSlotDetails': value['sameSlotDetails'],

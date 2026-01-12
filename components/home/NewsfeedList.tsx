@@ -1,4 +1,5 @@
 import { usePostStore } from "@/lib/store/post";
+import { useBlockedUsers } from "@/lib/providers/BlockedUsersContext";
 import { Post } from "@/types/post";
 import React, { useEffect, useRef, useMemo } from "react";
 import { Box } from "../ui/box";
@@ -16,13 +17,19 @@ export const NewsfeedList = React.memo<NewsfeedListProps>(function NewsfeedList(
   isUserCommunityAdmin,
 }) {
   const { pinnedPosts, setPinnedPosts } = usePostStore();
+  const { blockedUsers } = useBlockedUsers();
   const prevPostsRef = useRef<Post[]>([]);
 
   // Memoize featured posts to avoid recalculating on every render
   const featuredPosts = useMemo(() => {
-    // On community pages, show all provided posts instead of only featured
-    return communityPage ? posts : posts.filter((item) => item && item.featured);
-  }, [posts, communityPage]);
+    // Filter out posts from blocked users
+    const filteredPosts = posts.filter((item) => {
+      return item && !blockedUsers.includes(item.posterUserId);
+    });
+
+    // On community pages, show all filtered posts, otherwise show only featured
+    return communityPage ? filteredPosts : filteredPosts.filter((item) => item.featured);
+  }, [posts, communityPage, blockedUsers]);
 
   useEffect(() => {
     // Skip if posts haven't changed

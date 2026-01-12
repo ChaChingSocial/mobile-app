@@ -15,15 +15,32 @@
 
 import * as runtime from '../runtime';
 import type {
+  BulkEmailRequest,
+  BulkEmailResponse,
+  CheckEventsV2Reminders200Response,
+  ClientError,
   Donation,
   Event,
   EventSlot,
   EventSponsor,
   Host,
   PromoCode,
+  SendBulkEmail400Response,
+  SendBulkEmail404Response,
+  SendBulkEmail500Response,
+  SendWeeklyEventsDigest200Response,
+  SendWeeklyEventsDigestToUsersRequest,
   Ticket,
 } from '../models/index';
 import {
+    BulkEmailRequestFromJSON,
+    BulkEmailRequestToJSON,
+    BulkEmailResponseFromJSON,
+    BulkEmailResponseToJSON,
+    CheckEventsV2Reminders200ResponseFromJSON,
+    CheckEventsV2Reminders200ResponseToJSON,
+    ClientErrorFromJSON,
+    ClientErrorToJSON,
     DonationFromJSON,
     DonationToJSON,
     EventFromJSON,
@@ -36,6 +53,16 @@ import {
     HostToJSON,
     PromoCodeFromJSON,
     PromoCodeToJSON,
+    SendBulkEmail400ResponseFromJSON,
+    SendBulkEmail400ResponseToJSON,
+    SendBulkEmail404ResponseFromJSON,
+    SendBulkEmail404ResponseToJSON,
+    SendBulkEmail500ResponseFromJSON,
+    SendBulkEmail500ResponseToJSON,
+    SendWeeklyEventsDigest200ResponseFromJSON,
+    SendWeeklyEventsDigest200ResponseToJSON,
+    SendWeeklyEventsDigestToUsersRequestFromJSON,
+    SendWeeklyEventsDigestToUsersRequestToJSON,
     TicketFromJSON,
     TicketToJSON,
 } from '../models/index';
@@ -80,6 +107,11 @@ export interface DonateEventRequest {
     donation: Donation;
 }
 
+export interface GetEventByIdRequest {
+    postId: string;
+    eventId: string;
+}
+
 export interface GetEventSlotTicketEmailsRequest {
     eventSlotId: string;
 }
@@ -98,12 +130,24 @@ export interface GetUserEventSlotTicketsRequest {
     userId: string;
 }
 
+export interface SendBulkEmailRequest {
+    bulkEmailRequest: BulkEmailRequest;
+}
+
+export interface SendWeeklyEventsDigestToUsersOperationRequest {
+    sendWeeklyEventsDigestToUsersRequest: SendWeeklyEventsDigestToUsersRequest;
+}
+
 export interface UpdateEventRequest {
     event: Event;
 }
 
 export interface UpdateEventSlotRequest {
     eventSlot: EventSlot;
+}
+
+export interface UpdateTicketRequest {
+    ticket: Ticket;
 }
 
 export interface UserEventsRequest {
@@ -253,6 +297,62 @@ export class EventApi extends runtime.BaseAPI {
      */
     async addSponsor(requestParameters: AddSponsorRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<boolean> {
         const response = await this.addSponsorRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Called by Google Cloud Scheduler to check for eventsV2 that need 24-hour reminder emails and send them to attendees
+     * Check for eventsV2 that need 24-hour reminder emails
+     */
+    async checkEventsV2RemindersRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<CheckEventsV2Reminders200Response>> {
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        const response = await this.request({
+            path: `/events/v2/check-reminders`,
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => CheckEventsV2Reminders200ResponseFromJSON(jsonValue));
+    }
+
+    /**
+     * Called by Google Cloud Scheduler to check for eventsV2 that need 24-hour reminder emails and send them to attendees
+     * Check for eventsV2 that need 24-hour reminder emails
+     */
+    async checkEventsV2Reminders(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<CheckEventsV2Reminders200Response> {
+        const response = await this.checkEventsV2RemindersRaw(initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Called by Google Cloud Scheduler to check for eventsV2 that have ended and send thank you emails to attendees
+     * Check for eventsV2 that need post-event thank you emails
+     */
+    async checkEventsV2ThankYousRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<CheckEventsV2Reminders200Response>> {
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        const response = await this.request({
+            path: `/events/v2/check-thankyous`,
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => CheckEventsV2Reminders200ResponseFromJSON(jsonValue));
+    }
+
+    /**
+     * Called by Google Cloud Scheduler to check for eventsV2 that have ended and send thank you emails to attendees
+     * Check for eventsV2 that need post-event thank you emails
+     */
+    async checkEventsV2ThankYous(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<CheckEventsV2Reminders200Response> {
+        const response = await this.checkEventsV2ThankYousRaw(initOverrides);
         return await response.value();
     }
 
@@ -492,6 +592,46 @@ export class EventApi extends runtime.BaseAPI {
     }
 
     /**
+     * Get event by id
+     */
+    async getEventByIdRaw(requestParameters: GetEventByIdRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<Event>>> {
+        if (requestParameters['postId'] == null) {
+            throw new runtime.RequiredError(
+                'postId',
+                'Required parameter "postId" was null or undefined when calling getEventById().'
+            );
+        }
+
+        if (requestParameters['eventId'] == null) {
+            throw new runtime.RequiredError(
+                'eventId',
+                'Required parameter "eventId" was null or undefined when calling getEventById().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        const response = await this.request({
+            path: `/events/get-event-by-id/{post-id}/{event-id}`.replace(`{${"post-id"}}`, encodeURIComponent(String(requestParameters['postId']))).replace(`{${"event-id"}}`, encodeURIComponent(String(requestParameters['eventId']))),
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(EventFromJSON));
+    }
+
+    /**
+     * Get event by id
+     */
+    async getEventById(requestParameters: GetEventByIdRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<Event>> {
+        const response = await this.getEventByIdRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
      * Get all emails of ticket holders for an event slot
      */
     async getEventSlotTicketEmailsRaw(requestParameters: GetEventSlotTicketEmailsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<string>>> {
@@ -638,6 +778,110 @@ export class EventApi extends runtime.BaseAPI {
     }
 
     /**
+     * Send a custom email message to all attendees of a specific event slot
+     * Send custom bulk email to event attendees
+     */
+    async sendBulkEmailRaw(requestParameters: SendBulkEmailRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<BulkEmailResponse>> {
+        if (requestParameters['bulkEmailRequest'] == null) {
+            throw new runtime.RequiredError(
+                'bulkEmailRequest',
+                'Required parameter "bulkEmailRequest" was null or undefined when calling sendBulkEmail().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+        const response = await this.request({
+            path: `/events/send-bulk-email`,
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: BulkEmailRequestToJSON(requestParameters['bulkEmailRequest']),
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => BulkEmailResponseFromJSON(jsonValue));
+    }
+
+    /**
+     * Send a custom email message to all attendees of a specific event slot
+     * Send custom bulk email to event attendees
+     */
+    async sendBulkEmail(requestParameters: SendBulkEmailRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<BulkEmailResponse> {
+        const response = await this.sendBulkEmailRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Called by Google Cloud Scheduler every Sunday to send users a digest of events happening in their communities in the next 7 days
+     * Send weekly events digest emails to all users
+     */
+    async sendWeeklyEventsDigestRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<SendWeeklyEventsDigest200Response>> {
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        const response = await this.request({
+            path: `/events/v2/send-weekly-events-digest`,
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => SendWeeklyEventsDigest200ResponseFromJSON(jsonValue));
+    }
+
+    /**
+     * Called by Google Cloud Scheduler every Sunday to send users a digest of events happening in their communities in the next 7 days
+     * Send weekly events digest emails to all users
+     */
+    async sendWeeklyEventsDigest(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<SendWeeklyEventsDigest200Response> {
+        const response = await this.sendWeeklyEventsDigestRaw(initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Send weekly digest of upcoming events to a specific list of user IDs. For testing purposes.
+     * Send weekly events digest emails to specific users
+     */
+    async sendWeeklyEventsDigestToUsersRaw(requestParameters: SendWeeklyEventsDigestToUsersOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<SendWeeklyEventsDigest200Response>> {
+        if (requestParameters['sendWeeklyEventsDigestToUsersRequest'] == null) {
+            throw new runtime.RequiredError(
+                'sendWeeklyEventsDigestToUsersRequest',
+                'Required parameter "sendWeeklyEventsDigestToUsersRequest" was null or undefined when calling sendWeeklyEventsDigestToUsers().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+        const response = await this.request({
+            path: `/events/v2/send-weekly-events-digest-to-users`,
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: SendWeeklyEventsDigestToUsersRequestToJSON(requestParameters['sendWeeklyEventsDigestToUsersRequest']),
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => SendWeeklyEventsDigest200ResponseFromJSON(jsonValue));
+    }
+
+    /**
+     * Send weekly digest of upcoming events to a specific list of user IDs. For testing purposes.
+     * Send weekly events digest emails to specific users
+     */
+    async sendWeeklyEventsDigestToUsers(requestParameters: SendWeeklyEventsDigestToUsersOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<SendWeeklyEventsDigest200Response> {
+        const response = await this.sendWeeklyEventsDigestToUsersRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
      * Update an event
      */
     async updateEventRaw(requestParameters: UpdateEventRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Event>> {
@@ -706,6 +950,46 @@ export class EventApi extends runtime.BaseAPI {
      */
     async updateEventSlot(requestParameters: UpdateEventSlotRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<EventSlot> {
         const response = await this.updateEventSlotRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Update Ticket
+     */
+    async updateTicketRaw(requestParameters: UpdateTicketRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<string>> {
+        if (requestParameters['ticket'] == null) {
+            throw new runtime.RequiredError(
+                'ticket',
+                'Required parameter "ticket" was null or undefined when calling updateTicket().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+        const response = await this.request({
+            path: `/events/update-ticket`,
+            method: 'PUT',
+            headers: headerParameters,
+            query: queryParameters,
+            body: TicketToJSON(requestParameters['ticket']),
+        }, initOverrides);
+
+        if (this.isJsonMime(response.headers.get('content-type'))) {
+            return new runtime.JSONApiResponse<string>(response);
+        } else {
+            return new runtime.TextApiResponse(response) as any;
+        }
+    }
+
+    /**
+     * Update Ticket
+     */
+    async updateTicket(requestParameters: UpdateTicketRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<string> {
+        const response = await this.updateTicketRaw(requestParameters, initOverrides);
         return await response.value();
     }
 

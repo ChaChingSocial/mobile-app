@@ -13,6 +13,21 @@
  */
 
 import { mapValues } from '../runtime';
+import type { Like } from './Like';
+import {
+    LikeFromJSON,
+    LikeFromJSONTyped,
+    LikeToJSON,
+    LikeToJSONTyped,
+} from './Like';
+import type { CommentMessage } from './CommentMessage';
+import {
+    CommentMessageFromJSON,
+    CommentMessageFromJSONTyped,
+    CommentMessageToJSON,
+    CommentMessageToJSONTyped,
+} from './CommentMessage';
+
 /**
  * 
  * @export
@@ -24,84 +39,59 @@ export interface Comment {
      * @type {string}
      * @memberof Comment
      */
-    id?: string;
+    id: string;
     /**
      * 
      * @type {string}
      * @memberof Comment
      */
-    postId: string;
+    userId: string;
     /**
      * 
-     * @type {string}
+     * @type {CommentMessage}
      * @memberof Comment
      */
-    authorId: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof Comment
-     */
-    content: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof Comment
-     */
-    pictureUrl?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof Comment
-     */
-    linkUrl?: string;
-    /**
-     * 
-     * @type {Array<string>}
-     * @memberof Comment
-     */
-    tags?: Array<string>;
-    /**
-     * 
-     * @type {Array<string>}
-     * @memberof Comment
-     */
-    usersLiked?: Array<string>;
-    /**
-     * 
-     * @type {Array<string>}
-     * @memberof Comment
-     */
-    usersCommented?: Array<string>;
+    message: CommentMessage;
     /**
      * 
      * @type {Date}
      * @memberof Comment
      */
-    createdAt: Date;
+    timestamp: Date;
     /**
      * 
-     * @type {Date}
+     * @type {Array<Like>}
      * @memberof Comment
      */
-    updatedAt: Date;
+    likes?: Array<Like>;
     /**
      * 
-     * @type {Date}
+     * @type {Array<any>}
      * @memberof Comment
      */
-    deletedAt?: Date;
+    comments?: Array<any>;
+    /**
+     * 
+     * @type {string}
+     * @memberof Comment
+     */
+    postReference?: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof Comment
+     */
+    commentReference?: string;
 }
 
 /**
  * Check if a given object implements the Comment interface.
  */
 export function instanceOfComment(value: object): value is Comment {
-    if (!('postId' in value) || value['postId'] === undefined) return false;
-    if (!('authorId' in value) || value['authorId'] === undefined) return false;
-    if (!('content' in value) || value['content'] === undefined) return false;
-    if (!('createdAt' in value) || value['createdAt'] === undefined) return false;
-    if (!('updatedAt' in value) || value['updatedAt'] === undefined) return false;
+    if (!('id' in value) || value['id'] === undefined) return false;
+    if (!('userId' in value) || value['userId'] === undefined) return false;
+    if (!('message' in value) || value['message'] === undefined) return false;
+    if (!('timestamp' in value) || value['timestamp'] === undefined) return false;
     return true;
 }
 
@@ -115,18 +105,14 @@ export function CommentFromJSONTyped(json: any, ignoreDiscriminator: boolean): C
     }
     return {
         
-        'id': json['id'] == null ? undefined : json['id'],
-        'postId': json['post_id'],
-        'authorId': json['author_id'],
-        'content': json['content'],
-        'pictureUrl': json['picture_url'] == null ? undefined : json['picture_url'],
-        'linkUrl': json['link_url'] == null ? undefined : json['link_url'],
-        'tags': json['tags'] == null ? undefined : json['tags'],
-        'usersLiked': json['users_liked'] == null ? undefined : json['users_liked'],
-        'usersCommented': json['users_commented'] == null ? undefined : json['users_commented'],
-        'createdAt': (new Date(json['created_at'])),
-        'updatedAt': (new Date(json['updated_at'])),
-        'deletedAt': json['deleted_at'] == null ? undefined : (new Date(json['deleted_at'])),
+        'id': json['id'],
+        'userId': json['user_id'],
+        'message': CommentMessageFromJSON(json['message']),
+        'timestamp': (new Date(json['timestamp'])),
+        'likes': json['likes'] == null ? undefined : ((json['likes'] as Array<any>).map(LikeFromJSON)),
+        'comments': json['comments'] == null ? undefined : json['comments'],
+        'postReference': json['postReference'] == null ? undefined : json['postReference'],
+        'commentReference': json['commentReference'] == null ? undefined : json['commentReference'],
     };
 }
 
@@ -142,17 +128,13 @@ export function CommentToJSONTyped(value?: Comment | null, ignoreDiscriminator: 
     return {
         
         'id': value['id'],
-        'post_id': value['postId'],
-        'author_id': value['authorId'],
-        'content': value['content'],
-        'picture_url': value['pictureUrl'],
-        'link_url': value['linkUrl'],
-        'tags': value['tags'],
-        'users_liked': value['usersLiked'],
-        'users_commented': value['usersCommented'],
-        'created_at': ((value['createdAt']).toISOString()),
-        'updated_at': ((value['updatedAt']).toISOString()),
-        'deleted_at': value['deletedAt'] == null ? undefined : ((value['deletedAt']).toISOString()),
+        'user_id': value['userId'],
+        'message': CommentMessageToJSON(value['message']),
+        'timestamp': ((value['timestamp']).toISOString()),
+        'likes': value['likes'] == null ? undefined : ((value['likes'] as Array<any>).map(LikeToJSON)),
+        'comments': value['comments'],
+        'postReference': value['postReference'],
+        'commentReference': value['commentReference'],
     };
 }
 

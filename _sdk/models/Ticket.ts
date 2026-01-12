@@ -13,6 +13,13 @@
  */
 
 import { mapValues } from '../runtime';
+import type { TicketAnswers } from './TicketAnswers';
+import {
+    TicketAnswersFromJSON,
+    TicketAnswersFromJSONTyped,
+    TicketAnswersToJSON,
+    TicketAnswersToJSONTyped,
+} from './TicketAnswers';
 import type { Amount } from './Amount';
 import {
     AmountFromJSON,
@@ -47,6 +54,12 @@ export interface Ticket {
     eventId?: string;
     /**
      * 
+     * @type {string}
+     * @memberof Ticket
+     */
+    postId?: string;
+    /**
+     * 
      * @type {Amount}
      * @memberof Ticket
      */
@@ -59,6 +72,12 @@ export interface Ticket {
     qrCode?: string;
     /**
      * 
+     * @type {Array<TicketAnswers>}
+     * @memberof Ticket
+     */
+    ticketAnswers?: Array<TicketAnswers>;
+    /**
+     * 
      * @type {Date}
      * @memberof Ticket
      */
@@ -69,12 +88,6 @@ export interface Ticket {
      * @memberof Ticket
      */
     expiresAt?: Date;
-    /**
-     * 
-     * @type {string}
-     * @memberof Ticket
-     */
-    userId?: string;
     /**
      * 
      * @type {string}
@@ -93,6 +106,12 @@ export interface Ticket {
      * @memberof Ticket
      */
     email?: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof Ticket
+     */
+    userId?: string;
     /**
      * 
      * @type {string}
@@ -122,7 +141,9 @@ export const TicketTicketStatusEnum = {
     Refunded: 'REFUNDED',
     CheckedIn: 'CHECKED_IN',
     Cancelled: 'CANCELLED',
-    Pending: 'PENDING'
+    Pending: 'PENDING',
+    Approved: 'APPROVED',
+    Rejected: 'REJECTED'
 } as const;
 export type TicketTicketStatusEnum = typeof TicketTicketStatusEnum[keyof typeof TicketTicketStatusEnum];
 
@@ -147,14 +168,16 @@ export function TicketFromJSONTyped(json: any, ignoreDiscriminator: boolean): Ti
         'id': json['id'] == null ? undefined : json['id'],
         'eventSlotId': json['eventSlotId'] == null ? undefined : json['eventSlotId'],
         'eventId': json['eventId'] == null ? undefined : json['eventId'],
+        'postId': json['postId'] == null ? undefined : json['postId'],
         'ticketOption': json['ticketOption'] == null ? undefined : AmountFromJSON(json['ticketOption']),
         'qrCode': json['qrCode'] == null ? undefined : json['qrCode'],
+        'ticketAnswers': json['ticketAnswers'] == null ? undefined : ((json['ticketAnswers'] as Array<any>).map(TicketAnswersFromJSON)),
         'createdAt': json['createdAt'] == null ? undefined : (new Date(json['createdAt'])),
         'expiresAt': json['expiresAt'] == null ? undefined : (new Date(json['expiresAt'])),
-        'userId': json['userId'] == null ? undefined : json['userId'],
         'username': json['username'] == null ? undefined : json['username'],
         'profilePic': json['profilePic'] == null ? undefined : json['profilePic'],
         'email': json['email'] == null ? undefined : json['email'],
+        'userId': json['userId'] == null ? undefined : json['userId'],
         'phoneNumber': json['phoneNumber'] == null ? undefined : json['phoneNumber'],
         'promoCode': json['promoCode'] == null ? undefined : json['promoCode'],
         'ticketStatus': json['ticketStatus'] == null ? undefined : json['ticketStatus'],
@@ -175,14 +198,16 @@ export function TicketToJSONTyped(value?: Ticket | null, ignoreDiscriminator: bo
         'id': value['id'],
         'eventSlotId': value['eventSlotId'],
         'eventId': value['eventId'],
+        'postId': value['postId'],
         'ticketOption': AmountToJSON(value['ticketOption']),
         'qrCode': value['qrCode'],
+        'ticketAnswers': value['ticketAnswers'] == null ? undefined : ((value['ticketAnswers'] as Array<any>).map(TicketAnswersToJSON)),
         'createdAt': value['createdAt'] == null ? undefined : ((value['createdAt']).toISOString()),
         'expiresAt': value['expiresAt'] == null ? undefined : ((value['expiresAt']).toISOString()),
-        'userId': value['userId'],
         'username': value['username'],
         'profilePic': value['profilePic'],
         'email': value['email'],
+        'userId': value['userId'],
         'phoneNumber': value['phoneNumber'],
         'promoCode': value['promoCode'],
         'ticketStatus': value['ticketStatus'],

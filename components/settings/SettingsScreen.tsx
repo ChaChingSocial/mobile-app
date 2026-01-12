@@ -2,9 +2,15 @@ import { useEffect, useState } from "react";
 import { Box } from "@/components/ui/box";
 import { Text } from "@/components/ui/text";
 import { Switch } from "@/components/ui/switch";
+import { Button, ButtonText } from "@/components/ui/button";
+import { HStack } from "@/components/ui/hstack";
+import { VStack } from "@/components/ui/vstack";
 import { useSession } from "@/lib/providers/AuthContext";
+import { useBlockedUsers } from "@/lib/providers/BlockedUsersContext";
 import { fetchUserSettings, saveUserSettings } from "@/lib/api/user";
 import { Feather, FontAwesome5, MaterialIcons } from "@expo/vector-icons";
+import { useRouter } from "expo-router";
+import { TouchableOpacity } from "react-native";
 
 const defaultSettings = {
   community: true,
@@ -76,6 +82,8 @@ const data = [
 
 export function SettingsComponent() {
   const { session } = useSession();
+  const { blockedUsers } = useBlockedUsers();
+  const router = useRouter();
   const userId = session?.uid;
 
   const [settings, setSettings] = useState<{ [key: string]: boolean } | null>(
@@ -123,13 +131,50 @@ export function SettingsComponent() {
   };
 
   return (
-    <Box className="text-white">
-      <Text size="2xl" className="font-extrabold text-typography-black">
-        Configure Account Settings
-      </Text>
-      <Text size="lg" className="mt-1 mb-6 text-gray-600">
-        Manage your preferences for emails and other notifications
-      </Text>
+    <VStack space="lg" className="text-white">
+      <Box>
+        <Text size="2xl" className="font-extrabold text-typography-black">
+          Configure Account Settings
+        </Text>
+        <Text size="lg" className="mt-1 mb-6 text-gray-600">
+          Manage your preferences for emails and other notifications
+        </Text>
+      </Box>
+
+      {/* Privacy & Safety Section */}
+      <Box className="mb-6">
+        <Text size="xl" className="font-bold text-typography-black mb-4">
+          Privacy & Safety
+        </Text>
+        <TouchableOpacity
+          onPress={() => router.push("/(protected)/blocked-users")}
+          className="bg-white rounded-lg p-4 shadow-sm border border-gray-200"
+        >
+          <HStack space="md" className="items-center justify-between">
+            <HStack space="md" className="items-center flex-1">
+              <Box className="bg-red-100 p-2 rounded-full">
+                <FontAwesome5 name="ban" size={20} color="#dc2626" />
+              </Box>
+              <VStack className="flex-1">
+                <Text size="lg" className="font-semibold text-typography-black">
+                  Blocked Users
+                </Text>
+                <Text size="sm" className="text-gray-600">
+                  {blockedUsers.length} {blockedUsers.length === 1 ? "user" : "users"} blocked
+                </Text>
+              </VStack>
+            </HStack>
+            <FontAwesome5 name="chevron-right" size={16} color="#9ca3af" />
+          </HStack>
+        </TouchableOpacity>
+      </Box>
+
+      {/* Notification Settings */}
+      <Box>
+        <Text size="xl" className="font-bold text-typography-black mb-4">
+          Notification Preferences
+        </Text>
+      </Box>
       {data.map((item) => (
         <Box
           key={item.id}
@@ -157,6 +202,6 @@ export function SettingsComponent() {
           />
         </Box>
       ))}
-    </Box>
+    </VStack>
   );
 }

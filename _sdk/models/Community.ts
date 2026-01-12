@@ -20,6 +20,13 @@ import {
     CommunityPaidContributionToJSON,
     CommunityPaidContributionToJSONTyped,
 } from './CommunityPaidContribution';
+import type { Sponsor } from './Sponsor';
+import {
+    SponsorFromJSON,
+    SponsorFromJSONTyped,
+    SponsorToJSON,
+    SponsorToJSONTyped,
+} from './Sponsor';
 import type { CommunityGoals } from './CommunityGoals';
 import {
     CommunityGoalsFromJSON,
@@ -132,6 +139,12 @@ export interface Community {
      */
     requiresPaidSubscription?: boolean;
     /**
+     * The type of meetings the community holds - virtual or in-person (IRL).
+     * @type {string}
+     * @memberof Community
+     */
+    meetingType?: CommunityMeetingTypeEnum;
+    /**
      * The onboarding questions of the community.
      * @type {Array<string>}
      * @memberof Community
@@ -198,13 +211,28 @@ export interface Community {
      */
     communityFundingDestination?: string;
     /**
-     * 
-     * @type {CommunityGoals}
+     * The goals of the community.
+     * @type {Array<CommunityGoals>}
      * @memberof Community
      */
-    goals?: CommunityGoals;
+    goals?: Array<CommunityGoals> | null;
+    /**
+     * The sponsors of the community.
+     * @type {Array<Sponsor>}
+     * @memberof Community
+     */
+    sponsors?: Array<Sponsor> | null;
 }
 
+
+/**
+ * @export
+ */
+export const CommunityMeetingTypeEnum = {
+    Virtual: 'VIRTUAL',
+    Irl: 'IRL'
+} as const;
+export type CommunityMeetingTypeEnum = typeof CommunityMeetingTypeEnum[keyof typeof CommunityMeetingTypeEnum];
 
 /**
  * @export
@@ -256,6 +284,7 @@ export function CommunityFromJSONTyped(json: any, ignoreDiscriminator: boolean):
         'membersRequiringApproval': json['membersRequiringApproval'] == null ? undefined : json['membersRequiringApproval'],
         'requiresManualApproval': json['requiresManualApproval'] == null ? undefined : json['requiresManualApproval'],
         'requiresPaidSubscription': json['requiresPaidSubscription'] == null ? undefined : json['requiresPaidSubscription'],
+        'meetingType': json['meetingType'] == null ? undefined : json['meetingType'],
         'onboardingQuestions': json['onboardingQuestions'] == null ? undefined : json['onboardingQuestions'],
         'communitySurvey': json['communitySurvey'] == null ? undefined : ((json['communitySurvey'] as Array<any>).map(CommunitySurveyFromJSON)),
         'rules': json['rules'],
@@ -267,7 +296,8 @@ export function CommunityFromJSONTyped(json: any, ignoreDiscriminator: boolean):
         'firstVisit': json['firstVisit'] == null ? undefined : json['firstVisit'],
         'communityPaidContributions': json['communityPaidContributions'] == null ? undefined : ((json['communityPaidContributions'] as Array<any>).map(CommunityPaidContributionFromJSON)),
         'communityFundingDestination': json['communityFundingDestination'] == null ? undefined : json['communityFundingDestination'],
-        'goals': json['goals'] == null ? undefined : CommunityGoalsFromJSON(json['goals']),
+        'goals': json['goals'] == null ? undefined : ((json['goals'] as Array<any>).map(CommunityGoalsFromJSON)),
+        'sponsors': json['sponsors'] == null ? undefined : ((json['sponsors'] as Array<any>).map(SponsorFromJSON)),
     };
 }
 
@@ -297,6 +327,7 @@ export function CommunityToJSONTyped(value?: Community | null, ignoreDiscriminat
         'membersRequiringApproval': value['membersRequiringApproval'],
         'requiresManualApproval': value['requiresManualApproval'],
         'requiresPaidSubscription': value['requiresPaidSubscription'],
+        'meetingType': value['meetingType'],
         'onboardingQuestions': value['onboardingQuestions'],
         'communitySurvey': value['communitySurvey'] == null ? undefined : ((value['communitySurvey'] as Array<any>).map(CommunitySurveyToJSON)),
         'rules': value['rules'],
@@ -308,7 +339,8 @@ export function CommunityToJSONTyped(value?: Community | null, ignoreDiscriminat
         'firstVisit': value['firstVisit'],
         'communityPaidContributions': value['communityPaidContributions'] == null ? undefined : ((value['communityPaidContributions'] as Array<any>).map(CommunityPaidContributionToJSON)),
         'communityFundingDestination': value['communityFundingDestination'],
-        'goals': CommunityGoalsToJSON(value['goals']),
+        'goals': value['goals'] == null ? undefined : ((value['goals'] as Array<any>).map(CommunityGoalsToJSON)),
+        'sponsors': value['sponsors'] == null ? undefined : ((value['sponsors'] as Array<any>).map(SponsorToJSON)),
     };
 }
 

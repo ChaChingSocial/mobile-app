@@ -19,6 +19,7 @@ import type {
   CommunityPaymentInfo,
   CommunityPaymentInfo1,
   CommunityRules,
+  Sponsor,
   User1,
 } from '../models/index';
 import {
@@ -30,6 +31,8 @@ import {
     CommunityPaymentInfo1ToJSON,
     CommunityRulesFromJSON,
     CommunityRulesToJSON,
+    SponsorFromJSON,
+    SponsorToJSON,
     User1FromJSON,
     User1ToJSON,
 } from '../models/index';
@@ -78,11 +81,28 @@ export interface CommunityTagsRequest {
     communityId?: string;
 }
 
+export interface DeleteCommunitySponsorRequest {
+    communityId: string;
+    sponsorId: string;
+}
+
+export interface GetCommunityFundingInfoRequest {
+    communityId: string;
+}
+
 export interface GetCommunityMembersRequest {
     communityId: string;
 }
 
 export interface GetCommunityPaymentInfoRequest {
+    communityId: string;
+}
+
+export interface GetCommunitySponsorsRequest {
+    communityId: string;
+}
+
+export interface GetDetailedCommunityMembersRequest {
     communityId: string;
 }
 
@@ -98,6 +118,11 @@ export interface JoinCommunityRequest {
 export interface LeaveCommunityRequest {
     communityId: string;
     userId: string;
+}
+
+export interface ManageCommunitySponsorsRequest {
+    communityId: string;
+    sponsor: Array<Sponsor>;
 }
 
 /**
@@ -468,6 +493,83 @@ export class CommunityApi extends runtime.BaseAPI {
     }
 
     /**
+     * Delete Sponsor from a community
+     */
+    async deleteCommunitySponsorRaw(requestParameters: DeleteCommunitySponsorRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<string>> {
+        if (requestParameters['communityId'] == null) {
+            throw new runtime.RequiredError(
+                'communityId',
+                'Required parameter "communityId" was null or undefined when calling deleteCommunitySponsor().'
+            );
+        }
+
+        if (requestParameters['sponsorId'] == null) {
+            throw new runtime.RequiredError(
+                'sponsorId',
+                'Required parameter "sponsorId" was null or undefined when calling deleteCommunitySponsor().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        const response = await this.request({
+            path: `/community/delete-sponsor/{community-id}/{sponsor-id}`.replace(`{${"community-id"}}`, encodeURIComponent(String(requestParameters['communityId']))).replace(`{${"sponsor-id"}}`, encodeURIComponent(String(requestParameters['sponsorId']))),
+            method: 'DELETE',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        if (this.isJsonMime(response.headers.get('content-type'))) {
+            return new runtime.JSONApiResponse<string>(response);
+        } else {
+            return new runtime.TextApiResponse(response) as any;
+        }
+    }
+
+    /**
+     * Delete Sponsor from a community
+     */
+    async deleteCommunitySponsor(requestParameters: DeleteCommunitySponsorRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<string> {
+        const response = await this.deleteCommunitySponsorRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Get community funding info
+     */
+    async getCommunityFundingInfoRaw(requestParameters: GetCommunityFundingInfoRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<CommunityPaymentInfo>>> {
+        if (requestParameters['communityId'] == null) {
+            throw new runtime.RequiredError(
+                'communityId',
+                'Required parameter "communityId" was null or undefined when calling getCommunityFundingInfo().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        const response = await this.request({
+            path: `/community/get-community-funding-info/{community-id}`.replace(`{${"community-id"}}`, encodeURIComponent(String(requestParameters['communityId']))),
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(CommunityPaymentInfoFromJSON));
+    }
+
+    /**
+     * Get community funding info
+     */
+    async getCommunityFundingInfo(requestParameters: GetCommunityFundingInfoRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<CommunityPaymentInfo>> {
+        const response = await this.getCommunityFundingInfoRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
      * Get all members of a community
      */
     async getCommunityMembersRaw(requestParameters: GetCommunityMembersRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<User1>>> {
@@ -530,6 +632,72 @@ export class CommunityApi extends runtime.BaseAPI {
      */
     async getCommunityPaymentInfo(requestParameters: GetCommunityPaymentInfoRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<CommunityPaymentInfo>> {
         const response = await this.getCommunityPaymentInfoRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Get community sponsors
+     */
+    async getCommunitySponsorsRaw(requestParameters: GetCommunitySponsorsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<Sponsor>>> {
+        if (requestParameters['communityId'] == null) {
+            throw new runtime.RequiredError(
+                'communityId',
+                'Required parameter "communityId" was null or undefined when calling getCommunitySponsors().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        const response = await this.request({
+            path: `/community/get-sponsors/{community-id}`.replace(`{${"community-id"}}`, encodeURIComponent(String(requestParameters['communityId']))),
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(SponsorFromJSON));
+    }
+
+    /**
+     * Get community sponsors
+     */
+    async getCommunitySponsors(requestParameters: GetCommunitySponsorsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<Sponsor>> {
+        const response = await this.getCommunitySponsorsRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Get all members of a community with more detailed information
+     */
+    async getDetailedCommunityMembersRaw(requestParameters: GetDetailedCommunityMembersRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<object>>> {
+        if (requestParameters['communityId'] == null) {
+            throw new runtime.RequiredError(
+                'communityId',
+                'Required parameter "communityId" was null or undefined when calling getDetailedCommunityMembers().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        const response = await this.request({
+            path: `/community/detailed-community-members/{community-id}`.replace(`{${"community-id"}}`, encodeURIComponent(String(requestParameters['communityId']))),
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse<any>(response);
+    }
+
+    /**
+     * Get all members of a community with more detailed information
+     */
+    async getDetailedCommunityMembers(requestParameters: GetDetailedCommunityMembersRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<object>> {
+        const response = await this.getDetailedCommunityMembersRaw(requestParameters, initOverrides);
         return await response.value();
     }
 
@@ -651,6 +819,53 @@ export class CommunityApi extends runtime.BaseAPI {
      */
     async leaveCommunity(requestParameters: LeaveCommunityRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<string> {
         const response = await this.leaveCommunityRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Manage community sponsors for a community
+     */
+    async manageCommunitySponsorsRaw(requestParameters: ManageCommunitySponsorsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<string>> {
+        if (requestParameters['communityId'] == null) {
+            throw new runtime.RequiredError(
+                'communityId',
+                'Required parameter "communityId" was null or undefined when calling manageCommunitySponsors().'
+            );
+        }
+
+        if (requestParameters['sponsor'] == null) {
+            throw new runtime.RequiredError(
+                'sponsor',
+                'Required parameter "sponsor" was null or undefined when calling manageCommunitySponsors().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+        const response = await this.request({
+            path: `/community/manage-sponsors/{community-id}`.replace(`{${"community-id"}}`, encodeURIComponent(String(requestParameters['communityId']))),
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: requestParameters['sponsor']!.map(SponsorToJSON),
+        }, initOverrides);
+
+        if (this.isJsonMime(response.headers.get('content-type'))) {
+            return new runtime.JSONApiResponse<string>(response);
+        } else {
+            return new runtime.TextApiResponse(response) as any;
+        }
+    }
+
+    /**
+     * Manage community sponsors for a community
+     */
+    async manageCommunitySponsors(requestParameters: ManageCommunitySponsorsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<string> {
+        const response = await this.manageCommunitySponsorsRaw(requestParameters, initOverrides);
         return await response.value();
     }
 
