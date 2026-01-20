@@ -15,12 +15,14 @@ const AuthContext = createContext<{
   logIn: () => void;
   signUp: () => void;
   signOut: () => void;
+  updateSession: (updates: Partial<SessionValue>) => void;
   session?: SessionValue | null;
   isLoading: boolean;
 }>({
   logIn: () => null,
   signUp: () => null,
   signOut: () => null,
+  updateSession: () => null,
   session: null,
   isLoading: false,
 });
@@ -68,6 +70,10 @@ export function SessionProvider({ children }: PropsWithChildren) {
 
           setSession(null);
           router.replace("/login");
+        },
+        updateSession: (updates) => {
+          if (!session) return;
+          setSession({ ...session, ...updates });
         },
         session,
         isLoading,

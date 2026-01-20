@@ -14,14 +14,17 @@ import { Heading } from "@/components/ui/heading";
 import { Input, InputField } from "@/components/ui/input";
 import { Textarea, TextareaInput } from "@/components/ui/textarea";
 import { VStack } from "@/components/ui/vstack";
+import { Text } from "@/components/ui/text";
 import { userApi } from "@/config/backend";
-import { useLocalSearchParams } from "expo-router";
-import { getDownloadURL, getStorage, listAll, ref } from "firebase/storage";
+import { useLocalSearchParams, useRouter } from "expo-router";
+import { getDownloadURL, getStorage, listAll, ref, uploadBytes } from "firebase/storage";
 import { useEffect, useState } from "react";
-import { ScrollView, TouchableOpacity, View } from "react-native";
+import { Alert, ScrollView, TouchableOpacity, View } from "react-native";
 import NotifyModal from "../NotifyModal";
 import { Button, ButtonText } from "../ui/button";
 import { useSession } from "@/lib/providers/AuthContext";
+import * as ImagePicker from "expo-image-picker";
+import { Ionicons } from "@expo/vector-icons";
 
 async function fetchAllAvatars() {
   try {
@@ -46,8 +49,8 @@ export default function EditProfileComponent() {
   const userInfo = params?.userInfo
     ? (JSON.parse(params.userInfo) as User)
     : undefined;
-  const { session } = useSession();
-
+  const { session, updateSession } = useSession();
+  const router = useRouter();
   const [formData, setFormData] = useState({
     profilePic: session?.profilePic,
     username: userInfo?.username,
@@ -70,10 +73,45 @@ export default function EditProfileComponent() {
   const [showModal, setShowModal] = useState(false);
   const [avatars, setAvatars] = useState<string[]>([]);
   const [showAvatarCarousel, setShowAvatarCarousel] = useState(false);
+  const [showSocialLinks, setShowSocialLinks] = useState(false);
 
   useEffect(() => {
     loadAvatars();
   }, []);
+
+  // Always prefills the latest values when opening this screen
+  useEffect(() => {
+    const bootstrap = async () => {
+      try {
+        const latest = session?.uid
+          ? await userApi.getUserById({ userId: session.uid })
+          : undefined;
+        const seed: any = latest || userInfo;
+        if (seed) {
+          setFormData({
+            profilePic: seed.profilePic ?? session?.profilePic,
+            username: seed.username ?? session?.displayName,
+            bio: seed.bio ?? null,
+            industry: seed.industry ?? null,
+            facebook: seed.socials?.facebook ?? null,
+            twitter: seed.socials?.twitter ?? null,
+            instagram: seed.socials?.instagram ?? null,
+            linkedin: seed.socials?.linkedin ?? null,
+            tiktok: seed.socials?.tiktok ?? null,
+            youtube: seed.socials?.youtube ?? null,
+            twitch: seed.socials?.twitch ?? null,
+            snapchat: seed.socials?.snapchat ?? null,
+            discord: seed.socials?.discord ?? null,
+            medium: seed.socials?.medium ?? null,
+            website: seed.socials?.website ?? null,
+            website2: seed.socials?.website2 ?? null,
+            website3: seed.socials?.website3 ?? null,
+          });
+        }
+      } catch {}
+    };
+    bootstrap();
+  }, [session?.uid, params?.userInfo]);
 
   const loadAvatars = async () => {
     try {
@@ -84,11 +122,16 @@ export default function EditProfileComponent() {
     }
   };
 
-  const handleSubmit = async () => {
+  const handleSubmit = async (): Promise<boolean> => {
+    const trimmedName = (formData.username ?? "").trim();
+    if (!trimmedName) {
+      Alert.alert("Username required", "Please enter a username to continue.");
+      return false;
+    }
     try {
       const user = {
-        id: userInfo?.id,
-        username: formData.username,
+        id: userInfo?.id || session?.uid,
+        username: trimmedName,
         bio: formData.bio,
         industry: formData.industry,
         profilePic: formData.profilePic,
@@ -109,8 +152,16 @@ export default function EditProfileComponent() {
         },
       };
       await userApi.updateUser({ user });
+      // Update in-memory session so avatar/header and posts refresh immediately
+      updateSession?.({
+        displayName: trimmedName,
+        profilePic: formData.profilePic ?? session?.profilePic ?? null,
+        bio: formData.bio ?? null,
+      });
+      return true;
     } catch (error) {
       console.error("Error updating profile:", error);
+      return false;
     }
   };
 
@@ -127,6 +178,38 @@ export default function EditProfileComponent() {
     setShowAvatarCarousel(false);
   };
 
+  const uploadImageToStorage = async (localUri: string) => {
+    const storage = getStorage();
+    const filename = `/app-images/avatars/custom/${session?.uid ?? "anon"}_${Date.now()}.jpg`;
+    const storageRef = ref(storage, filename);
+    const resp = await fetch(localUri);
+    const blob = await resp.blob();
+    await uploadBytes(storageRef, blob);
+    const url = await getDownloadURL(storageRef);
+    return url;
+  };
+
+  const uploadCustomAvatar = async () => {
+    try {
+      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (status !== "granted") return;
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 0.9,
+      });
+      if (!result.canceled && result.assets?.length) {
+        const uri = result.assets[0].uri;
+        const downloadUrl = await uploadImageToStorage(uri);
+        setFormData((prev) => ({ ...prev, profilePic: downloadUrl }));
+        setShowAvatarCarousel(false);
+      }
+    } catch (e) {
+      console.error("Error picking custom avatar:", e);
+    }
+  };
+
   return (
     <Box className="">
 <Heading size="xl" className="mb-6 text-white">
@@ -135,15 +218,21 @@ export default function EditProfileComponent() {
 
       {/* Profile Picture Section */}
       <TouchableOpacity onPress={pickImage} className="mb-6 self-center">
-        <Avatar size="2xl" className="border-2 border-black rounded-full">
-          <AvatarFallbackText>{formData?.username}</AvatarFallbackText>
-          <AvatarImage
-            key={formData?.profilePic}
-            source={{
-              uri: formData?.profilePic,
-            }}
-          />
-        </Avatar>
+        <View className="relative rounded-full overflow-hidden">
+          <Avatar size="2xl" className="border-2 border-black rounded-full">
+            <AvatarFallbackText>{formData?.username}</AvatarFallbackText>
+            <AvatarImage
+              key={formData?.profilePic}
+              source={{
+                uri: formData?.profilePic,
+              }}
+            />
+          </Avatar>
+          {/* Bottom banner overlay to indicate change action */}
+          <View className="absolute bottom-0 left-0 right-0 bg-black/60 py-2 rounded-b-full items-center">
+            <Text size="sm" className="text-white font-semibold">Change</Text>
+          </View>
+        </View>
       </TouchableOpacity>
 
       {showAvatarCarousel && (
@@ -154,6 +243,12 @@ export default function EditProfileComponent() {
           contentContainerStyle={{ paddingHorizontal: 10 }}
         >
           <View className="flex-row space-x-4">
+            {/* Custom upload option as first circle */}
+            <TouchableOpacity onPress={uploadCustomAvatar} className="p-1">
+              <Avatar size="xl" className="bg-gray-200 border border-gray-300">
+                <Ionicons name="cloud-upload-outline" size={28} color="#111827" />
+              </Avatar>
+            </TouchableOpacity>
             {avatars.map((avatar, index) => (
               <TouchableOpacity
                 key={index}
@@ -224,10 +319,19 @@ export default function EditProfileComponent() {
           </FormControl>
         </VStack>
 
-<Heading size="md" className="mt-4 text-white">
-          Social Links
-        </Heading>
+<View className="mt-4 flex-row items-center justify-between">
+          <Heading size="md" className="text-white">Social Links</Heading>
+          <TouchableOpacity onPress={() => setShowSocialLinks((prev) => !prev)}>
+            <Ionicons
+              name={showSocialLinks ? "chevron-down" : "chevron-up"}
+              size={22}
+              color="white"
+            />
+          </TouchableOpacity>
+        </View>
 
+        {showSocialLinks && (
+          <>
         <VStack space="xs">
           <FormControl>
             <FormControlLabel>
@@ -436,14 +540,22 @@ export default function EditProfileComponent() {
           </FormControl>
         </VStack>
 
+        </>
+        )}
+        
         <Button
-className="bg-white rounded-lg mt-4"
-          onPress={() => setShowModal(true)}
+className={`bg-white rounded-lg ${showSocialLinks ? "mt-4" : "mt-16"}`}
+          onPress={async () => {
+            const ok = await handleSubmit();
+            if (ok) router.back();
+          }}
         >
 <ButtonText className="text-center text-black font-semibold">
             Save Changes
           </ButtonText>
         </Button>
+        {/* Filler space to push content and ensure background fills to tab bar when links are hidden */}
+        {!showSocialLinks && <View className="h-24" />}
       </VStack>
       <NotifyModal
         isOpen={showModal}
