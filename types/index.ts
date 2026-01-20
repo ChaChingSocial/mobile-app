@@ -13,4 +13,5 @@ export type SessionValue = {
   email: string | null;
   displayName: string | null;
   profilePic: string | null;
+  bio?: string | null;
 };

@@ -32,8 +32,10 @@ export const PostInfo = ({
   const router = useRouter();
   const { session: user } = useSession();
 
-  const displayName = authorName ?? post.posterName;
   const displayUserId = authorId ?? post.posterUserId;
+  const displayName = (displayUserId && user?.uid && displayUserId === user.uid && user.displayName)
+    ? user.displayName
+    : (authorName ?? post.posterName);
   // Prefers current session avatar when the post belongs to the logged-in user to update it instantly
   const displayPic = (displayUserId && user?.uid && displayUserId === user.uid && user.profilePic)
     ? user.profilePic

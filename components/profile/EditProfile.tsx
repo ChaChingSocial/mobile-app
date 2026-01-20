@@ -19,7 +19,7 @@ import { userApi } from "@/config/backend";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { getDownloadURL, getStorage, listAll, ref, uploadBytes } from "firebase/storage";
 import { useEffect, useState } from "react";
-import { ScrollView, TouchableOpacity, View } from "react-native";
+import { Alert, ScrollView, TouchableOpacity, View } from "react-native";
 import NotifyModal from "../NotifyModal";
 import { Button, ButtonText } from "../ui/button";
 import { useSession } from "@/lib/providers/AuthContext";
@@ -79,6 +79,40 @@ export default function EditProfileComponent() {
     loadAvatars();
   }, []);
 
+  // Always prefills the latest values when opening this screen
+  useEffect(() => {
+    const bootstrap = async () => {
+      try {
+        const latest = session?.uid
+          ? await userApi.getUserById({ userId: session.uid })
+          : undefined;
+        const seed: any = latest || userInfo;
+        if (seed) {
+          setFormData({
+            profilePic: seed.profilePic ?? session?.profilePic,
+            username: seed.username ?? session?.displayName,
+            bio: seed.bio ?? null,
+            industry: seed.industry ?? null,
+            facebook: seed.socials?.facebook ?? null,
+            twitter: seed.socials?.twitter ?? null,
+            instagram: seed.socials?.instagram ?? null,
+            linkedin: seed.socials?.linkedin ?? null,
+            tiktok: seed.socials?.tiktok ?? null,
+            youtube: seed.socials?.youtube ?? null,
+            twitch: seed.socials?.twitch ?? null,
+            snapchat: seed.socials?.snapchat ?? null,
+            discord: seed.socials?.discord ?? null,
+            medium: seed.socials?.medium ?? null,
+            website: seed.socials?.website ?? null,
+            website2: seed.socials?.website2 ?? null,
+            website3: seed.socials?.website3 ?? null,
+          });
+        }
+      } catch {}
+    };
+    bootstrap();
+  }, [session?.uid, params?.userInfo]);
+
   const loadAvatars = async () => {
     try {
       const avatarUrls = await fetchAllAvatars();
@@ -88,11 +122,16 @@ export default function EditProfileComponent() {
     }
   };
 
-  const handleSubmit = async () => {
+  const handleSubmit = async (): Promise<boolean> => {
+    const trimmedName = (formData.username ?? "").trim();
+    if (!trimmedName) {
+      Alert.alert("Username required", "Please enter a username to continue.");
+      return false;
+    }
     try {
       const user = {
-        id: userInfo?.id,
-        username: formData.username,
+        id: userInfo?.id || session?.uid,
+        username: trimmedName,
         bio: formData.bio,
         industry: formData.industry,
         profilePic: formData.profilePic,
@@ -114,14 +153,15 @@ export default function EditProfileComponent() {
       };
       await userApi.updateUser({ user });
       // Update in-memory session so avatar/header and posts refresh immediately
-      if (session) {
-        updateSession({
-          displayName: formData.username ?? session.displayName,
-          profilePic: formData.profilePic ?? session.profilePic,
-        });
-      }
+      updateSession?.({
+        displayName: trimmedName,
+        profilePic: formData.profilePic ?? session?.profilePic ?? null,
+        bio: formData.bio ?? null,
+      });
+      return true;
     } catch (error) {
       console.error("Error updating profile:", error);
+      return false;
     }
   };
 
@@ -506,8 +546,8 @@ export default function EditProfileComponent() {
         <Button
 className={`bg-white rounded-lg ${showSocialLinks ? "mt-4" : "mt-16"}`}
           onPress={async () => {
-            await handleSubmit();
-            router.back();
+            const ok = await handleSubmit();
+            if (ok) router.back();
           }}
         >
 <ButtonText className="text-center text-black font-semibold">

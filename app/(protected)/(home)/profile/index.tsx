@@ -26,8 +26,9 @@ import type { Post } from "@/types/post";
 import { AntDesign, FontAwesome5 } from "@expo/vector-icons";
 import * as Linking from "expo-linking";
 import { useLocalSearchParams, useRouter } from "expo-router";
+import { useFocusEffect } from "@react-navigation/native";
 import { DocumentSnapshot } from "firebase/firestore";
-import { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import {
   Image,
   NativeScrollEvent,
@@ -105,6 +106,14 @@ export default function Profile() {
       })();
     }
   }, [currentUserId]);
+
+  // Refreshes user info when returning to this screen or when the session changes
+  useFocusEffect(
+    useCallback(() => {
+      if (currentUserId) fetchUserInfo();
+      return () => {};
+    }, [currentUserId, session?.displayName, session?.profilePic, session?.bio])
+  );
 
   useEffect(() => {
     fetchFollowersAndFollowing();
@@ -218,12 +227,12 @@ export default function Profile() {
               <Text className="font-extralight text-white">Followers</Text>
             </Box>
           </HStack>
-          {userInfo?.bio && (
+          {(userInfo?.bio || (currentUserId === session?.uid && session?.bio)) && (
             <Text
               size="md"
               className="font-extralight text-typography-white text-center"
             >
-              {userInfo?.bio}
+              {currentUserId === session?.uid ? (session?.bio || userInfo?.bio) : userInfo?.bio}
             </Text>
           )}
           {userInfo?.socials && (
