@@ -46,6 +46,7 @@ jobs:
           echo "build_id=$BUILD_ID" >> "$GITHUB_OUTPUT"
 
       - name: Submit iOS (App Store Connect)
+        continue-on-error: true
         env:
           EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
         run: eas submit --platform ios --profile production --non-interactive --id ${{ steps.build_ios.outputs.build_id }}
