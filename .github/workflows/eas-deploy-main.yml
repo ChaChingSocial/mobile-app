@@ -35,30 +35,32 @@ jobs:
           eas whoami
           eas project:info
 
-      # ---- iOS: build, capture build ID, submit that exact build ----
+      # ---- iOS: build -> capture build ID -> submit that exact build ----
       - name: Build iOS (production)
         id: build_ios
         env:
           EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
         run: |
           eas build --platform ios --profile production --non-interactive --wait --json > ios-build.json
-          echo "BUILD_ID=$(node -p \"require('./ios-build.json')[0].id\")" >> $GITHUB_OUTPUT
+          BUILD_ID=$(jq -r '.[0].id' ios-build.json)
+          echo "build_id=$BUILD_ID" >> "$GITHUB_OUTPUT"
 
       - name: Submit iOS (App Store Connect)
         env:
           EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
-        run: eas submit --platform ios --profile production --non-interactive --id ${{ steps.build_ios.outputs.BUILD_ID }}
+        run: eas submit --platform ios --profile production --non-interactive --id ${{ steps.build_ios.outputs.build_id }}
 
-      # ---- Android: build, capture build ID, submit that exact build ----
+      # ---- Android: build -> capture build ID -> submit that exact build ----
       - name: Build Android (production)
         id: build_android
         env:
           EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
         run: |
           eas build --platform android --profile production --non-interactive --wait --json > android-build.json
-          echo "BUILD_ID=$(node -p \"require('./android-build.json')[0].id\")" >> $GITHUB_OUTPUT
+          BUILD_ID=$(jq -r '.[0].id' android-build.json)
+          echo "build_id=$BUILD_ID" >> "$GITHUB_OUTPUT"
 
       - name: Submit Android (Google Play)
         env:
           EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
-        run: eas submit --platform android --profile production --non-interactive --id ${{ steps.build_android.outputs.BUILD_ID }}
+        run: eas submit --platform android --profile production --non-interactive --id ${{ steps.build_android.outputs.build_id }}
