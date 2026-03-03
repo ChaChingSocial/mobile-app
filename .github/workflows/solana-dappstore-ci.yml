@@ -2,7 +2,8 @@ name: Solana dApp Store - Build/Sign/Validate
 
 on:
   push:
-    branches: ["main"]
+    branches: ["main-sol"]
+  workflow_dispatch: {}
 
 concurrency:
   group: solana-dappstore-ci
@@ -82,10 +83,9 @@ jobs:
         env:
           EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
         run: |
-          # Get build details and artifact URL
           eas build:view ${{ steps.eas_android.outputs.build_id }} --json > build-view.json
           ARTIFACT_URL=$(jq -r '.artifacts.buildUrl' build-view.json)
-          echo "Artifact URL resolved"
+          echo "Artifact URL resolved: $ARTIFACT_URL"
           mkdir -p dist
           curl -L -o dist/app.aab "$ARTIFACT_URL"
 
