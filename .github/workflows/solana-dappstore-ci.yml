@@ -17,8 +17,8 @@ jobs:
       BUNDLETOOL_VERSION: "1.18.1"
       ANDROID_BUILD_TOOLS_VERSION: "35.0.0"
 
-      # Pin CLI
-      SOLANA_DAPPSTORE_CLI_VERSION: "0.11.0"
+      # Latest dApp Store CLI
+      SOLANA_DAPPSTORE_CLI_VERSION: "latest"
 
     steps:
       - name: Checkout
