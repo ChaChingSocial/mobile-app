@@ -33,6 +33,12 @@ yarn-error.*
 .env*.local
 .env
 
+# solana
+publishing/keys/
+publishing/files/*.apk
+publishing/files/*.aab
+publishing/files/*.apks
+
 # typescript
 *.tsbuildinfo
 

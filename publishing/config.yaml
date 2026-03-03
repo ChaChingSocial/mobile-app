@@ -1,0 +1,156 @@
+publisher:
+  name: ChaChing Social
+  website: https://www.chaching.social/
+  email: mabel.oza@chachingsocial.io
+app:
+  name: ChaChing Social
+  address: AvBpdMKMKLnWgLwDK5UARnZmnqHfrt2Fcxj6EqFSF7SY
+  android_package: com.sonylomo.chachingmobileapp
+  urls:
+    license_url: https://www.chaching.social/terms-of-service
+    copyright_url: https://www.chaching.social/copyright
+    privacy_policy_url: https://www.chaching.social/privacy-policy
+    website: https://www.chaching.social/
+  media:
+    - purpose: icon
+      uri: media/icon-512.png
+release:
+  address: 6ExdSJgJa1XHhnBUSZi934uxiMLyqUAJA4DMAcsVMmSG
+  media:
+    - purpose: icon
+      uri: media/icon-512.png
+    - purpose: banner
+      uri: media/banner-1200x600.png
+    - purpose: featureGraphic
+      uri: media/feature-1200x1200.png
+    - purpose: screenshot
+      uri: media/screen1.png
+    - purpose: screenshot
+      uri: media/screen2.png
+    - purpose: screenshot
+      uri: media/screen3.png
+    - purpose: screenshot
+      uri: media/screen4.png
+    - purpose: video
+      uri: media/preview1.mp4
+  files:
+    - purpose: install
+      uri: files/chaching-v1-signed.apk
+  catalog:
+    en-US:
+      name: ChaChing Social
+      short_description: Invest in you. Social + IRL.
+      long_description: ChaChing Social helps you grow financially, socially, and emotionally by delivering you educational content you can consume, fostering communities you can connect with, and providing you the tools to create content.
+      new_in_version: |
+        • General stability/performance improvements.
+        • Added feature to view tickets for events in-app.
+        • Updated app assets.
+  android_details:
+    cert_fingerprint: a3d14c48f0603ce62f1e8393c377924ae10557cd6a1c1fbe69b321a39a412b6f
+    min_sdk: 24
+    version: 1.0.0
+    version_code: 26
+    locales:
+      - en-US
+      - af
+      - am
+      - ar
+      - as
+      - az
+      - be
+      - bg
+      - bn
+      - bs
+      - ca
+      - cs
+      - da
+      - de
+      - el
+      - en-AU
+      - en-CA
+      - en-GB
+      - en-IN
+      - en-XC
+      - es
+      - es-419
+      - es-ES
+      - es-GT
+      - es-US
+      - et
+      - eu
+      - fa
+      - fi
+      - fr
+      - fr-CA
+      - gl
+      - gu
+      - hi
+      - hr
+      - hu
+      - hy
+      - in
+      - is
+      - it
+      - iw
+      - ja
+      - ka
+      - kk
+      - km
+      - kn
+      - ko
+      - ky
+      - lo
+      - lt
+      - lv
+      - mk
+      - ml
+      - mn
+      - mr
+      - ms
+      - my
+      - nb
+      - ne
+      - nl
+      - or
+      - pa
+      - pl
+      - pt
+      - pt-BR
+      - pt-PT
+      - ro
+      - ru
+      - ru-RU
+      - si
+      - sk
+      - sl
+      - sq
+      - sr
+      - sr-Latn
+      - sv
+      - sw
+      - ta
+      - te
+      - th
+      - tl
+      - tr
+      - uk
+      - ur
+      - uz
+      - vi
+      - zh
+      - zh-CN
+      - zh-HK
+      - zh-TW
+      - zu
+solana_mobile_dapp_publisher_portal:
+  testing_instructions: |-
+    Login with test account
+    username: test12345@gmail.com
+    password: test1234
+  alpha_testers: []
+lastSubmittedVersionOnChain:
+  address: 6ExdSJgJa1XHhnBUSZi934uxiMLyqUAJA4DMAcsVMmSG
+  version_code: 26
+  apk_hash: TyFlhKU5Z7/NmxpOmOv9c6U9tg5tPaS2ihcYPz3YvXk=
+lastUpdatedVersionOnStore:
+  address: 6ExdSJgJa1XHhnBUSZi934uxiMLyqUAJA4DMAcsVMmSG
