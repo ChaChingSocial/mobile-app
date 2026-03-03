@@ -14,13 +14,11 @@ jobs:
     runs-on: ubuntu-latest
 
     env:
-      # Pin versions for reproducibility
       BUNDLETOOL_VERSION: "1.18.1"
       ANDROID_BUILD_TOOLS_VERSION: "35.0.0"
-      PACKAGE_NAME: "com.sonylomo.chachingmobileapp"
 
-      # RPC (secret)
-      HELIUS_RPC_URL: ${{ secrets.HELIUS_RPC_URL }}
+      # Pin CLI
+      SOLANA_DAPPSTORE_CLI_VERSION: "0.11.0"
 
     steps:
       - name: Checkout
@@ -44,10 +42,10 @@ jobs:
           distribution: temurin
           java-version: "17"
 
-      - name: Install Android SDK Build-Tools
+      - name: Install Android SDK
         uses: android-actions/setup-android@v3
 
-      - name: Install Android build-tools
+      - name: Install Android build-tools + platform-tools
         run: |
           sdkmanager --install "build-tools;${ANDROID_BUILD_TOOLS_VERSION}" "platform-tools"
           echo "ANDROID_HOME=$ANDROID_SDK_ROOT" >> $GITHUB_ENV
@@ -124,14 +122,19 @@ jobs:
           mkdir -p publishing/files
           cp dist/chaching-release-signed.apk publishing/files/chaching-v1-signed.apk
 
-      - name: Validate Solana dApp Store package
+      - name: Validate Solana dApp Store package (run from publishing/)
+        working-directory: publishing
         run: |
-          npx -y -p @solana-mobile/dapp-store-cli@latest \
+          npx -y \
+            -p @solana-mobile/dapp-store-cli@${SOLANA_DAPPSTORE_CLI_VERSION} \
+            -p @metaplex-foundation/mpl-auction-house@2.5.1 \
+            -p @solana/web3.js@1.95.3 \
             dapp-store validate \
-              -k ./publishing/keys/publisher.json \
+              -k ./keys/publisher.json \
               -b "$ANDROID_HOME/build-tools/${ANDROID_BUILD_TOOLS_VERSION}"
 
       - name: Upload signed APK as a build artifact (for download)
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: solana-signed-apk
