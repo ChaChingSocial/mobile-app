@@ -29,6 +29,7 @@ import { PodcastPost } from "./posts/PodcastPost";
 import { PostComments } from "./posts/PostComments";
 import { PostWrapper } from "./posts/PostWrapper";
 import { PresentationPost } from "./posts/PresentationPost";
+import { LinkPreviewCard } from "./posts/LinkPreviewCard";
 import { getSingleCommunityById } from "@/lib/api/communities";
 import { useScoreStore } from "@/lib/store/score";
 import OinkInfo from "@/components/home/OinkInfo";
@@ -321,6 +322,16 @@ export function PostComponent({ post }: { post: PostType }) {
             onViewComments={setShowAllComments}
           >
             {renderPostContent()}
+            {/* Show a link preview card for any post that carries a linkPreview URL,
+                except categories that already render their own link UI:
+                - "link" → ArticlePost has its own display
+                - "youtube" / "tiktok" / "video" → linkPreview.url is the video source, not a web link */}
+            {post.linkPreview?.url &&
+              !["link", "youtube", "tiktok", "video"].includes(post.category) && (
+                <View className="px-4 pb-3">
+                  <LinkPreviewCard linkPreview={post.linkPreview} />
+                </View>
+              )}
           </PostWrapper>
 
           {/*{writeComment && (*/}
