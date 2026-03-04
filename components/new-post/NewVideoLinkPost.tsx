@@ -225,7 +225,9 @@ export default function NewImagePost() {
           multiline={true}
           numberOfLines={2}
           className="font-bold max-h-[300px] text-2xl"
-          placeholder="Title"
+          placeholder="Enter your title..."
+          placeholderTextColor="#ffffff"
+          style={{ color: "#ffffff" }}
         />
 
         {createdPostVideo && (

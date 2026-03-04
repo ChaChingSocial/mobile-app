@@ -50,7 +50,7 @@ function parseMeta(html: string, names: string[]): string | null {
 }
 
 function parseTitle(html: string): string | null {
-  const og = parseMeta(html, ["og:title", "twitter:title"]); 
+  const og = parseMeta(html, ["og:title", "twitter:title"]);
   if (og) return og;
   const m = html.match(/<title[^>]*>([^<]+)<\/title>/i);
   return m?.[1] ?? null;
@@ -286,7 +286,9 @@ export default function NewArticlePost() {
           multiline={true}
           numberOfLines={2}
           className="font-bold max-h-[300px] text-2xl"
-          placeholder="Title"
+          placeholder="Enter your title..."
+          placeholderTextColor="#ffffff"
+          style={{ color: "#ffffff" }}
         />
 
         {preview?.image && (
@@ -302,7 +304,13 @@ export default function NewArticlePost() {
           <InputField
             placeholder="Paste article link"
             value={articleLink}
+            cursorColor={"#ffffff"}
+            placeholderClassName="text-white italic"
             onChangeText={(value) => setArticleLink(value)}
+            placeholderTextColor="#ffffff"
+            selectionColor="#ffffff"
+            style={{ color: "#ffffff", paddingVertical: 8, paddingLeft: 10 }}
+            className="text-white"
           />
         </Input>
 
@@ -321,10 +329,10 @@ export default function NewArticlePost() {
         </TouchableOpacity>
 
         <ScrollView>
-          <Box
-            className="w-full flex-1 rounded-3xl h-full space-between border-t border-gray-300 bg-white"
-            style={{ marginBottom: keyboardHeight }}
-          >
+            <Box
+                className="w-full flex-1 rounded-3xl h-full space-between"
+                style={{ marginBottom: keyboardHeight }}
+            >
             <RichEditor
               ref={richText}
               onChange={(text) => setNewPostContent(text)}
@@ -332,8 +340,8 @@ export default function NewArticlePost() {
               initialContentHTML={newPostContent}
               editorStyle={{
                 backgroundColor: "transparent",
-                color: "gray",
-                placeholderColor: "gray",
+                color: "white",
+                placeholderColor: "white",
                 cssText: `
                     * {
                       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;

@@ -242,9 +242,6 @@ export default function SearchCommunity() {
                     </TouchableOpacity>
                 </Box>
             )}
-            <Text>
-                HELLO
-            </Text>
 
             <SafeAreaView className="flex-1 py-3 px-4">
                 {loading ? renderLoadingComponent() : (

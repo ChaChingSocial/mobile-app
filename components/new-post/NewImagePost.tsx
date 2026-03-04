@@ -34,6 +34,7 @@ import {
 } from "../ui/drawer";
 import { Heading } from "../ui/heading";
 import { HStack } from "../ui/hstack";
+import {Colors} from "@/lib/constants/Colors";
 
 export default function NewImagePost() {
   const { session: user } = useSession();
@@ -162,11 +163,15 @@ export default function NewImagePost() {
             <AntDesign name="close" size={30} color="black" />
           </TouchableOpacity>
           <TouchableOpacity
-            className="bg-blue-500 rounded-full"
+            className="rounded-full"
+            style={{backgroundColor: Colors.light.tint}}
             onPress={handlePost}
           >
-            <Text className="px-5 py-2 text-white font-bold text-base">
-              Post
+              <Text
+                  className="px-5 py-2 font-bold text-base"
+                  style={{color: Colors.dark.tint}}
+              >
+                  Post
             </Text>
           </TouchableOpacity>
         </Box>
@@ -211,7 +216,9 @@ export default function NewImagePost() {
           multiline={true}
           numberOfLines={2}
           className="font-bold max-h-[300px] text-2xl"
-          placeholder="Title"
+          placeholder="Enter your title..."
+          placeholderTextColor="#ffffff"
+          style={{ color: "#ffffff" }}
         />
 
         {createdPostImage && createdPostImage?.length > 0 && (
@@ -220,33 +227,17 @@ export default function NewImagePost() {
               <Image
                 key={id}
                 source={{ uri: url }}
-                className="w-[100px] h-[100px] rounded-lg"
+                className="w-[250px] h-[250px] rounded-lg"
               />
             ))}
           </Box>
         )}
 
-        <TouchableOpacity
-          className="bg-gray-300 rounded-full px-4 flex-row items-center gap-1"
-          onPress={() => setTagDrawerVisible(!tagDrawerVisible)}
-        >
-          {tags.length > 0 ? (
-            <HStack space="md" className="py-1 flex items-center w-fit">
-              <PostTags tags={tags} />
-              <FontAwesome5 name="edit" size={16} color="black" />
-            </HStack>
-          ) : (
-            <Text className="text-gray-900 my-2.5 font-bold w-fit">
-              Add a tag (optional)
-            </Text>
-          )}
-        </TouchableOpacity>
-
         <ScrollView>
-          <Box
-            className="w-full flex-1 rounded-3xl h-full space-between border-t border-gray-300 bg-white"
-            style={{ marginBottom: keyboardHeight }}
-          >
+            <Box
+                className="w-full flex-1 rounded-3xl h-full space-between"
+                style={{ marginBottom: keyboardHeight }}
+            >
             <RichEditor
               ref={richText}
               onChange={(text) => setNewPostContent(text)}
@@ -254,8 +245,8 @@ export default function NewImagePost() {
               initialContentHTML={newPostContent}
               editorStyle={{
                 backgroundColor: "transparent",
-                color: "gray",
-                placeholderColor: "gray",
+                color: "white",
+                placeholderColor: "white",
                 cssText: `
                     * {
                       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
@@ -268,6 +259,21 @@ export default function NewImagePost() {
               useContainer={true}
             />
           </Box>
+            <TouchableOpacity
+                className="bg-gray-300 rounded-full px-4 flex-row items-center gap-1"
+                onPress={() => setTagDrawerVisible(!tagDrawerVisible)}
+            >
+                {tags.length > 0 ? (
+                    <HStack space="md" className="py-1 flex items-center w-fit">
+                        <PostTags tags={tags} />
+                        <FontAwesome5 name="edit" size={16} color="black" />
+                    </HStack>
+                ) : (
+                    <Text className="text-gray-900 my-2.5 font-bold w-fit">
+                        Add a tag (optional)
+                    </Text>
+                )}
+            </TouchableOpacity>
         </ScrollView>
       </Box>
 

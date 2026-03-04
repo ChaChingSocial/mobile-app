@@ -216,7 +216,9 @@ export default function NewPost() {
           multiline={true}
           numberOfLines={2}
           className="font-bold max-h-[300px] text-2xl"
-          placeholder="Title"
+          placeholder="Enter your title..."
+          placeholderTextColor="#ffffff"
+          style={{ color: "#ffffff" }}
         />
         <TouchableOpacity
           className="bg-gray-300 rounded-full px-4 flex-row items-center gap-1"
