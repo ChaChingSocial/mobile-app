@@ -87,18 +87,22 @@ export default function NewEventPost({
           {/* Title */}
           <TextInput
             className="border border-gray-300 rounded p-2"
-            placeholder="Title"
             value={title}
             onChangeText={setTitle}
+            placeholder="Enter your title..."
+            placeholderTextColor="#ffffff"
+            style={{ color: "#ffffff" }}
           />
 
           {/* Description */}
           <TextInput
             className="border border-gray-300 rounded p-2 h-24 text-top"
-            placeholder="Description"
             multiline
             value={description}
             onChangeText={setDescription}
+            placeholder="Enter your description..."
+            placeholderTextColor="#ffffff"
+            style={{ color: "#ffffff" }}
           />
 
           {/* Image Picker */}

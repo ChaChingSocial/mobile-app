@@ -106,6 +106,13 @@ export default function ProtectedLayout() {
             headerShown: false,
           }}
         />
+        <Stack.Screen
+          name="webview"
+          options={{
+            headerShown: false,
+            presentation: "modal",
+          }}
+        />
         </Stack>
       </BlockedUsersProvider>
     </DrawerProvider>

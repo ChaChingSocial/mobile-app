@@ -34,6 +34,7 @@ import {
 import { Heading } from "../ui/heading";
 import { HStack } from "../ui/hstack";
 import { Input, InputField } from "../ui/input";
+import {Colors} from "@/lib/constants/Colors";
 
 export default function NewPodcastPost() {
   const { session: user } = useSession();
@@ -202,10 +203,14 @@ export default function NewPodcastPost() {
             <AntDesign name="close" size={30} color="black" />
           </TouchableOpacity>
           <TouchableOpacity
-            className="bg-blue-500 rounded-full"
+            className="rounded-full"
+            style={{backgroundColor: Colors.light.tint}}
             onPress={handlePost}
           >
-            <Text className="px-5 py-2 text-white font-bold text-base">
+            <Text
+                className="px-5 py-2 font-bold text-base"
+                style={{color: Colors.dark.tint}}
+            >
               Post
             </Text>
           </TouchableOpacity>
@@ -244,30 +249,16 @@ export default function NewPodcastPost() {
         </TouchableOpacity>
 
         <Box className="w-full">
-          <TextInput
-            value={newPostTitle}
-            onChangeText={(value) => setNewPostTitle(value)}
-            multiline={true}
-            numberOfLines={2}
-            className="font-bold max-h-[300px] text-2xl"
-            placeholder="Title"
-          />
-
-          <TouchableOpacity
-            className="bg-gray-300 rounded-full px-4 flex-row items-center gap-1"
-            onPress={() => setTagDrawerVisible(!tagDrawerVisible)}
-          >
-            {tags.length > 0 ? (
-              <HStack space="md" className="py-1 flex items-center w-fit">
-                <PostTags tags={tags} />
-                <FontAwesome5 name="edit" size={16} color="black" />
-              </HStack>
-            ) : (
-              <Text className="text-gray-900 my-2.5 font-bold w-fit">
-                Add a tag (optional)
-              </Text>
-            )}
-          </TouchableOpacity>
+            <TextInput
+                value={newPostTitle}
+                onChangeText={(value) => setNewPostTitle(value)}
+                multiline={true}
+                numberOfLines={2}
+                className="font-bold max-h-[300px] text-2xl mb-2"
+                placeholder="Enter your title..."
+                placeholderTextColor="#ffffff"
+                style={{ color: "#ffffff" }}
+            />
 
           {previousRoute?.name === "new-podcast-post" && (
             <Input
@@ -276,11 +267,16 @@ export default function NewPodcastPost() {
               isInvalid={false}
               className="mt-3 rounded-3xl"
             >
-              <InputField
-                placeholder="Enter Spotify Link"
-                value={spotifyLink}
-                onChangeText={(value) => setSpotifyLink(value)}
-              />
+                <TextInput
+                    placeholder="Enter Spotify Link"
+                    value={spotifyLink}
+                    onChangeText={(value) => setSpotifyLink(value)}
+                    placeholderTextColor="#ffffff"
+                    selectionColor="#ffffff"
+                    style={{ color: "#ffffff", paddingVertical: 8, paddingLeft: 10 }}
+                    className="text-white"
+                />
+
             </Input>
           )}
         </Box>
@@ -293,12 +289,12 @@ export default function NewPodcastPost() {
             <RichEditor
               ref={richText}
               onChange={(text) => setNewPostContent(text)}
-              placeholder="body text"
+              placeholder="Share your thoughts here!"
               initialContentHTML={newPostContent}
               editorStyle={{
                 backgroundColor: "transparent",
-                color: "gray",
-                placeholderColor: "gray",
+                color: "white",
+                placeholderColor: "white",
                 cssText: `
                     * {
                       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
@@ -310,7 +306,23 @@ export default function NewPodcastPost() {
               className="flex-1"
               useContainer={true}
             />
+              <TouchableOpacity
+                  className="bg-gray-300 rounded-full px-4 flex-row items-center gap-1"
+                  onPress={() => setTagDrawerVisible(!tagDrawerVisible)}
+              >
+                  {tags.length > 0 ? (
+                      <HStack space="md" className="py-1 flex items-center w-fit">
+                          <PostTags tags={tags} />
+                          <FontAwesome5 name="edit" size={16} color="black" />
+                      </HStack>
+                  ) : (
+                      <Text className="text-gray-900 my-2.5 font-bold w-fit">
+                          Add a tag (optional)
+                      </Text>
+                  )}
+              </TouchableOpacity>
           </Box>
+
         </ScrollView>
       </Box>
 

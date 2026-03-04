@@ -3,18 +3,21 @@ import { Text } from "@/components/ui/text";
 import { createPost } from "@/lib/api/newsfeed";
 import { useSession } from "@/lib/providers/AuthContext";
 import { usePostStore } from "@/lib/store/post";
-import { Post as PostType } from "@/types/post";
+import { LinkPreview, Post as PostType } from "@/types/post";
 import { AntDesign, FontAwesome5, Ionicons } from "@expo/vector-icons";
 import { useNavigation, useRouter } from "expo-router";
 import { useEffect, useRef, useState } from "react";
 import {
+  ActivityIndicator,
   Keyboard,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
   TextInput,
   TouchableOpacity,
+  View,
 } from "react-native";
+import { LinkPreviewCard } from "@/components/home/posts/LinkPreviewCard";
 import {
   RichEditor,
   RichToolbar,
@@ -33,6 +36,32 @@ import {
 } from "../ui/drawer";
 import { Heading } from "../ui/heading";
 import { HStack } from "../ui/hstack";
+
+// Lightweight OpenGraph scraper (no DOMParser needed in RN)
+function parseMeta(html: string, names: string[]): string | null {
+  for (const name of names) {
+    const pattern = new RegExp(
+      `<meta[^>]+(?:property|name)=["']${name}["'][^>]*content=["']([^"']+)["'][^>]*>`,
+      "i"
+    );
+    const m = html.match(pattern);
+    if (m?.[1]) return m[1];
+  }
+  return null;
+}
+function parseTitle(html: string): string | null {
+  const og = parseMeta(html, ["og:title", "twitter:title"]);
+  if (og) return og;
+  const m = html.match(/<title[^>]*>([^<]+)<\/title>/i);
+  return m?.[1] ?? null;
+}
+function parseDescription(html: string): string | null {
+  return parseMeta(html, ["og:description", "twitter:description", "description"]);
+}
+function parseImage(html: string): string | null {
+  return parseMeta(html, ["og:image:secure_url", "og:image", "twitter:image"]);
+}
+import { extractFirstUrl } from "@/lib/hooks/useLinkPreview";
 
 export default function NewPost() {
   const { session: user } = useSession();
@@ -68,6 +97,11 @@ export default function NewPost() {
   const [tags, setTags] = useState<string[]>([]);
   const [tagDrawerVisible, setTagDrawerVisible] = useState(false);
 
+  const [detectedUrl, setDetectedUrl] = useState<string | null>(null);
+  const [linkPreview, setLinkPreview] = useState<LinkPreview | null>(null);
+  const [fetchingPreview, setFetchingPreview] = useState(false);
+  const debounceRef = useRef<NodeJS.Timeout | null>(null);
+
   // Get the navigation state
   const state = navigation.getState();
   console.log("Navigation state:", state);
@@ -94,6 +128,43 @@ export default function NewPost() {
     };
   }, []);
 
+  // Auto-fetch OG metadata whenever a URL is detected in the post body
+  useEffect(() => {
+    if (!detectedUrl) {
+      setLinkPreview(null);
+      return;
+    }
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(async () => {
+      setFetchingPreview(true);
+      try {
+        const res = await fetch(detectedUrl, {
+          headers: {
+            "User-Agent":
+              "Mozilla/5.0 (iPhone; CPU iPhone OS 15_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/15.0 Mobile/15E148 Safari/604.1",
+          },
+        });
+        const html = await res.text();
+        setLinkPreview({
+          url: detectedUrl,
+          title: parseTitle(html) ?? "",
+          description: (parseDescription(html) ?? "").slice(0, 300),
+          image: parseImage(html) ?? "",
+          tags: [],
+          publisher: "",
+          publisherPicUrl: "",
+        });
+      } catch {
+        setLinkPreview(null);
+      } finally {
+        setFetchingPreview(false);
+      }
+    }, 600);
+    return () => {
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+    };
+  }, [detectedUrl]);
+
   const handlePost = async () => {
     try {
       const contentHtml = await richText.current?.getContentHtml();
@@ -116,7 +187,7 @@ export default function NewPost() {
           tags,
           pictures: [],
           documents: [],
-          linkPreview: null,
+          linkPreview: linkPreview ?? null,
           category: "post",
           newsfeedId:
             (createdPostCommunityId as string) ||
@@ -216,38 +287,28 @@ export default function NewPost() {
           multiline={true}
           numberOfLines={2}
           className="font-bold max-h-[300px] text-2xl"
-          placeholder="Title"
+          placeholder="Enter your title..."
+          placeholderTextColor="#ffffff"
+          style={{ color: "#ffffff" }}
         />
-        <TouchableOpacity
-          className="bg-gray-300 rounded-full px-4 flex-row items-center gap-1"
-          onPress={() => setTagDrawerVisible(!tagDrawerVisible)}
-        >
-          {tags.length > 0 ? (
-            <HStack space="md" className="py-1 flex items-center w-fit">
-              <PostTags tags={tags} />
-              <FontAwesome5 name="edit" size={16} color="black" />
-            </HStack>
-          ) : (
-            <Text className="text-gray-900 my-2.5 font-bold w-fit">
-              Add a tag (optional)
-            </Text>
-          )}
-        </TouchableOpacity>
 
         <ScrollView>
-          <Box
-            className="w-full flex-1 rounded-3xl h-full space-between border-t border-gray-300 bg-white"
-            style={{ marginBottom: keyboardHeight }}
-          >
+            <Box
+                className="w-full flex-1 rounded-3xl h-full space-between"
+                style={{ marginBottom: keyboardHeight }}
+            >
             <RichEditor
               ref={richText}
-              onChange={(text) => setNewPostContent(text)}
+              onChange={(text) => {
+                setNewPostContent(text);
+                setDetectedUrl(extractFirstUrl(text));
+              }}
               placeholder="What's on your mind?"
               initialContentHTML={newPostContent}
               editorStyle={{
                 backgroundColor: "transparent",
-                color: "gray",
-                placeholderColor: "gray",
+                color: "white",
+                placeholderColor: "white",
                 cssText: `
                     * {
                       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
@@ -260,6 +321,35 @@ export default function NewPost() {
               useContainer={true}
             />
           </Box>
+
+          {fetchingPreview && (
+            <View className="mt-3 flex-row items-center gap-2">
+              <ActivityIndicator size="small" color="#6b7280" />
+              <Text className="text-gray-400 text-sm">Fetching link preview…</Text>
+            </View>
+          )}
+
+          {linkPreview?.url && !fetchingPreview && (
+            <View className="mt-1">
+              <LinkPreviewCard linkPreview={linkPreview} />
+            </View>
+          )}
+
+            <TouchableOpacity
+                className="bg-gray-300 rounded-full px-4 flex-row items-center gap-1 mt-3"
+                onPress={() => setTagDrawerVisible(!tagDrawerVisible)}
+            >
+                {tags.length > 0 ? (
+                    <HStack space="md" className="py-1 flex items-center w-fit">
+                        <PostTags tags={tags} />
+                        <FontAwesome5 name="edit" size={16} color="black" />
+                    </HStack>
+                ) : (
+                    <Text className="text-gray-900 my-2.5 font-bold w-fit">
+                        Add a tag (optional)
+                    </Text>
+                )}
+            </TouchableOpacity>
         </ScrollView>
       </Box>
 

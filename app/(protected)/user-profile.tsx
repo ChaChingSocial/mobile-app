@@ -43,6 +43,7 @@ import {
   NotificationNotificationTypeEnum,
 } from "@/_sdk";
 import Toast from "react-native-toast-message";
+import {Colors} from "@/lib/constants/Colors";
 
 export default function UserProfile() {
   const { id: UserId } = useLocalSearchParams();
@@ -266,7 +267,8 @@ export default function UserProfile() {
 
   return (
     <ScrollView
-      className="bg-[#077f5f] flex-1"
+      className="flex-1"
+      style={{backgroundColor: Colors.light.tint}}
       onScroll={handleScroll}
       scrollEventThrottle={16}
       refreshControl={
@@ -293,7 +295,7 @@ export default function UserProfile() {
         >
           @{userInfo?.username}
         </Heading>
-        
+
         {/* Block/Unblock button - only show if viewing another user's profile */}
         {session?.uid && currentUserId && session.uid !== currentUserId && (
           <Box className="mt-2">
@@ -447,7 +449,7 @@ export default function UserProfile() {
                     ? userInfo.interests
                     : userInfo.interests.slice(0, 5)
                   ).map((interest, index) => (
-                    <Badge key={index} variant="solid" className="bg-[#a3e4d2]">
+                    <Badge key={index} variant="solid" style={{ backgroundColor: Colors.dark.tint }}>
                       <BadgeText>{interest}</BadgeText>
                     </Badge>
                   ))}
@@ -487,7 +489,7 @@ export default function UserProfile() {
           className="w-full"
         />
       )}
-      
+
       <BlockUserModal
         isOpen={showBlockModal}
         onClose={() => setShowBlockModal(false)}

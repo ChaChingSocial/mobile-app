@@ -36,7 +36,7 @@ export default function TabLayout() {
         return {
           headerShadowVisible: true,
           headerStyle: {
-            backgroundColor: "#a3e4d2",
+            backgroundColor: Colors.light.tint,
           },
           tabBarHideOnKeyboard: Platform.OS === "android" ? true : undefined,
           headerTitle: () => (
@@ -81,7 +81,7 @@ export default function TabLayout() {
               onPressOut={() => setOpen(!open)}
               className="ml-5"
             >
-              <Avatar size="md">
+              <Avatar size="md" className="mb-4 border-2 border-gray-900">
                 <AvatarFallbackText>{session?.displayName}</AvatarFallbackText>
                 <AvatarImage
                   source={{
