@@ -220,27 +220,12 @@ export default function NewPost() {
           placeholderTextColor="#ffffff"
           style={{ color: "#ffffff" }}
         />
-        <TouchableOpacity
-          className="bg-gray-300 rounded-full px-4 flex-row items-center gap-1"
-          onPress={() => setTagDrawerVisible(!tagDrawerVisible)}
-        >
-          {tags.length > 0 ? (
-            <HStack space="md" className="py-1 flex items-center w-fit">
-              <PostTags tags={tags} />
-              <FontAwesome5 name="edit" size={16} color="black" />
-            </HStack>
-          ) : (
-            <Text className="text-gray-900 my-2.5 font-bold w-fit">
-              Add a tag (optional)
-            </Text>
-          )}
-        </TouchableOpacity>
 
         <ScrollView>
-          <Box
-            className="w-full flex-1 rounded-3xl h-full space-between border-t border-gray-300 bg-white"
-            style={{ marginBottom: keyboardHeight }}
-          >
+            <Box
+                className="w-full flex-1 rounded-3xl h-full space-between"
+                style={{ marginBottom: keyboardHeight }}
+            >
             <RichEditor
               ref={richText}
               onChange={(text) => setNewPostContent(text)}
@@ -248,8 +233,8 @@ export default function NewPost() {
               initialContentHTML={newPostContent}
               editorStyle={{
                 backgroundColor: "transparent",
-                color: "gray",
-                placeholderColor: "gray",
+                color: "white",
+                placeholderColor: "white",
                 cssText: `
                     * {
                       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
@@ -262,6 +247,21 @@ export default function NewPost() {
               useContainer={true}
             />
           </Box>
+            <TouchableOpacity
+                className="bg-gray-300 rounded-full px-4 flex-row items-center gap-1"
+                onPress={() => setTagDrawerVisible(!tagDrawerVisible)}
+            >
+                {tags.length > 0 ? (
+                    <HStack space="md" className="py-1 flex items-center w-fit">
+                        <PostTags tags={tags} />
+                        <FontAwesome5 name="edit" size={16} color="black" />
+                    </HStack>
+                ) : (
+                    <Text className="text-gray-900 my-2.5 font-bold w-fit">
+                        Add a tag (optional)
+                    </Text>
+                )}
+            </TouchableOpacity>
         </ScrollView>
       </Box>
 

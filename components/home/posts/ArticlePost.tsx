@@ -6,8 +6,8 @@ import {
   TouchableOpacity,
   ScrollView,
   Image,
-  Linking,
 } from "react-native";
+import * as WebBrowser from "expo-web-browser";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { updatePost } from "@/lib/api/newsfeed";
@@ -68,7 +68,9 @@ export function ArticlePost({
 
   const navigateToLink = () => {
     if (post.linkPreview?.url) {
-      Linking.openURL(post.linkPreview.url);
+      WebBrowser.openBrowserAsync(post.linkPreview.url, {
+        presentationStyle: WebBrowser.WebBrowserPresentationStyle.FULL_SCREEN,
+      });
     }
   };
 

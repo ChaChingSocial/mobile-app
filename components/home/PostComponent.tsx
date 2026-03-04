@@ -190,6 +190,7 @@ export function PostComponent({ post }: { post: PostType }) {
         );
       case "youtube":
       case "tiktok":
+      case "video":
         return (
           <VideoPost
             post={post}
