@@ -13,7 +13,7 @@ export function Header() {
     >
       <Image
         source={require("@/assets/images/logo.svg")}
-        style={{ width: 120, height: 40, resizeMode: "contain" }}
+        style={{ width: 120, height: 40, paddingBottom: 10, resizeMode: "contain" }}
       />
 
       <TouchableOpacity

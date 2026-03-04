@@ -37,6 +37,7 @@ import {
   ScrollView,
   TouchableOpacity,
 } from "react-native";
+import {Colors} from "@/lib/constants/Colors";
 
 export default function Profile() {
   const { id: UserId } = useLocalSearchParams();
@@ -328,7 +329,7 @@ export default function Profile() {
                     ? userInfo.interests
                     : userInfo.interests.slice(0, 5)
                   ).map((interest, index) => (
-                    <Badge key={index} variant="solid" className="bg-[#a3e4d2]">
+                      <Badge key={index} variant="solid" style={{ backgroundColor: Colors.dark.tint }}>
                       <BadgeText>{interest}</BadgeText>
                     </Badge>
                   ))}

@@ -32,6 +32,7 @@ import { PresentationPost } from "./posts/PresentationPost";
 import { getSingleCommunityById } from "@/lib/api/communities";
 import { useScoreStore } from "@/lib/store/score";
 import OinkInfo from "@/components/home/OinkInfo";
+import {Colors} from "@/lib/constants/Colors";
 
 export function PostComponent({ post }: { post: PostType }) {
   const { session } = useSession();
@@ -290,12 +291,12 @@ export function PostComponent({ post }: { post: PostType }) {
               }
               className="flex flex-row items-center justify-between px-4 rounded-lg"
             >
-              <Image
-                source={require("@/assets/images/pig-face.png")}
-                className="w-10 h-10 absolute top-0 -left-7 z-20"
-              />
-              <Badge className="absolute bg-[#36454F] top-3 left-0 z-10 rounded-full px-6 py-0.5 w-fit">
-                <BadgeText className="text-white uppercase text-center font-bold text-xs">
+              {/*<Image*/}
+              {/*  source={require("@/assets/images/pig-face.png")}*/}
+              {/*  className="w-10 h-10 absolute top-0 -left-7 z-20"*/}
+              {/*/>*/}
+              <Badge variant="outline" className="absolute top-3 left-0 z-10 rounded-full px-6 py-0.5 w-fit" style={{backgroundColor: Colors.light.tint}}>
+                <BadgeText className="uppercase text-center font-bold text-xs" style={{color: Colors.dark.tint}}>
                   {communityName.length > 30
                     ? `${communityName.slice(0, 30)}...`
                     : communityName}

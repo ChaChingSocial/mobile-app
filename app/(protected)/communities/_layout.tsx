@@ -17,6 +17,7 @@ import * as Clipboard from "expo-clipboard";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import { TouchableOpacity, Platform } from "react-native";
+import {Colors} from "@/lib/constants/Colors";
 
 export default function CommunitiesLayout() {
   const { session } = useSession();
@@ -62,6 +63,9 @@ export default function CommunitiesLayout() {
       <Stack
         screenOptions={() => ({
           headerTitle: "",
+          headerStyle: {
+            backgroundColor: Colors.light.tint
+          },
           headerRight: () => (
             <Box className="flex flex-row items-center">
               <TouchableOpacity

@@ -1,10 +1,14 @@
 import NewVideoLinkPost from "@/components/new-post/NewVideoLinkPost";
 import { SafeAreaView } from "react-native-safe-area-context";
+import {Colors} from "@/lib/constants/Colors";
 
 export default function NewLinkPostScreen() {
   return (
-    <SafeAreaView className="flex-1 bg-white pt-6 mt-4">
-      <NewVideoLinkPost />
+      <SafeAreaView
+          style={{ backgroundColor: Colors.dark.tint }}
+          className="flex-1 pt-6"
+      >
+          <NewVideoLinkPost />
     </SafeAreaView>
   );
 }
