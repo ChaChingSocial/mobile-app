@@ -267,7 +267,8 @@ export default function UserProfile() {
 
   return (
     <ScrollView
-      className="bg-[#077f5f] flex-1"
+      className="flex-1"
+      style={{backgroundColor: Colors.light.tint}}
       onScroll={handleScroll}
       scrollEventThrottle={16}
       refreshControl={

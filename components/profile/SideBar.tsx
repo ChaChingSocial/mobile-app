@@ -152,20 +152,21 @@ export default function SideBar({
               </VStack>
             </Box>
           </DrawerBody>
-          <DrawerFooter className="border-t border-background-200 pt-6">
-            <TouchableOpacity
-              className="flex flex-row gap-3 items-center ml-2"
-              onPress={() => {
-                signOut();
-                onOpenChange(false);
-              }}
-            >
-              <FontAwesome name="sign-out" size={20} color="white" />
-              <Text size="xl" bold className="text-white">
-                Logout
-              </Text>
-            </TouchableOpacity>
-          </DrawerFooter>
+            <DrawerFooter className="border-t border-background-200 pt-6 w-full items-start justify-start">
+                <TouchableOpacity
+                    className="flex flex-row gap-3 items-center ml-2"
+                    onPress={() => {
+                        signOut();
+                        onOpenChange(false);
+                    }}
+                >
+                    <FontAwesome name="sign-out" size={20} color="white" />
+                    <Text size="xl" bold className="text-white">
+                        Logout
+                    </Text>
+                </TouchableOpacity>
+            </DrawerFooter>
+
         </DrawerContent>
       </Drawer>
     </SafeAreaView>

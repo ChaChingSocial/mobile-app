@@ -203,8 +203,8 @@ export function PostWrapper({
                     className="flex flex-row items-center"
                   >
                       <Image
-                        source={userOinkedPost ? require("@/assets/images/oink.png") : require("@/assets/images/oink-birthday.png")}
-                        className="w-12 h-12"
+                        source={userOinkedPost ? require("@/assets/images/oink-birthday.png") : require("@/assets/images/oink.png")}
+                        style={{ width: 48, height: 48 }}
                       />
 
                     {/*<MaterialCommunityIcons*/}
