@@ -77,10 +77,15 @@ export default function HomePage() {
       route: "/(protected)/create-post/new-image-post",
     },
     {
-      title: "Podcast",
-      icon: <FontAwesome5 name="spotify" size={18} color="white" />,
-      route: "/(protected)/create-post/new-podcast-post",
+      title: "Camera",
+      icon: <Ionicons name="camera" size={20} color="white" />,
+      route: "camera",
     },
+    // {
+    //   title: "Podcast",
+    //   icon: <FontAwesome5 name="spotify" size={18} color="white" />,
+    //   route: "/(protected)/create-post/new-podcast-post",
+    // },
     /*{
       title: "Event",
       icon: <Ionicons name="ticket-outline" size={20} color="white" />,
@@ -204,6 +209,43 @@ export default function HomePage() {
     }
   };
 
+  const takePhoto = async () => {
+    const { status } = await ImagePicker.requestCameraPermissionsAsync();
+    if (status !== "granted") {
+      Alert.alert(
+        "Permission required",
+        "Sorry, we need camera access to take a photo!"
+      );
+      return false;
+    }
+
+    try {
+      const result = await ImagePicker.launchCameraAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        quality: 1,
+      });
+
+      if (!result.canceled && result.assets) {
+        const asset = result.assets[0];
+        setCreatedPostImage([
+          {
+            id: asset.assetId ?? `camera-${Date.now()}`,
+            url: asset.uri,
+            description: "",
+            createdAt: new Date(),
+            modifiedAt: new Date(),
+          },
+        ]);
+        return true;
+      }
+    } catch (error) {
+      console.error("Error taking photo:", error);
+      Alert.alert("Error", "Failed to take photo");
+    }
+    return false;
+  };
+
   const handleOptionPress = async (
     route:
       | "/(protected)/create-post/new-article-post"
@@ -211,8 +253,15 @@ export default function HomePage() {
       | "/(protected)/create-post/new-image-post"
       | "/(protected)/create-post/new-podcast-post"
       | "/(protected)/create-post/new-event-post"
+      | "camera"
   ) => {
     setShowOptions(false);
+
+    if (route === "camera") {
+      const taken = await takePhoto();
+      if (taken) router.push("/(protected)/create-post/new-image-post");
+      return;
+    }
 
     if (route === "/(protected)/create-post/new-image-post") {
       await pickImage();
