@@ -59,7 +59,15 @@ export const PostInfo = ({
   if (hideAvatar) {
     return (
       <Box className="flex flex-row items-center justify-between w-full pl-2 pr-4 mt-4">
-        <TouchableOpacity onPress={() => router.push(`/(protected)/user-profile?id=${displayUserId}`)}>
+        <TouchableOpacity
+          onPress={() => {
+            if (displayUserId) {
+              router.push(`/(protected)/user-profile?id=${displayUserId}`);
+            } else {
+              console.warn("[PostInfo] Cannot navigate to profile: displayUserId is undefined");
+            }
+          }}
+        >
           <Text size="sm" className="font-semibold">@{displayName}</Text>
         </TouchableOpacity>
         <Text size="xs">{formatPostDate(createdAt)}</Text>
@@ -70,7 +78,13 @@ export const PostInfo = ({
   return (
     <Box className="flex flex-row items-center justify-between w-full px-4">
       <TouchableOpacity
-        onPress={() => router.push(`/(protected)/user-profile?id=${displayUserId}`)}
+        onPress={() => {
+          if (displayUserId) {
+            router.push(`/(protected)/user-profile?id=${displayUserId}`);
+          } else {
+            console.warn("[PostInfo] Cannot navigate to profile: displayUserId is undefined");
+          }
+        }}
         className="flex items-left justify-start mt-4"
       >
         <Avatar

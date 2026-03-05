@@ -89,12 +89,14 @@ async function followUser(userId: string, followerId: string) {
   const followerDoc = doc(db, "users", followerId, "following", userId);
 
   try {
-    await setDoc(userDoc, { followerId });
-    await setDoc(followerDoc, { userId });
+    console.log(`[followUser] Following user ${userId} with follower ${followerId}`);
+    await setDoc(userDoc, { followerId, timestamp: new Date() });
+    await setDoc(followerDoc, { userId, timestamp: new Date() });
+    console.log(`[followUser] Successfully created follow relationship`);
 
     return true;
   } catch (error) {
-    console.error("Error writing document:", error);
+    console.error("[followUser] Error writing document:", error);
     return false;
   }
 }
@@ -103,10 +105,16 @@ async function unfollowUser(userId: string, followerId: string) {
   const followerDoc = doc(db, "users", userId, "followers", followerId);
   const followingDoc = doc(db, "users", followerId, "following", userId);
 
-  await deleteDoc(followerDoc);
-  await deleteDoc(followingDoc);
-
-  return true;
+  try {
+    console.log(`[unfollowUser] Unfollowing user ${userId} with follower ${followerId}`);
+    await deleteDoc(followerDoc);
+    await deleteDoc(followingDoc);
+    console.log(`[unfollowUser] Successfully deleted follow relationship`);
+    return true;
+  } catch (error) {
+    console.error("[unfollowUser] Error unfollowing user:", error);
+    return false;
+  }
 }
 
 async function fetchFollowers(userId: string) {
@@ -176,7 +184,13 @@ async function getAllUsers(): Promise<UserProfile[]> {
   try {
     const profiles = await getDocs(collectionGroup(db, "profile"));
     return profiles.docs
-      .map((doc) => doc.data() as UserProfile)
+      .map((doc) => {
+        const data = doc.data();
+        return {
+          ...data,
+          userId: doc.id, // Explicitly set userId from document ID
+        } as UserProfile;
+      })
       .filter((user) => !!user.displayName);
   } catch (error) {
     console.error("Error fetching user profiles:", error);

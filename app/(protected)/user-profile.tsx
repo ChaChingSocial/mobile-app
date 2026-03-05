@@ -12,7 +12,7 @@ import {
   AvatarImage,
 } from "@/components/ui/avatar";
 import { Badge, BadgeText } from "@/components/ui/badge";
-import { userApi } from "@/config/backend";
+import { userApi, communityApi } from "@/config/backend";
 import { getPostsByUser } from "@/lib/api/newsfeed";
 import { sendNotificationEmail } from "@/lib/api/notifications";
 import {
@@ -103,6 +103,8 @@ export default function UserProfile({
   // Use prop userId if provided, otherwise fall back to route parameter
   const currentUserId = propUserId || (Array.isArray(UserId) ? UserId[0] : UserId);
 
+  console.log("[UserProfile] Route params:", { id: UserId, propUserId, currentUserId });
+
   // Parse route params (they come as strings)
   const routeDisplayName = Array.isArray(paramDisplayName) ? paramDisplayName[0] : paramDisplayName;
   const routePhotoURL = Array.isArray(paramPhotoURL) ? paramPhotoURL[0] : paramPhotoURL;
@@ -136,9 +138,21 @@ export default function UserProfile({
   const [showFollowersModal, setShowFollowersModal] = useState(false);
   const [blocking, setBlocking] = useState(false);
   const [followLoading, setFollowLoading] = useState(false);
+  const [communityMemberships, setCommunityMemberships] = useState<any[]>([]);
 
   const { blockUser, unblockUser, isBlocked } = useBlockedUsers();
   const userIsBlocked = currentUserId ? isBlocked(currentUserId) : false;
+
+  // Filter communities by meeting type
+  const digitalCommunities = communityMemberships.filter((c: any) => {
+    const meetingType = String(c.meetingType ?? '').trim().toUpperCase();
+    return meetingType === 'VIRTUAL';
+  });
+
+  const irlCommunities = communityMemberships.filter((c: any) => {
+    const meetingType = String(c.meetingType ?? '').trim().toUpperCase();
+    return meetingType === 'IRL';
+  });
 
 
   // ── Data fetching ─────────────────────────────────────────────────────────
@@ -211,6 +225,19 @@ export default function UserProfile({
     }
   };
 
+  const fetchCommunityMemberships = async () => {
+    if (!currentUserId) return;
+    try {
+      const response = await communityApi.getUserCommunityMembership({ userId: currentUserId });
+      if (response) {
+        console.log('Communities fetched:', response);
+        setCommunityMemberships(response);
+      }
+    } catch (error) {
+      console.error('Failed to fetch community memberships:', error);
+    }
+  };
+
   const fetchFinfluencerStatus = async () => {
     if (currentUserId) {
       const res = await checkIfFinFluencer(currentUserId);
@@ -243,6 +270,7 @@ export default function UserProfile({
       fetchFollowersAndFollowing();
       fetchFinfluencerStatus();
       fetchFollowStatus();
+      fetchCommunityMemberships();
       (async () => {
         setLoading(true);
         const { posts: initial, lastDoc: initialLastDoc } =
@@ -266,20 +294,63 @@ export default function UserProfile({
 
   // ── Follow / Unfollow ────────────────────────────────────────────────────
   const handleFollowToggle = async () => {
-    if (!session?.uid || !currentUserId) return;
+    console.log(`[handleFollowToggle] Started - currentUserId: ${currentUserId}, session.uid: ${session?.uid}, userFollowing: ${userFollowing}`);
+
+    if (!session?.uid || !currentUserId) {
+      console.log("[handleFollowToggle] Missing session.uid or currentUserId");
+      Toast.show({
+        type: "error",
+        text1: "Error",
+        text2: "Unable to follow user. Please try again.",
+      });
+      return;
+    }
     setFollowLoading(true);
     try {
+      let success = false;
       if (userFollowing) {
-        await unfollowUser(currentUserId, session.uid);
-        setUserFollowing(false);
+        console.log("[handleFollowToggle] Unfollowing user...");
+        success = await unfollowUser(currentUserId, session.uid);
+        if (success) {
+          setUserFollowing(false);
+          Toast.show({
+            type: "success",
+            text1: "Unfollowed",
+            text2: "You are no longer following this user.",
+          });
+        }
       } else {
-        await followUser(currentUserId, session.uid);
-        setUserFollowing(true);
+        console.log("[handleFollowToggle] Following user...");
+        success = await followUser(currentUserId, session.uid);
+        if (success) {
+          setUserFollowing(true);
+          Toast.show({
+            type: "success",
+            text1: "Friend Request Sent",
+            text2: "Your friend request is pending.",
+          });
+        }
       }
-      // Recalculate mutual friends after the action
-      await fetchFollowersAndFollowing();
+
+      if (!success) {
+        console.log("[handleFollowToggle] Operation failed");
+        Toast.show({
+          type: "error",
+          text1: "Error",
+          text2: "Unable to process your request. Please try again.",
+        });
+      } else {
+        console.log("[handleFollowToggle] Operation successful, refreshing followers count");
+        // Recalculate mutual friends after the action
+        await fetchFollowersAndFollowing();
+      }
     } catch (error) {
-      console.error("Error toggling follow:", error);
+      console.error("[handleFollowToggle] Error toggling follow:", error);
+      Toast.show({
+        type: "error",
+        text1: "Error",
+        text2: "Unable to process your request. Please try again.",
+      });
     } finally {
       setFollowLoading(false);
     }
@@ -412,6 +483,23 @@ export default function UserProfile({
 
   // ── Render ───────────────────────────────────────────────────────────────
 
+  // Early return if no user ID is available
+  if (!currentUserId) {
+    console.log("[UserProfile] No currentUserId available, cannot display profile");
+    return (
+      <View className="flex-1 items-center justify-center bg-white">
+        <Text className="text-gray-600 text-lg">Unable to load profile</Text>
+        <Text className="text-gray-400 text-sm mt-2">User ID is missing</Text>
+        <TouchableOpacity
+          onPress={() => router.back()}
+          className="mt-4 bg-[#1e3a6e] px-6 py-3 rounded-full"
+        >
+          <Text className="text-white font-semibold">Go Back</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
+
   return (
     <ScrollView
       className="flex-1"
@@ -480,7 +568,7 @@ export default function UserProfile({
                 <AvatarFallbackText>{displayName}</AvatarFallbackText>
                 <AvatarImage source={{ uri: displayPic }} />
               </Avatar>
-              <View className="bg-[#1e3a6e] rounded-lg px-3 py-1">
+              <View className="bg-[#1e3a6e] rounded-lg px-3">
                 <Text
                   className="text-white font-bold text-sm"
                   numberOfLines={1}
@@ -515,8 +603,8 @@ export default function UserProfile({
             </TouchableOpacity>
 
 
-            {/* Follow / Unfollow button */}
-            {session?.uid && currentUserId && session.uid !== currentUserId && (
+            {/* Follow / Unfollow button - Show when viewing another user's profile */}
+            {/*{session?.uid && currentUserId && String(session.uid) !== String(currentUserId) && (*/}
               <TouchableOpacity
                 disabled={followLoading}
                 onPress={handleFollowToggle}
@@ -530,7 +618,7 @@ export default function UserProfile({
                     : "Friend Me"}
                 </Text>
               </TouchableOpacity>
-            )}
+            {/*)}*/}
           </View>
 
           {/* Social links */}
@@ -620,20 +708,60 @@ export default function UserProfile({
 
         {/* Virtual Communities */}
         <CollapsibleSection title="Virtual Communities">
-          <Text className="px-4 pb-4 text-gray-400 text-sm">
-            No virtual communities yet.
-          </Text>
+          {digitalCommunities.length > 0 ? (
+            <View className="px-4 pb-4 flex-row flex-wrap gap-4">
+              {digitalCommunities.map((community: any, index: number) => (
+                <TouchableOpacity
+                  key={index}
+                  onPress={() => router.push(`/(protected)/communities/${community.communityId}`)}
+                  className="items-center"
+                >
+                  <Image
+                      source={{ uri: community.image }}
+                      className="w-20 h-20 rounded-full mb-1"
+                  />
+                  <Text className="text-gray-700 text-xs text-center max-w-[80px]">
+                    {community.name}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          ) : (
+            <Text className="px-4 pb-4 text-gray-400 text-sm">
+              No virtual communities yet.
+            </Text>
+          )}
         </CollapsibleSection>
 
         {/* IRL Communities */}
         <CollapsibleSection title="IRL Communities">
-          <Text className="px-4 pb-4 text-gray-400 text-sm">
-            No IRL communities yet.
-          </Text>
+          {irlCommunities.length > 0 ? (
+            <View className="px-4 pb-4 flex-row flex-wrap gap-4">
+              {irlCommunities.map((community: any, index: number) => (
+                <TouchableOpacity
+                  key={index}
+                  onPress={() => router.push(`/(protected)/communities/${community.communityId}`)}
+                  className="items-center"
+                >
+                  <Image
+                      source={{ uri: community.image }}
+                      className="w-20 h-20 rounded-full mb-1"
+                  />
+                  <Text className="text-gray-700 text-xs text-center max-w-[80px]">
+                    {community.name}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          ) : (
+            <Text className="px-4 pb-4 text-gray-400 text-sm">
+              No IRL communities yet.
+            </Text>
+          )}
         </CollapsibleSection>
 
         {/* Badges */}
-        <CollapsibleSection title="Badges">
+        <CollapsibleSection title="NFTs">
           <Text className="px-4 pb-4 text-gray-400 text-sm">
             No badges earned yet.
           </Text>

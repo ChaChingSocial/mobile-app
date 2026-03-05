@@ -1,6 +1,7 @@
 import { User } from "@/_sdk";
 import NewsfeedList from "@/components/home/NewsfeedList";
 import FollowersModal from "@/components/profile/FollowersModal";
+import FriendMeModal from "@/components/profile/FriendMeModal";
 import {
   Avatar,
   AvatarFallbackText,
@@ -89,6 +90,7 @@ export default function Profile() {
   const [showAllInterests, setShowAllInterests] = useState(false);
   const [showBgModal, setShowBgModal] = useState(false);
   const [showFollowersModal, setShowFollowersModal] = useState(false);
+  const [showFriendMeModal, setShowFriendMeModal] = useState(false);
   const [bannerOverride, setBannerOverride] = useState<string | undefined>();
   const [followLoading, setFollowLoading] = useState(false);
 
@@ -346,7 +348,7 @@ export default function Profile() {
                 <AvatarFallbackText>{displayName}</AvatarFallbackText>
                 <AvatarImage source={{ uri: displayPic }} />
               </Avatar>
-              <View className="bg-[#1e3a6e] rounded-lg px-3 py-1 mt-2">
+              <View className="bg-[#1e3a6e] rounded-lg px-3 py-1">
                 <Text
                   className="text-white font-bold text-sm"
                   numberOfLines={1}
@@ -380,6 +382,16 @@ export default function Profile() {
                     <Text className="text-white font-semibold">Friends</Text>
                 </TouchableOpacity>
 
+                {/* Friend Me QR Code button - show if viewing own profile */}
+                {session?.uid && currentUserId && session.uid === currentUserId && (
+                    <TouchableOpacity
+                        onPress={() => setShowFriendMeModal(true)}
+                        className="bg-[#1e3a6e] rounded-full px-4 py-3 flex-row items-center gap-2"
+                    >
+                        <Ionicons name="qr-code" size={20} color="white" />
+                        <Text className="text-white font-semibold">Friend Me</Text>
+                    </TouchableOpacity>
+                )}
 
                 {/* Follow / Unfollow button */}
                 {session?.uid && currentUserId && session.uid !== currentUserId && (
@@ -532,7 +544,7 @@ export default function Profile() {
         </CollapsibleSection>
 
         {/* Badges */}
-        <CollapsibleSection title="Badges">
+        <CollapsibleSection title="NFTs">
           <Text className="px-4 pb-4 text-gray-400 text-sm">
             No badges earned yet.
           </Text>
@@ -568,6 +580,13 @@ export default function Profile() {
         onClose={() => setShowFollowersModal(false)}
         userId={currentUserId || ""}
         initialTab="friends"
+      />
+
+      <FriendMeModal
+        isOpen={showFriendMeModal}
+        onClose={() => setShowFriendMeModal(false)}
+        userId={currentUserId || ""}
+        username={displayName}
       />
     </ScrollView>
   );

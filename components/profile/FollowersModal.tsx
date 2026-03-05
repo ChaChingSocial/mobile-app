@@ -123,6 +123,10 @@ export default function FollowersModal({
   };
 
   const handleUserPress = (user: UserItem) => {
+    if (!user.userId) {
+      console.warn("[FollowersModal] Cannot navigate to profile: user.userId is undefined");
+      return;
+    }
     onClose();
     router.push({
       pathname: "/(protected)/user-profile",

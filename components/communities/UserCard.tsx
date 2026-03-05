@@ -21,6 +21,10 @@ export default function UserCard({ user }: { user: UserProfile }) {
     <Box className="p-4 shadow-2xl rounded-xl bg-white border border-gray-300">
       <TouchableOpacity
         onPress={() => {
+          if (!user.userId) {
+            console.warn("[UserCard] Cannot navigate to profile: user.userId is undefined");
+            return;
+          }
           router.push({
             pathname: "/(protected)/user-profile",
             params: {
