@@ -4,6 +4,7 @@ import {
   NotificationNotificationTypeEnum,
 } from "@/_sdk";
 import NewsfeedList from "@/components/home/NewsfeedList";
+import { LinkTree } from "@/components/profile/LinkTree";
 import BlockUserModal from "@/components/BlockUserModal";
 import FollowersModal from "@/components/profile/FollowersModal";
 import {
@@ -139,6 +140,7 @@ export default function UserProfile({
   const [blocking, setBlocking] = useState(false);
   const [followLoading, setFollowLoading] = useState(false);
   const [communityMemberships, setCommunityMemberships] = useState<any[]>([]);
+  const [activeTab, setActiveTab] = useState<"posts" | "links">("posts");
 
   const { blockUser, unblockUser, isBlocked } = useBlockedUsers();
   const userIsBlocked = currentUserId ? isBlocked(currentUserId) : false;
@@ -783,16 +785,61 @@ export default function UserProfile({
         </CollapsibleSection>
       </View>
 
-      {/* ── Posts ── */}
-      <NewsfeedList posts={posts} communityPage={false} />
+      {/* ── Tab bar ── */}
+      <View
+        style={{
+          flexDirection: "row",
+          backgroundColor: "white",
+          borderBottomWidth: 1,
+          borderBottomColor: "#e5e7eb",
+        }}
+      >
+        {(["posts", "links"] as const).map((tab) => (
+          <TouchableOpacity
+            key={tab}
+            onPress={() => setActiveTab(tab)}
+            style={{
+              flex: 1,
+              paddingVertical: 14,
+              alignItems: "center",
+              borderBottomWidth: 2,
+              borderBottomColor: activeTab === tab ? "#1e3a6e" : "transparent",
+            }}
+          >
+            <Text
+              style={{
+                color: activeTab === tab ? "#1e3a6e" : "#9ca3af",
+                fontWeight: "600",
+                fontSize: 14,
+                textTransform: "capitalize",
+              }}
+            >
+              {tab === "posts" ? "Posts" : "Links"}
+            </Text>
+          </TouchableOpacity>
+        ))}
+      </View>
 
-      {loading && (
-        <Image
-          source={require("@/assets/images/logo-inverted.png")}
-          alt="Loading..."
-          resizeMode="contain"
-          className="w-full"
-        />
+      {/* ── Tab content ── */}
+      {activeTab === "posts" ? (
+        <>
+          <NewsfeedList posts={posts} communityPage={false} />
+          {loading && (
+            <Image
+              source={require("@/assets/images/logo-inverted.png")}
+              alt="Loading..."
+              resizeMode="contain"
+              className="w-full"
+            />
+          )}
+        </>
+      ) : (
+        currentUserId ? (
+          <LinkTree
+            userId={currentUserId}
+            isOwnProfile={session?.uid === currentUserId}
+          />
+        ) : null
       )}
 
       <BlockUserModal

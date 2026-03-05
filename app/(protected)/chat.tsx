@@ -1076,7 +1076,7 @@ export default function ChatScreen() {
             paddingHorizontal: 16,
             paddingVertical: 10,
             fontSize: 14,
-            color: "blacku",
+            color: "black",
             maxHeight: 100,
           }}
           placeholder="Message..."
