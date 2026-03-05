@@ -22,7 +22,7 @@ import { useSession } from "@/lib/providers/AuthContext";
 import { useScoreStore } from "@/lib/store/score";
 import { useUserStore } from "@/lib/store/user";
 import type { Post } from "@/types/post";
-import { AntDesign } from "@expo/vector-icons";
+import { AntDesign, Ionicons } from "@expo/vector-icons";
 import * as Linking from "expo-linking";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useFocusEffect } from "@react-navigation/native";
@@ -38,7 +38,6 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
 import {Colors} from "@/lib/constants/Colors";
 import BackgroundImageModal from "@/components/profile/BackgroundImageModal";
 
@@ -390,6 +389,17 @@ export default function Profile() {
                     >
                         <Ionicons name="qr-code" size={20} color="white" />
                         <Text className="text-white font-semibold">Friend Me</Text>
+                    </TouchableOpacity>
+                )}
+
+                {/* Inbox / Messages button - own profile */}
+                {session?.uid && currentUserId && session.uid === currentUserId && (
+                    <TouchableOpacity
+                        onPress={() => router.push("/(protected)/inbox")}
+                        className="bg-white border border-[#1e3a6e] rounded-full px-4 py-3 flex-row items-center gap-2"
+                    >
+                        <Ionicons name="chatbubbles-outline" size={18} color="#1e3a6e" />
+                        <Text className="text-[#1e3a6e] font-semibold">Messages</Text>
                     </TouchableOpacity>
                 )}
 

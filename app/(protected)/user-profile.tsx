@@ -588,7 +588,7 @@ export default function UserProfile({
             ) : null}
           </View>
 
-          {/* Followers + Following + Follow button row */}
+          {/* Followers + Follow + Message row */}
           <View className="flex-row gap-3 mt-4 flex-wrap items-center">
             <TouchableOpacity
               onPress={() => setShowFollowersModal(true)}
@@ -602,23 +602,38 @@ export default function UserProfile({
               <Text className="text-white font-semibold">Friends</Text>
             </TouchableOpacity>
 
+            {session?.uid && currentUserId && String(session.uid) !== String(currentUserId) && (
+              <>
+                {/* Friend Me */}
+                <TouchableOpacity
+                  disabled={followLoading}
+                  onPress={handleFollowToggle}
+                  className="bg-[#1e3a6e] rounded-full px-4 py-3.5 flex-row items-center gap-2"
+                >
+                  <Text className="text-white font-semibold">
+                    {followLoading ? "..." : userFollowing ? "Pending" : "Friend Me"}
+                  </Text>
+                </TouchableOpacity>
 
-            {/* Follow / Unfollow button - Show when viewing another user's profile */}
-            {/*{session?.uid && currentUserId && String(session.uid) !== String(currentUserId) && (*/}
-              <TouchableOpacity
-                disabled={followLoading}
-                onPress={handleFollowToggle}
-                className="bg-[#1e3a6e] rounded-full px-4 py-3.5 flex-row items-center gap-2"
-              >
-                <Text className="text-white font-semibold">
-                  {followLoading
-                    ? "..."
-                    : userFollowing
-                    ? "Pending"
-                    : "Friend Me"}
-                </Text>
-              </TouchableOpacity>
-            {/*)}*/}
+                {/* Message */}
+                <TouchableOpacity
+                  onPress={() =>
+                    router.push({
+                      pathname: "/(protected)/chat",
+                      params: {
+                        otherUserId: currentUserId,
+                        otherUserName: displayName ?? "",
+                        otherUserPic: displayPic ?? "",
+                      },
+                    })
+                  }
+                  className="bg-white border border-[#1e3a6e] rounded-full px-4 py-3 flex-row items-center gap-2"
+                >
+                  <Ionicons name="chatbubble-outline" size={16} color="#1e3a6e" />
+                  <Text className="text-[#1e3a6e] font-semibold">Message</Text>
+                </TouchableOpacity>
+              </>
+            )}
           </View>
 
           {/* Social links */}
