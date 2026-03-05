@@ -1,20 +1,25 @@
 import { User } from "@/_sdk";
 import NewsfeedList from "@/components/home/NewsfeedList";
+import FollowersModal from "@/components/profile/FollowersModal";
 import {
   Avatar,
   AvatarFallbackText,
   AvatarImage,
 } from "@/components/ui/avatar";
 import { Badge, BadgeText } from "@/components/ui/badge";
-import { scoreApi, userApi } from "@/config/backend";
+import { scoreApi, userApi, communityApi } from "@/config/backend";
 import { getPostsByUser } from "@/lib/api/newsfeed";
 import {
   checkIfFinFluencer,
   fetchFollowers,
   fetchFollowing,
+  isFollowing,
+  followUser,
+  unfollowUser,
 } from "@/lib/api/user";
 import { useSession } from "@/lib/providers/AuthContext";
 import { useScoreStore } from "@/lib/store/score";
+import { useUserStore } from "@/lib/store/user";
 import type { Post } from "@/types/post";
 import { AntDesign } from "@expo/vector-icons";
 import * as Linking from "expo-linking";
@@ -75,7 +80,7 @@ export default function Profile() {
 
   const [isFinfluencer, setIsFinfluencer] = useState(false);
   const [followers, setFollowers] = useState(0);
-  const [following, setFollowing] = useState(0);
+  const [userFollowing, setUserFollowing] = useState(false);
   const [posts, setPosts] = useState<Post[]>([]);
   const [userInfo, setUserInfo] = useState<User | null>(null);
   const [lastDoc, setLastDoc] = useState<DocumentSnapshot | null>(null);
@@ -83,11 +88,27 @@ export default function Profile() {
   const [refreshing, setRefreshing] = useState(false);
   const [showAllInterests, setShowAllInterests] = useState(false);
   const [showBgModal, setShowBgModal] = useState(false);
+  const [showFollowersModal, setShowFollowersModal] = useState(false);
   const [bannerOverride, setBannerOverride] = useState<string | undefined>();
+  const [followLoading, setFollowLoading] = useState(false);
 
   const setCurrentUserScore = useScoreStore(
     (state) => state.setCurrentUserScore
   );
+
+  const communityMemberships = useUserStore((state) => state.userCommunities);
+  const setCommunityMemberships = useUserStore((state) => state.setUserCommunities);
+
+  // Filter communities by meeting type
+  const digitalCommunities = communityMemberships.filter((c: any) => {
+    const meetingType = String(c.meetingType ?? '').trim().toUpperCase();
+    return meetingType === 'VIRTUAL';
+  });
+
+  const irlCommunities = communityMemberships.filter((c: any) => {
+    const meetingType = String(c.meetingType ?? '').trim().toUpperCase();
+    return meetingType === 'IRL';
+  });
 
   // ── Data fetching ────────────────────────────────────────────────────────
   const fetchUserInfo = async () => {
@@ -104,6 +125,19 @@ export default function Profile() {
     }
   };
 
+  const fetchCommunityMemberships = async () => {
+    if (!currentUserId) return;
+    try {
+      const response = await communityApi.getUserCommunityMembership({ userId: currentUserId });
+      if (response) {
+        console.log('Communities fetched:', response);
+        setCommunityMemberships(response);
+      }
+    } catch (error) {
+      console.error('Failed to fetch community memberships:', error);
+    }
+  };
+
   const fetchFinfluencerStatus = async () => {
     if (currentUserId) {
       const res = await checkIfFinFluencer(currentUserId);
@@ -117,14 +151,50 @@ export default function Profile() {
         fetchFollowers(currentUserId),
         fetchFollowing(currentUserId),
       ]);
-      setFollowers(followersRes.size);
-      setFollowing(followingRes.size);
+
+      // Get the IDs of followers and following
+      const followerIds = followersRes.docs.map(doc => doc.id);
+      const followingIds = followingRes.docs.map(doc => doc.id);
+
+      // Calculate mutual follows (people who follow each other)
+      const mutualFollows = followerIds.filter(id => followingIds.includes(id));
+
+      setFollowers(mutualFollows.length); // This is mutual friends count
+    }
+  };
+
+  const fetchFollowStatus = async () => {
+    if (session?.uid && currentUserId) {
+      const following = await isFollowing(currentUserId, session.uid);
+      setUserFollowing(following);
+    }
+  };
+
+  // ── Follow / Unfollow ────────────────────────────────────────────────────
+  const handleFollowToggle = async () => {
+    if (!session?.uid || !currentUserId) return;
+    setFollowLoading(true);
+    try {
+      if (userFollowing) {
+        await unfollowUser(currentUserId, session.uid);
+        setUserFollowing(false);
+      } else {
+        await followUser(currentUserId, session.uid);
+        setUserFollowing(true);
+      }
+      // Recalculate mutual friends after the action
+      await fetchFollowersAndFollowing();
+    } catch (error) {
+      console.error("Error toggling follow:", error);
+    } finally {
+      setFollowLoading(false);
     }
   };
 
   useEffect(() => {
     if (currentUserId) {
       fetchUserInfo();
+      fetchCommunityMemberships();
       (async () => {
         setLoading(true);
         const { posts: initial, lastDoc: initialLastDoc } =
@@ -151,6 +221,7 @@ export default function Profile() {
   useEffect(() => {
     fetchFollowersAndFollowing();
     fetchFinfluencerStatus();
+    fetchFollowStatus();
   }, [currentUserId]);
 
   // ── Pagination / scroll ──────────────────────────────────────────────────
@@ -295,26 +366,39 @@ export default function Profile() {
             ) : null}
           </View>
 
-          {/* Followers + Following row */}
-          <View className="flex-row gap-3 mt-5 flex-wrap">
-            <View className="bg-[#1e3a6e] rounded-full px-4 py-2.5 flex-row items-center gap-2">
-              <View className="bg-white rounded-full w-7 h-7 items-center justify-center">
-                <Text className="text-[#1e3a6e] font-bold text-xs">
-                  {followers}
-                </Text>
-              </View>
-              <Text className="text-white font-semibold">Friends</Text>
+            {/* Followers + Following + Follow button row */}
+            <View className="flex-row gap-3 mt-4 flex-wrap items-center">
+                <TouchableOpacity
+                    onPress={() => setShowFollowersModal(true)}
+                    className="bg-[#1e3a6e] rounded-full px-4 py-3 flex-row items-center gap-2"
+                >
+                    <View className="bg-white rounded-full w-7 h-7 items-center justify-center">
+                        <Text className="text-[#1e3a6e] font-bold text-xs">
+                            {followers}
+                        </Text>
+                    </View>
+                    <Text className="text-white font-semibold">Friends</Text>
+                </TouchableOpacity>
+
+
+                {/* Follow / Unfollow button */}
+                {session?.uid && currentUserId && session.uid !== currentUserId && (
+                    <TouchableOpacity
+                        disabled={followLoading}
+                        onPress={handleFollowToggle}
+                        className="bg-[#1e3a6e] rounded-full px-4 py-3.5 flex-row items-center gap-2"
+                    >
+                        <Text className="text-white font-semibold">
+                            {followLoading
+                                ? "..."
+                                : userFollowing
+                                    ? "Pending"
+                                    : "Friend Me"}
+                        </Text>
+                    </TouchableOpacity>
+                )}
             </View>
 
-            <View className="bg-white border border-[#1e3a6e] rounded-full px-4 py-2.5 flex-row items-center gap-2">
-              <View className="bg-[#1e3a6e] rounded-full w-7 h-7 items-center justify-center">
-                <Text className="text-white font-bold text-xs">
-                  {following}
-                </Text>
-              </View>
-              <Text className="text-[#1e3a6e] font-semibold">Following</Text>
-            </View>
-          </View>
 
           {/* Social links */}
           {userInfo?.socials && (
@@ -332,7 +416,7 @@ export default function Profile() {
                   onPress={() => Linking.openURL(userInfo!.socials!.linkedin!)}
                   accessibilityLabel="LinkedIn"
                 >
-                  <AntDesign name="linkedin-square" size={26} color="#6b7280" />
+                  <AntDesign name="linkedin" size={26} color="#6b7280" />
                 </TouchableOpacity>
               )}
               {userInfo.socials.tiktok && (
@@ -340,7 +424,7 @@ export default function Profile() {
                   onPress={() => Linking.openURL(userInfo!.socials!.tiktok!)}
                   accessibilityLabel="TikTok"
                 >
-                  <AntDesign name="tiktok" size={26} color="#6b7280" />
+                  <AntDesign name="video-camera" size={26} color="#6b7280" />
                 </TouchableOpacity>
               )}
               {(userInfo.socials as any).website && (
@@ -350,7 +434,7 @@ export default function Profile() {
                   }
                   accessibilityLabel="Website"
                 >
-                  <AntDesign name="earth" size={26} color="#6b7280" />
+                  <AntDesign name="link" size={26} color="#6b7280" />
                 </TouchableOpacity>
               )}
             </View>
@@ -395,16 +479,56 @@ export default function Profile() {
 
         {/* Virtual Communities */}
         <CollapsibleSection title="Virtual Communities">
-          <Text className="px-4 pb-4 text-gray-400 text-sm">
-            No virtual communities yet.
-          </Text>
+          {digitalCommunities.length > 0 ? (
+            <View className="px-4 pb-4 flex-row flex-wrap gap-4">
+              {digitalCommunities.map((community: any, index: number) => (
+                <TouchableOpacity
+                  key={index}
+                  onPress={() => router.push(`/(protected)/communities/${community.communityId}`)}
+                  className="items-center"
+                >
+                  <Image
+                      source={{ uri: community.image }}
+                      className="w-20 h-20 rounded-full mb-1"
+                  />
+                  <Text className="text-gray-700 text-xs text-center max-w-[80px]">
+                    {community.name}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          ) : (
+            <Text className="px-4 pb-4 text-gray-400 text-sm">
+              No virtual communities yet.
+            </Text>
+          )}
         </CollapsibleSection>
 
         {/* IRL Communities */}
         <CollapsibleSection title="IRL Communities">
-          <Text className="px-4 pb-4 text-gray-400 text-sm">
-            No IRL communities yet.
-          </Text>
+          {irlCommunities.length > 0 ? (
+            <View className="px-4 pb-4 flex-row flex-wrap gap-4">
+              {irlCommunities.map((community: any, index: number) => (
+                <TouchableOpacity
+                  key={index}
+                  onPress={() => router.push(`/(protected)/communities/${community.communityId}`)}
+                  className="items-center"
+                >
+                  <Image
+                      source={{ uri: community.image }}
+                      className="w-20 h-20 rounded-full mb-1"
+                  />
+                  <Text className="text-gray-700 text-xs text-center max-w-[80px]">
+                    {community.name}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          ) : (
+            <Text className="px-4 pb-4 text-gray-400 text-sm">
+              No IRL communities yet.
+            </Text>
+          )}
         </CollapsibleSection>
 
         {/* Badges */}
@@ -437,6 +561,13 @@ export default function Profile() {
           setBannerOverride(url);
           setShowBgModal(false);
         }}
+      />
+
+      <FollowersModal
+        isOpen={showFollowersModal}
+        onClose={() => setShowFollowersModal(false)}
+        userId={currentUserId || ""}
+        initialTab="friends"
       />
     </ScrollView>
   );
