@@ -45,25 +45,29 @@ export default function CommunitiesScreen() {
     useCallback(() => {
       const fetchData = async () => {
         setLoading(true);
+
+        // Fetch independently so one failure doesn't block the other
         try {
-          const [communities, users] = await Promise.all([
-            getAllCommunities(),
-            getAllUsers(),
-          ]);
+          const communities = await getAllCommunities();
           if (communities) {
             setCommunityData(communities);
             setFilteredCommunities(communities);
           }
+        } catch (err) {
+          console.error("Error fetching communities:", err);
+        }
+
+        try {
+          const users = await getAllUsers();
           if (users) {
             setUserData(users);
             setFilteredUsers(users);
           }
         } catch (err) {
-          console.error("Error fetching data:", err);
-          setError(err);
-        } finally {
-          setLoading(false);
+          console.error("Error fetching users:", err);
         }
+
+        setLoading(false);
       };
 
       fetchData();
@@ -211,7 +215,7 @@ export default function CommunitiesScreen() {
             refreshing={loading}
             renderItem={({ item }) => (
               <Box className="mb-5">
-                <CommunityCard community={item.data} />
+                <CommunityCard community={{ id: item.id, ...item.data } as any} />
               </Box>
             )}
             keyExtractor={(item) => item.id}

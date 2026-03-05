@@ -173,23 +173,15 @@ interface UserProfile {
 }
 
 async function getAllUsers(): Promise<UserProfile[]> {
-  const usersRef = collection(db, "users");
-  const userSnapshots = await getDocs(usersRef);
-
-  const userProfiles: UserProfile[] = [];
-
-  for (const userDoc of userSnapshots.docs) {
-    const userId = userDoc.id;
-    const userProfileRef = doc(db, "users", userId, "profile", userId);
-    const userProfileSnapshot = await getDoc(userProfileRef);
-
-    if (userProfileSnapshot.exists()) {
-      const userProfileData = userProfileSnapshot.data();
-      userProfiles.push(userProfileData as UserProfile);
-    }
+  try {
+    const profiles = await getDocs(collectionGroup(db, "profile"));
+    return profiles.docs
+      .map((doc) => doc.data() as UserProfile)
+      .filter((user) => !!user.displayName);
+  } catch (error) {
+    console.error("Error fetching user profiles:", error);
+    return [];
   }
-
-  return userProfiles;
 }
 
 async function fetchAllUsernames() {

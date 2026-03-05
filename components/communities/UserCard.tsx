@@ -23,7 +23,13 @@ export default function UserCard({ user }: { user: UserProfile }) {
         onPress={() => {
           router.push({
             pathname: "/(protected)/user-profile",
-            params: { userId: user.userId },
+            params: {
+              id: user.userId,
+              displayName: user.displayName,
+              photoURL: user.photoURL,
+              bio: user.bio,
+              interests: JSON.stringify(user.interests || []),
+            },
           });
         }}
       >
