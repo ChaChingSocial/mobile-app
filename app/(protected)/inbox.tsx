@@ -8,6 +8,7 @@ import React, { useEffect, useState } from "react";
 import {
   ActivityIndicator,
   FlatList,
+  SafeAreaView,
   Text,
   TouchableOpacity,
   View,
@@ -29,6 +30,7 @@ export default function InboxScreen() {
   const router = useRouter();
   const [conversations, setConversations] = useState<ConversationWithProfile[]>([]);
   const [loading, setLoading] = useState(true);
+  const currentUserId = session?.uid || "";
 
   useEffect(() => {
     if (!session?.uid) return;
@@ -85,7 +87,8 @@ export default function InboxScreen() {
 
   const renderItem = ({ item }: { item: ConversationWithProfile }) => (
     <TouchableOpacity
-      className="flex-row items-center px-4 py-3 bg-white border-b border-gray-100"
+      className="flex-row items-center px-4 py-3 border-b border-gray-500"
+      style={{ backgroundColor: Colors.light.tint }}
       onPress={() =>
         router.push({
           pathname: "/(protected)/chat",
@@ -106,9 +109,9 @@ export default function InboxScreen() {
       <View className="flex-1">
         <View className="flex-row justify-between items-center">
           <Text className="font-semibold text-gray-900 text-sm">
-            {item.otherUserName}
+            {item.title || item.otherUserName}
           </Text>
-          <Text className="text-gray-400 text-xs">
+          <Text className="text-black text-xs">
             {formatTime(item.lastMessageAt)}
           </Text>
         </View>
@@ -127,14 +130,42 @@ export default function InboxScreen() {
 
   if (loading) {
     return (
-      <View className="flex-1 items-center justify-center bg-white">
-        <ActivityIndicator size="large" color={Colors.dark.tint} />
-      </View>
+      <SafeAreaView className="flex-1 bg-white">
+        <View className="flex-row items-center justify-between px-4 py-3 border-b border-gray-200">
+        <TouchableOpacity
+          onPress={() => router.push({
+            pathname: "/(protected)/(home)/profile",
+            params: { id: currentUserId }
+          })}
+          className="flex-row items-center"
+        >
+          <Ionicons name="chevron-back" size={24} color={Colors.dark.tint} />
+        </TouchableOpacity>
+          <Text className="text-lg font-bold text-gray-900">Inbox</Text>
+          <View style={{ width: 24 }} />
+        </View>
+        <View className="flex-1 items-center justify-center">
+          <ActivityIndicator size="large" color={Colors.dark.tint} />
+        </View>
+      </SafeAreaView>
     );
   }
 
   return (
-    <View className="flex-1" style={{ backgroundColor: "#f3f4f6" }}>
+    <SafeAreaView className="flex-1" style={{ backgroundColor: Colors.dark.tint }}>
+      <View className="flex-row items-center justify-between px-4 py-3 border-b border-gray-500">
+        <TouchableOpacity
+          onPress={() => router.push({
+            pathname: "/(protected)/(home)/profile",
+            params: { id: currentUserId }
+          })}
+          className="flex-row items-center"
+        >
+          <Ionicons name="chevron-back" size={24} color="white" />
+        </TouchableOpacity>
+        <Text className="text-lg font-bold text-white">Inbox</Text>
+        <View style={{ width: 24 }} />
+      </View>
       <FlatList
         data={conversations}
         keyExtractor={(item) => item.id}
@@ -151,6 +182,6 @@ export default function InboxScreen() {
           </View>
         }
       />
-    </View>
+    </SafeAreaView>
   );
 }

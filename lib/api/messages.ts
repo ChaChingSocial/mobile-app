@@ -4,6 +4,7 @@ import {
   arrayRemove,
   arrayUnion,
   collection,
+  deleteDoc,
   doc,
   getDoc,
   getDocs,
@@ -28,6 +29,8 @@ export interface Message {
   createdAt: Timestamp | null;
   read: boolean;
   reactions?: Record<string, string[]>; // emoji → [userId, ...]
+  mediaUrl?: string;                    // Firebase Storage download URL
+  mediaType?: "image" | "video";
 }
 
 export interface Conversation {
@@ -37,6 +40,7 @@ export interface Conversation {
   lastMessageAt: Timestamp | null;
   lastMessageBy: string;
   unreadCount?: number;
+  title?: string; // Custom title for the conversation
 }
 
 /**
@@ -73,15 +77,16 @@ export async function getOrCreateConversation(
 }
 
 /**
- * Send a message in a conversation.
+ * Send a message in a conversation, optionally with media.
  */
 export async function sendMessage(
   conversationId: string,
   senderId: string,
-  text: string
+  text: string,
+  media?: { mediaUrl: string; mediaType: "image" | "video" }
 ): Promise<void> {
   const trimmed = text.trim();
-  if (!trimmed) return;
+  if (!trimmed && !media) return;
 
   const messagesRef = collection(
     db,
@@ -95,6 +100,7 @@ export async function sendMessage(
     senderId,
     createdAt: serverTimestamp(),
     read: false,
+    ...(media ?? {}),
   });
 
   // Update conversation summary
@@ -227,3 +233,63 @@ export async function markMessagesAsRead(
 
   await Promise.all(updates);
 }
+
+/**
+ * Update the title of a conversation.
+ */
+export async function updateConversationTitle(
+  conversationId: string,
+  title: string
+): Promise<void> {
+  const conversationRef = doc(db, "conversations", conversationId);
+  await updateDoc(conversationRef, { title: title.trim() });
+}
+
+/**
+ * Delete a conversation and all its messages.
+ */
+export async function deleteConversation(
+  conversationId: string
+): Promise<void> {
+  const messagesRef = collection(
+    db,
+    "conversations",
+    conversationId,
+    "messages"
+  );
+  const snapshot = await getDocs(messagesRef);
+
+  // Delete all messages in the conversation
+  const deletePromises = snapshot.docs.map((doc) => {
+    return deleteDoc(doc.ref);
+  });
+
+  await Promise.all(deletePromises);
+
+  // Delete the conversation itself
+  const conversationRef = doc(db, "conversations", conversationId);
+  await deleteDoc(conversationRef);
+}
+
+/**
+ * Add a participant to an existing conversation.
+ */
+export async function addParticipantToConversation(
+  conversationId: string,
+  userId: string
+): Promise<void> {
+  const conversationRef = doc(db, "conversations", conversationId);
+  await updateDoc(conversationRef, { participants: arrayUnion(userId) });
+}
+
+/**
+ * Remove a participant from an existing conversation.
+ */
+export async function removeParticipantFromConversation(
+  conversationId: string,
+  userId: string
+): Promise<void> {
+  const conversationRef = doc(db, "conversations", conversationId);
+  await updateDoc(conversationRef, { participants: arrayRemove(userId) });
+}
+
