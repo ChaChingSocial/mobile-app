@@ -39,6 +39,7 @@ import {
 } from "@expo/vector-icons";
 import * as ImagePicker from "expo-image-picker";
 import * as MediaLibrary from "expo-media-library";
+import {Colors} from "@/lib/constants/Colors";
 
 export default function SingleCommunity() {
   const params = useLocalSearchParams();
@@ -343,7 +344,8 @@ export default function SingleCommunity() {
     <Box className="flex-1 relative">
       {/* Content */}
       <ScrollView
-        className="bg-[#077f5f] flex-1"
+        className="flex-1"
+        style={{backgroundColor: communityData.themeDarkColor || Colors.dark.tint}}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
         onScroll={onScrollNearBottom}
         scrollEventThrottle={32}
@@ -389,9 +391,14 @@ export default function SingleCommunity() {
                 {communityData.interests.map((interest, index) => (
                   <View
                     key={index}
-                    className="bg-[#a3e4d2] px-3 py-1 rounded-full mr-2 mb-2"
+                    className="px-3 py-1 rounded-full mr-2 mb-2"
+                    style={{ backgroundColor: communityData.themeLightColor || Colors.light.tint }}
                   >
-                    <Text className="text-[#077f5f]">{interest}</Text>
+                    <Text
+                        style={{ color: communityData.themeDarkColor || Colors.dark.tint }}
+                    >
+                        {interest}
+                    </Text>
                   </View>
                 ))}
               </View>

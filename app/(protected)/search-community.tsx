@@ -130,7 +130,7 @@ export default function SearchCommunity() {
                     if (!isFromCreatePost) {
                         router.push({
                             pathname: "/(protected)/communities/[slug]",
-                            params: { slug: data.slug, communityId: id },
+                            params: { title: data.title, slug: data.slug, communityId: id, themeLightColor: data.themeLightColor, themeDarkColor: data.themeDarkColor }
                         });
                     } else {
                         setCreatedPostCommunityData(data);

@@ -36,7 +36,7 @@ export default function TabLayout() {
         return {
           headerShadowVisible: true,
           headerStyle: {
-            backgroundColor: Colors.light.tint,
+            backgroundColor: Colors.dark.tint,
           },
           tabBarHideOnKeyboard: Platform.OS === "android" ? true : undefined,
           headerTitle: () => (
@@ -44,7 +44,7 @@ export default function TabLayout() {
               <Image
                 source={require("@/assets/images/logo.png")}
                 style={{
-                  height: 40,
+                  height: 50,
                   resizeMode: "contain",
                   width: 140,
                   marginBottom: 10,

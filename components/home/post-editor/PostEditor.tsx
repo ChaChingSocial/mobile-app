@@ -64,8 +64,8 @@ const PostEditor = ({ message, setContent, editorType }: PostEditorProps) => {
           placeholder="What's on your mind?"
           initialContentHTML={newPostContent}
             editorStyle={{
-            backgroundColor: "transparent",
-            color: "#000",
+            backgroundColor: "gray-50",
+            color: "white",
             placeholderColor: "gray",
             cssText: `
                      * {

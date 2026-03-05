@@ -52,6 +52,8 @@ export function PostComponent({ post }: { post: PostType }) {
   const [oinkInfoModalVisible, setOinkInfoModalVisible] = useState(false);
   const currentUserScore = useScoreStore((state) => state.currentUserScore);
   const [commentContent, setCommentContent] = useState("");
+  const [communityThemeDarkColor, setCommunityThemeDarkColor] = useState<string | null>(null);
+  const [communityThemeLightColor, setCommunityThemeLightColor] = useState<string | null>(null);
 
   useEffect(() => {
     if (post) {
@@ -90,6 +92,8 @@ export function PostComponent({ post }: { post: PostType }) {
           if (res) {
             setCommunityName(res.title);
             setCommunitySlug(res.slug);
+            setCommunityThemeDarkColor(res.themeDarkColor);
+            setCommunityThemeLightColor(res.themeLightColor);
           }
         } catch (error) {
           console.error("Error fetching community data:", error);
@@ -297,8 +301,8 @@ export function PostComponent({ post }: { post: PostType }) {
               {/*  source={require("@/assets/images/pig-face.png")}*/}
               {/*  className="w-10 h-10 absolute top-0 -left-7 z-20"*/}
               {/*/>*/}
-              <Badge variant="outline" className="absolute top-3 left-0 z-10 rounded-full px-6 py-0.5 w-fit" style={{backgroundColor: Colors.light.tint}}>
-                <BadgeText className="uppercase text-center font-bold text-xs" style={{color: Colors.dark.tint}}>
+              <Badge variant="outline" className="absolute top-3 left-0 z-10 rounded-full px-6 py-0.5 w-fit bg-gray-900">
+                <BadgeText className="uppercase text-center font-bold text-xs" style={{color: communityThemeLightColor || Colors.light.tint}}>
                   {communityName.length > 30
                     ? `${communityName.slice(0, 30)}...`
                     : communityName}
@@ -335,7 +339,10 @@ export function PostComponent({ post }: { post: PostType }) {
           </PostWrapper>
 
           {/*{writeComment && (*/}
-          <View className="bg-[#a5e5cb] rounded-md p-4 -mx-4 -mb-4">
+          <View
+              className="p-4 -mx-4 -mb-4"
+              style={{ backgroundColor: communityThemeLightColor || Colors.light.tint }}
+          >
             <View className="flex flex-row items-center gap-2">
               <View className="flex-1">
                 <PostEditor
