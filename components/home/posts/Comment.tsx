@@ -19,6 +19,8 @@ import { PostWrapper } from "./PostWrapper";
 import HtmlRenderText from "@/components/common/HtmlRenderText";
 import { Comment as CommentType, Post as PostType } from "@/types/post";
 import { Box } from "@/components/ui/box";
+import { LinkPreviewCard } from "./LinkPreviewCard";
+import { useLinkPreview } from "@/lib/hooks/useLinkPreview";
 
 export function Comment({
                             comment,
@@ -32,6 +34,12 @@ export function Comment({
     const { session } = useSession();
     const currentUserId = session?.uid;
     const currentUserName = session?.displayName;
+
+    const commentHtml =
+        typeof comment.message === "string"
+            ? comment.message
+            : comment.message?.message ?? (comment as any)?.content ?? "";
+    const commentLinkPreview = useLinkPreview(commentHtml);
 
     const [liked, setLiked] = useState(
         comment.likes.some((like) => like.userId === currentUserId)
@@ -187,12 +195,11 @@ export function Comment({
                     <View className="ml-2 mr-3">
                         <HtmlRenderText
                             inset={96}
-                            source={
-                                typeof comment.message === "string"
-                                    ? comment.message
-                                    : comment.message?.message ?? (comment as any)?.content ?? ""
-                            }
+                            source={commentHtml}
                         />
+                        {commentLinkPreview && (
+                            <LinkPreviewCard linkPreview={commentLinkPreview} />
+                        )}
                     </View>
                 </View>
             )}

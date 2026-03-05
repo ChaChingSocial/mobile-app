@@ -77,10 +77,20 @@ export default function HomePage() {
       route: "/(protected)/create-post/new-image-post",
     },
     {
-      title: "Podcast",
-      icon: <FontAwesome5 name="spotify" size={18} color="white" />,
-      route: "/(protected)/create-post/new-podcast-post",
+      title: "Camera",
+      icon: <Ionicons name="camera" size={20} color="white" />,
+      route: "camera",
     },
+    {
+      title: "Record Video",
+      icon: <Ionicons name="videocam" size={20} color="white" />,
+      route: "record-video",
+    },
+    // {
+    //   title: "Podcast",
+    //   icon: <FontAwesome5 name="spotify" size={18} color="white" />,
+    //   route: "/(protected)/create-post/new-podcast-post",
+    // },
     /*{
       title: "Event",
       icon: <Ionicons name="ticket-outline" size={20} color="white" />,
@@ -204,6 +214,81 @@ export default function HomePage() {
     }
   };
 
+  const takePhoto = async () => {
+    const { status } = await ImagePicker.requestCameraPermissionsAsync();
+    if (status !== "granted") {
+      Alert.alert(
+        "Permission required",
+        "Sorry, we need camera access to take a photo!"
+      );
+      return false;
+    }
+
+    try {
+      const result = await ImagePicker.launchCameraAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        quality: 1,
+      });
+
+      if (!result.canceled && result.assets) {
+        const asset = result.assets[0];
+        setCreatedPostImage([
+          {
+            id: asset.assetId ?? `camera-${Date.now()}`,
+            url: asset.uri,
+            description: "",
+            createdAt: new Date(),
+            modifiedAt: new Date(),
+          },
+        ]);
+        return true;
+      }
+    } catch (error) {
+      console.error("Error taking photo:", error);
+      Alert.alert("Error", "Failed to take photo");
+    }
+    return false;
+  };
+
+  const recordVideo = async () => {
+    const { status } = await ImagePicker.requestCameraPermissionsAsync();
+    if (status !== "granted") {
+      Alert.alert(
+        "Permission required",
+        "Sorry, we need camera access to record a video!"
+      );
+      return false;
+    }
+
+    try {
+      const result = await ImagePicker.launchCameraAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Videos,
+        allowsEditing: false,
+        quality: 1,
+        videoMaxDuration: 300, // 5 minutes max
+      });
+
+      if (!result.canceled && result.assets) {
+        const asset = result.assets[0];
+        setCreatedPostVideo({
+          url: asset.uri,
+          description: asset.fileName ?? "",
+          title: asset.fileName ?? "Untitled Video",
+          image: asset.uri,
+          tags: [],
+          publisher: session?.displayName || "Anonymous",
+          publisherPicUrl: session?.profilePic || "",
+        });
+        return true;
+      }
+    } catch (error) {
+      console.error("Error recording video:", error);
+      Alert.alert("Error", "Failed to record video");
+    }
+    return false;
+  };
+
   const handleOptionPress = async (
     route:
       | "/(protected)/create-post/new-article-post"
@@ -211,8 +296,22 @@ export default function HomePage() {
       | "/(protected)/create-post/new-image-post"
       | "/(protected)/create-post/new-podcast-post"
       | "/(protected)/create-post/new-event-post"
+      | "camera"
+      | "record-video"
   ) => {
     setShowOptions(false);
+
+    if (route === "camera") {
+      const taken = await takePhoto();
+      if (taken) router.push("/(protected)/create-post/new-image-post");
+      return;
+    }
+
+    if (route === "record-video") {
+      const recorded = await recordVideo();
+      if (recorded) router.push("/(protected)/create-post/new-link-post");
+      return;
+    }
 
     if (route === "/(protected)/create-post/new-image-post") {
       await pickImage();
