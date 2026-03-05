@@ -1045,7 +1045,7 @@ export default function ChatScreen() {
           flexDirection: "row",
           alignItems: "center",
           paddingHorizontal: 16,
-          paddingBottom: Platform.OS === "ios" ? 20 : 24,
+          paddingBottom: Platform.OS === "ios" ? 20 : 15,
           paddingTop: 12,
           backgroundColor: Colors.dark.tint,
           borderTopWidth: 1,
