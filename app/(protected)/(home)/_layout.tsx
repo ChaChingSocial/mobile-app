@@ -115,28 +115,20 @@ export default function TabLayout() {
         options={{
           title: "Discover",
           tabBarIcon: ({ color }) => (
-            <FontAwesome size={28} name="space-shuttle" color={color} />
+            <FontAwesome size={28} name="star-o" color={color} />
           ),
         }}
       />
       <Tabs.Screen
         name="communities"
         options={{
-          title: "Communities",
+          title: "Connect",
           tabBarIcon: ({ color }) => (
-            <FontAwesome size={22} name="users" color={color} />
+            <FontAwesome size={22} name="hand-scissors-o" color={color} />
           ),
         }}
       />
-      <Tabs.Screen
-        name="profile/index"
-        options={{
-          title: "Profile",
-          tabBarIcon: ({ color }) => (
-            <FontAwesome5 name="user-alt" size={22} color={color} />
-          ),
-        }}
-      />
+
       <Tabs.Screen
         name="profile/edit-profile"
         options={{
@@ -150,7 +142,7 @@ export default function TabLayout() {
         options={{
           title: "Blog",
           tabBarIcon: ({ color }) => (
-            <FontAwesome size={22} name="book" color={color} />
+            <FontAwesome size={22} name="newspaper-o" color={color} />
           ),
         }}
       />
@@ -159,6 +151,15 @@ export default function TabLayout() {
         options={{
           href: null,
         }}
+      />
+      <Tabs.Screen
+          name="profile/index"
+          options={{
+              title: "Profile",
+              tabBarIcon: ({ color }) => (
+                  <FontAwesome5 name="user-alt" size={22} color={color} />
+              ),
+          }}
       />
     </Tabs>
   );
