@@ -1,3 +1,4 @@
+import { Community } from "@/_sdk";
 import { communityApi } from "@/config/backend";
 import { useUserStore } from "@/lib/store/user";
 import { useRouter } from "expo-router";
@@ -16,19 +17,13 @@ interface UserProfile {
   userId: string;
 }
 
-interface CommunityMembership {
-  communityId: string;
-  name: string;
-  image: string;
-  meetingType?: string;
-}
 
 const MAX_SHOWN = 5;
 
 export default function UserCard({ user }: { user: UserProfile }) {
   const router = useRouter();
-  const myMemberships = useUserStore((state) => state.userCommunities) as CommunityMembership[];
-  const [sharedCommunities, setSharedCommunities] = useState<CommunityMembership[]>([]);
+  const myMemberships = useUserStore((state) => state.userCommunities) as Community[];
+  const [sharedCommunities, setSharedCommunities] = useState<Community[]>([]);
 
   useEffect(() => {
     if (!user.userId || myMemberships.length === 0) return;
@@ -42,9 +37,9 @@ export default function UserCard({ user }: { user: UserProfile }) {
         });
         if (cancelled || !theirMemberships) return;
 
-        const myIds = new Set(myMemberships.map((c) => c.communityId));
-        const shared = (theirMemberships as CommunityMembership[]).filter((c) =>
-          myIds.has(c.communityId)
+        const myIds = new Set(myMemberships.map((c) => c.id));
+        const shared = theirMemberships.filter((c) =>
+          myIds.has(c.id)
         );
         setSharedCommunities(shared);
       } catch {
@@ -118,7 +113,7 @@ export default function UserCard({ user }: { user: UserProfile }) {
                 <HStack className="items-end gap-2">
                   {shownCommunities.map((c) => (
                     <View
-                      key={c.communityId}
+                      key={c.id}
                       style={{ width: 44, alignItems: "center" }}
                     >
                       <View

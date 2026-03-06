@@ -1,6 +1,7 @@
 import { GluestackUIProvider } from "@/components/ui/gluestack-ui-provider";
 import "@/global.css";
 import { SessionProvider, useSession } from "@/lib/providers/AuthContext";
+import { PrivyProvider } from "@privy-io/expo";
 import { GoogleSignin } from "@react-native-google-signin/google-signin";
 import { Redirect, usePathname } from "expo-router";
 import { Stack } from "expo-router";
@@ -65,11 +66,23 @@ function RootLayoutNav() {
 }
 
 export default function RootLayout() {
+  const privyAppId = process.env.EXPO_PUBLIC_PRIVY_APP_ID;
+  const privyClientId = process.env.EXPO_PUBLIC_PRIVY_CLIENT_ID;
+
+  const appTree = (
+    <SessionProvider>
+      <RootLayoutNav />
+    </SessionProvider>
+  );
   return (
     <>
-      <SessionProvider>
-        <RootLayoutNav />
-      </SessionProvider>
+      {privyAppId && privyClientId ? (
+        <PrivyProvider appId={privyAppId} clientId={privyClientId}>
+          {appTree}
+        </PrivyProvider>
+      ) : (
+        appTree
+      )}
       <Toast />
     </>
   );

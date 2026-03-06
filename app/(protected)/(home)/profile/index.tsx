@@ -23,6 +23,11 @@ import { useSession } from "@/lib/providers/AuthContext";
 import { useScoreStore } from "@/lib/store/score";
 import { useUserStore } from "@/lib/store/user";
 import type { Post } from "@/types/post";
+import {
+    useBackpackDeeplinkWalletConnector,
+    useDeeplinkWalletConnector,
+} from "@privy-io/expo/connectors";
+import { usePhantomClusterConnector } from "@/lib/wallet/usePhantomClusterConnector";
 import { AntDesign, Ionicons } from "@expo/vector-icons";
 import * as Linking from "expo-linking";
 import { useLocalSearchParams, useRouter } from "expo-router";
@@ -30,7 +35,9 @@ import { useFocusEffect } from "@react-navigation/native";
 import { DocumentSnapshot } from "firebase/firestore";
 import React, { useEffect, useState, useCallback } from "react";
 import {
+  Alert,
   Image,
+  Modal,
   NativeScrollEvent,
   NativeSyntheticEvent,
   RefreshControl,
@@ -91,10 +98,28 @@ export default function Profile() {
   const [showBgModal, setShowBgModal] = useState(false);
   const [showFollowersModal, setShowFollowersModal] = useState(false);
   const [showFriendMeModal, setShowFriendMeModal] = useState(false);
-  const [bannerOverride, setBannerOverride] = useState<string | undefined>();
   const [followLoading, setFollowLoading] = useState(false);
   const [activeTab, setActiveTab] = useState<"posts" | "links">("posts");
-
+  const [showWalletPicker, setShowWalletPicker] = useState(false);
+  const [walletDisconnectedLocally, setWalletDisconnectedLocally] =
+      useState(false);
+    const [bannerOverride, setBannerOverride] = useState<string | undefined>();
+    const walletConnectorAppUrl =
+        process.env.EXPO_PUBLIC_PRIVY_CONNECT_APP_URL || "https://chachingsocial.io";
+    const phantomWalletConnector = usePhantomClusterConnector({
+        appUrl: walletConnectorAppUrl,
+        redirectUri: "/",
+    });
+    const backpackWalletConnector = useBackpackDeeplinkWalletConnector({
+        appUrl: walletConnectorAppUrl,
+        redirectUri: "/",
+    });
+    const solflareWalletConnector = useDeeplinkWalletConnector({
+        appUrl: walletConnectorAppUrl,
+        baseUrl: "https://solflare.com",
+        encryptionPublicKeyName: "solflare_encryption_public_key",
+        redirectUri: "/",
+    });
   const setCurrentUserScore = useScoreStore(
     (state) => state.setCurrentUserScore
   );
@@ -270,6 +295,100 @@ export default function Profile() {
     if (isNearBottom) fetchMorePosts();
   };
 
+  const connectWithWallet = async (
+    wallet: "phantom" | "backpack" | "solflare"
+  ) => {
+    const connector =
+      wallet === "phantom"
+        ? phantomWalletConnector
+        : wallet === "backpack"
+          ? backpackWalletConnector
+          : solflareWalletConnector;
+    const walletName =
+      wallet === "phantom"
+        ? "Phantom"
+        : wallet === "backpack"
+          ? "Backpack"
+          : "Solflare";
+
+    setShowWalletPicker(false);
+    try {
+      await connector.connect();
+      setWalletDisconnectedLocally(false);
+    } catch (error) {
+      console.error(`Error connecting ${walletName} wallet:`, error);
+      Alert.alert(
+        "Wallet connection failed",
+        `Could not connect ${walletName}. Make sure the wallet app is installed and try again.`
+      );
+    }
+  };
+
+  const handleConnectWallet = () => {
+    if (walletDisconnectedLocally) {
+      setShowWalletPicker(true);
+      return;
+    }
+    const activeWallet =
+      phantomWalletConnector.isConnected && phantomWalletConnector.address
+        ? {
+            name: "Phantom",
+            address: phantomWalletConnector.address,
+            connector: phantomWalletConnector,
+          }
+        : backpackWalletConnector.isConnected && backpackWalletConnector.address
+          ? {
+              name: "Backpack",
+              address: backpackWalletConnector.address,
+              connector: backpackWalletConnector,
+            }
+          : solflareWalletConnector.isConnected && solflareWalletConnector.address
+            ? {
+                name: "Solflare",
+                address: solflareWalletConnector.address,
+                connector: solflareWalletConnector,
+              }
+            : null;
+
+    if (!activeWallet) {
+      setShowWalletPicker(true);
+      return;
+    }
+
+    Alert.alert(
+      "Disconnect wallet?",
+      `Disconnect ${activeWallet.name} (${activeWallet.address.slice(0, 4)}...${activeWallet.address.slice(-4)}) from your profile?`,
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Disconnect",
+          style: "destructive",
+          onPress: async () => {
+            setWalletDisconnectedLocally(true);
+            try {
+              await activeWallet.connector.disconnect();
+            } catch (error) {
+              const errorMessage =
+                error instanceof Error ? error.message : String(error);
+              const normalized = errorMessage.toLowerCase();
+              if (
+                normalized.includes("not been authorized") ||
+                normalized.includes("timed out")
+              ) {
+                return;
+              }
+              console.error("Error disconnecting wallet:", error);
+              Alert.alert(
+                "Disconnect failed",
+                "Could not disconnect wallet. Please try again."
+              );
+            }
+          },
+        },
+      ]
+    );
+  };
+
   // ── Render ───────────────────────────────────────────────────────────────
   const bannerUri = bannerOverride ?? (userInfo as any)?.backgroundPic ?? (userInfo as any)?.backgroundImage;
   const displayName =
@@ -284,6 +403,31 @@ export default function Profile() {
     currentUserId === session?.uid && session?.profilePic
       ? session.profilePic
       : userInfo?.profilePic;
+  const connectedWalletRaw =
+    phantomWalletConnector.isConnected && phantomWalletConnector.address
+      ? {
+          name: "Phantom",
+          address: phantomWalletConnector.address,
+          connector: phantomWalletConnector,
+        }
+      : backpackWalletConnector.isConnected && backpackWalletConnector.address
+        ? {
+            name: "Backpack",
+            address: backpackWalletConnector.address,
+            connector: backpackWalletConnector,
+          }
+        : solflareWalletConnector.isConnected && solflareWalletConnector.address
+          ? {
+              name: "Solflare",
+              address: solflareWalletConnector.address,
+              connector: solflareWalletConnector,
+            }
+          : null;
+  const connectedWallet = walletDisconnectedLocally ? null : connectedWalletRaw;
+  const isWalletConnected = !!connectedWallet;
+  const walletButtonLabel = connectedWallet
+    ? `${connectedWallet.name} ${connectedWallet.address.slice(0, 4)}...${connectedWallet.address.slice(-4)}`
+    : "Connect Wallet";
 
   return (
     <ScrollView
@@ -421,8 +565,29 @@ export default function Profile() {
                         </Text>
                     </TouchableOpacity>
                 )}
+                {currentUserId === session?.uid && (
+                    <TouchableOpacity
+                        className="bg-white border border-[#1e3a6e] rounded-full px-4 py-2.5 flex-row items-center gap-2"
+                        onPress={handleConnectWallet}
+                        activeOpacity={0.8}
+                        style={
+                            isWalletConnected
+                                ? {
+                                    backgroundColor: "#059669",
+                                    borderColor: "#059669",
+                                }
+                                : undefined
+                        }
+                    >
+                        <Text
+                            className="font-semibold"
+                            style={{ color: isWalletConnected ? "#ffffff" : "#1e3a6e" }}
+                        >
+                            {walletButtonLabel}
+                        </Text>
+                    </TouchableOpacity>
+                )}
             </View>
-
 
           {/* Social links */}
           {userInfo?.socials && (
@@ -440,7 +605,7 @@ export default function Profile() {
                   onPress={() => Linking.openURL(userInfo!.socials!.linkedin!)}
                   accessibilityLabel="LinkedIn"
                 >
-                  <AntDesign name="linkedin" size={26} color="#6b7280" />
+                  <AntDesign name="linkedin-square" size={26} color="#6b7280" />
                 </TouchableOpacity>
               )}
               {userInfo.socials.tiktok && (
@@ -448,7 +613,7 @@ export default function Profile() {
                   onPress={() => Linking.openURL(userInfo!.socials!.tiktok!)}
                   accessibilityLabel="TikTok"
                 >
-                  <AntDesign name="video-camera" size={26} color="#6b7280" />
+                  <AntDesign name="tiktok" size={26} color="#6b7280" />
                 </TouchableOpacity>
               )}
               {(userInfo.socials as any).website && (
@@ -458,7 +623,7 @@ export default function Profile() {
                   }
                   accessibilityLabel="Website"
                 >
-                  <AntDesign name="link" size={26} color="#6b7280" />
+                  <AntDesign name="earth" size={26} color="#6b7280" />
                 </TouchableOpacity>
               )}
             </View>

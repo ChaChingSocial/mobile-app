@@ -5,10 +5,12 @@ import { Center } from "@/components/ui/center";
 import { Text } from "@/components/ui/text";
 import { Input, InputField, InputIcon, InputSlot } from "@/components/ui/input";
 import { SearchIcon } from "@/components/ui/icon";
+import { communityApi } from "@/config/backend";
 import { getAllCommunities } from "@/lib/api/communities";
 import { getAllUsers } from "@/lib/api/user";
+import { useUserStore } from "@/lib/store/user";
 import { useCallback, useState } from "react";
-import { FlatList, TouchableOpacity } from "react-native";
+import { ActivityIndicator, FlatList, ScrollView, TouchableOpacity, View } from "react-native";
 import { useFocusEffect } from "expo-router";
 import { HStack } from "@/components/ui/hstack";
 import { Colors } from "@/lib/constants/Colors";
@@ -40,6 +42,11 @@ export default function CommunitiesScreen() {
   const [error, setError] = useState<unknown>(null);
   const [searchText, setSearchText] = useState("");
   const [timeoutToClear, setTimeoutToClear] = useState<ReturnType<typeof setTimeout>>();
+
+  const myMemberships = useUserStore((state) => state.userCommunities) as any[];
+  const [selectedCommunityId, setSelectedCommunityId] = useState<string | null>(null);
+  const [communityMemberIds, setCommunityMemberIds] = useState<Set<string> | null>(null);
+  const [communityFilterLoading, setCommunityFilterLoading] = useState(false);
 
   useFocusEffect(
     useCallback(() => {
@@ -107,20 +114,46 @@ export default function CommunitiesScreen() {
     setFilteredCommunities(filtered);
   };
 
-  const filterUsers = (text: string) => {
-    if (text === "") {
-      setFilteredUsers(userData);
+  const filterUsers = (text: string, memberIds: Set<string> | null = communityMemberIds) => {
+    let base = memberIds
+      ? userData.filter((u: any) => memberIds.has(u.userId))
+      : userData;
+
+    if (text !== "") {
+      base = base.filter(
+        (user: any) =>
+          user.displayName?.toLowerCase().includes(text.toLowerCase()) ||
+          user.bio?.toLowerCase().includes(text.toLowerCase()) ||
+          user.interests?.some((interest: string) =>
+            interest.toLowerCase().includes(text.toLowerCase())
+          )
+      );
+    }
+    setFilteredUsers(base);
+  };
+
+  const handleCommunityFilter = async (communityId: string) => {
+    if (selectedCommunityId === communityId) {
+      setSelectedCommunityId(null);
+      setCommunityMemberIds(null);
+      filterUsers(searchText, null);
       return;
     }
-    const filtered = userData.filter(
-      (user: any) =>
-        user.displayName?.toLowerCase().includes(text.toLowerCase()) ||
-        user.bio?.toLowerCase().includes(text.toLowerCase()) ||
-        user.interests?.some((interest: string) =>
-          interest.toLowerCase().includes(text.toLowerCase())
-        )
-    );
-    setFilteredUsers(filtered);
+
+    setSelectedCommunityId(communityId);
+    setCommunityFilterLoading(true);
+    try {
+      const members = await communityApi.getCommunityMembers({ communityId });
+      const ids = new Set((members as any[]).map((m) => m.userId ?? m.id).filter(Boolean));
+      setCommunityMemberIds(ids);
+      filterUsers(searchText, ids);
+    } catch {
+      setSelectedCommunityId(null);
+      setCommunityMemberIds(null);
+      filterUsers(searchText, null);
+    } finally {
+      setCommunityFilterLoading(false);
+    }
   };
 
   const handleSearch = (text: string) => {
@@ -139,6 +172,8 @@ export default function CommunitiesScreen() {
     setSearchText("");
     setFilteredCommunities(communityData);
     setFilteredUsers(userData);
+    setSelectedCommunityId(null);
+    setCommunityMemberIds(null);
   };
 
   return (
@@ -234,6 +269,52 @@ export default function CommunitiesScreen() {
             keyExtractor={(item) => item.userId}
             ListEmptyComponent={<ListEmptyComponent tab="users" />}
             style={{ flex: 1, flexDirection: "column", padding: 16 }}
+            ListHeaderComponent={
+              myMemberships.length > 0 ? (
+                <View style={{ marginBottom: 12 }}>
+                  <HStack className="items-center mb-2 gap-1">
+                    <Text className="text-xs text-white font-semibold">
+                      Filter by community
+                    </Text>
+                    {communityFilterLoading && (
+                      <ActivityIndicator size="small" color="white" />
+                    )}
+                  </HStack>
+                  <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                    <HStack className="gap-2">
+                      {myMemberships.map((c: any) => {
+                        const id = c.communityId ?? c.id;
+                        const isSelected = selectedCommunityId === id;
+                        return (
+                          <TouchableOpacity
+                            key={id}
+                            onPress={() => handleCommunityFilter(id)}
+                            style={{
+                              paddingHorizontal: 12,
+                              paddingVertical: 6,
+                              borderRadius: 20,
+                              backgroundColor: isSelected ? "white" : "rgba(255,255,255,0.2)",
+                              borderWidth: 1,
+                              borderColor: isSelected ? "white" : "rgba(255,255,255,0.4)",
+                            }}
+                          >
+                            <Text
+                              style={{
+                                fontSize: 12,
+                                fontWeight: isSelected ? "700" : "400",
+                                color: isSelected ? Colors.dark.tint : "white",
+                              }}
+                            >
+                              {c.name ?? c.title}
+                            </Text>
+                          </TouchableOpacity>
+                        );
+                      })}
+                    </HStack>
+                  </ScrollView>
+                </View>
+              ) : null
+            }
           />
         )}
       </Box>

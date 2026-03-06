@@ -401,9 +401,9 @@ export default function UserProfile({
     if (isNearBottom) fetchMorePosts();
   };
 
-  // ── Block / Unblock ──────────────────────────────────────────────────────
   const handleBlockUser = async (reason?: string, alsoReport?: boolean) => {
     if (!session?.uid || !currentUserId) return;
+
     setBlocking(true);
     try {
       let abuseReportId: string | undefined;
@@ -433,7 +433,9 @@ export default function UserProfile({
         );
       }
 
+      // Block the user
       const success = await blockUser(currentUserId, reason, abuseReportId);
+
       if (success) {
         Toast.show({
           type: "success",
@@ -441,6 +443,7 @@ export default function UserProfile({
           text2: "You won't see their content anymore.",
         });
         setShowBlockModal(false);
+        // Navigate back after blocking
         router.back();
       } else {
         Toast.show({
@@ -463,6 +466,7 @@ export default function UserProfile({
 
   const handleUnblockUser = async () => {
     if (!session?.uid || !currentUserId) return;
+
     try {
       const success = await unblockUser(currentUserId);
       if (success) {
@@ -480,6 +484,11 @@ export default function UserProfile({
       }
     } catch (error) {
       console.error("Error unblocking user:", error);
+      Toast.show({
+        type: "error",
+        text1: "Failed to unblock user",
+        text2: "Please try again.",
+      });
     }
   };
 
