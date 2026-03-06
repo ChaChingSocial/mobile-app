@@ -1,6 +1,7 @@
 import { useWindowDimensions, Image, TouchableOpacity, Modal, View, Text, Dimensions } from "react-native";
 import RenderHtml from "react-native-render-html";
 import React, { useState } from "react";
+import { useRouter } from "expo-router";
 
 const customStyles = {
   body: {
@@ -184,6 +185,7 @@ const customRenderers = {
 export default function HtmlRenderText({ source, inset = 32 }: { source: string; inset?: number }) {
   const { width } = useWindowDimensions();
   const contentWidth = Math.max(100, width - inset);
+  const router = useRouter();
 
   // lightbox state
   const [open, setOpen] = useState(false);
@@ -212,6 +214,17 @@ export default function HtmlRenderText({ source, inset = 32 }: { source: string;
         enableExperimentalBRCollapsing={false}
         enableExperimentalMarginCollapsing={false}
         systemFonts={["Courier", "Courier New", "monospace"]}
+        renderersProps={{
+          a: {
+            onPress(_event, href) {
+              if (!href) return;
+              router.push({
+                pathname: "/(protected)/webview",
+                params: { url: href },
+              });
+            },
+          },
+        }}
       />
       <Modal visible={open} transparent animationType="fade" onRequestClose={() => setOpen(false)}>
         <View style={{ flex: 1, backgroundColor: "rgba(0,0,0,0.9)", justifyContent: "center", alignItems: "center" }}>

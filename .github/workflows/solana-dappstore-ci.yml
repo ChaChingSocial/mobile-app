@@ -1,0 +1,141 @@
+name: Solana dApp Store - Build/Sign/Validate
+
+on:
+  push:
+    branches: ["main-sol"]
+  workflow_dispatch: {}
+
+concurrency:
+  group: solana-dappstore-ci
+  cancel-in-progress: true
+
+jobs:
+  build_sign_validate:
+    runs-on: ubuntu-latest
+
+    env:
+      BUNDLETOOL_VERSION: "1.18.1"
+      ANDROID_BUILD_TOOLS_VERSION: "35.0.0"
+
+      # Latest dApp Store CLI
+      SOLANA_DAPPSTORE_CLI_VERSION: "latest"
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install EAS CLI
+        run: npm i -g eas-cli
+
+      - name: Install Java (for bundletool)
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Install Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install Android build-tools + platform-tools
+        run: |
+          sdkmanager --install "build-tools;${ANDROID_BUILD_TOOLS_VERSION}" "platform-tools"
+          echo "ANDROID_HOME=$ANDROID_SDK_ROOT" >> $GITHUB_ENV
+          echo "$ANDROID_SDK_ROOT/build-tools/${ANDROID_BUILD_TOOLS_VERSION}" >> $GITHUB_PATH
+          echo "$ANDROID_SDK_ROOT/platform-tools" >> $GITHUB_PATH
+
+      - name: Restore Solana publisher keypair (publisher.json)
+        run: |
+          mkdir -p publishing/keys
+          echo "${{ secrets.SOLANA_PUBLISHER_JSON_B64 }}" | base64 -d > publishing/keys/publisher.json
+          chmod 600 publishing/keys/publisher.json
+
+      - name: Restore Android keystore
+        run: |
+          mkdir -p publishing/keys
+          echo "${{ secrets.ANDROID_KEYSTORE_B64 }}" | base64 -d > publishing/keys/release-key.keystore
+          chmod 600 publishing/keys/release-key.keystore
+
+      - name: Download bundletool
+        run: |
+          curl -L -o bundletool.jar "https://github.com/google/bundletool/releases/download/${BUNDLETOOL_VERSION}/bundletool-all-${BUNDLETOOL_VERSION}.jar"
+
+      - name: Build Android AAB via EAS (production)
+        id: eas_android
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+        run: |
+          eas build --platform android --profile production --non-interactive --wait --json > android-build.json
+          BUILD_ID=$(jq -r '.[0].id' android-build.json)
+          echo "build_id=$BUILD_ID" >> "$GITHUB_OUTPUT"
+
+      - name: Download AAB artifact from EAS build
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+        run: |
+          eas build:view ${{ steps.eas_android.outputs.build_id }} --json > build-view.json
+          ARTIFACT_URL=$(jq -r '.artifacts.buildUrl' build-view.json)
+          echo "Artifact URL resolved: $ARTIFACT_URL"
+          mkdir -p dist
+          curl -L -o dist/app.aab "$ARTIFACT_URL"
+
+      - name: Sanity-check versionCode/versionName in AAB
+        run: |
+          java -jar bundletool.jar dump manifest --bundle dist/app.aab | grep -E "versionCode|versionName" || true
+
+      - name: Build universal APK set (APKS) from AAB
+        run: |
+          mkdir -p dist/extracted
+          java -jar bundletool.jar build-apks --bundle=dist/app.aab --output=dist/app.apks --mode=universal
+          cp dist/app.apks dist/app.zip
+          unzip -o dist/app.zip -d dist/extracted
+
+      - name: Sign universal APK
+        env:
+          KS_PASS: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          KEY_PASS: ${{ secrets.ANDROID_KEY_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+        run: |
+          apksigner sign \
+            --ks publishing/keys/release-key.keystore \
+            --ks-pass env:KS_PASS \
+            --key-pass env:KEY_PASS \
+            --ks-key-alias "$KEY_ALIAS" \
+            --out dist/chaching-release-signed.apk \
+            dist/extracted/universal.apk
+
+      - name: Verify signature
+        run: |
+          zipalign -c -v 4 dist/chaching-release-signed.apk
+          apksigner verify --print-certs dist/chaching-release-signed.apk
+
+      - name: Place signed APK where Solana config expects it
+        run: |
+          mkdir -p publishing/files
+          cp dist/chaching-release-signed.apk publishing/files/chaching-v1-signed.apk
+
+      - name: Validate Solana dApp Store package (run from publishing/)
+        working-directory: publishing
+        run: |
+          npx -y \
+            -p @solana-mobile/dapp-store-cli@${SOLANA_DAPPSTORE_CLI_VERSION} \
+            -p @metaplex-foundation/mpl-auction-house@2.5.1 \
+            -p @solana/web3.js@1.95.3 \
+            dapp-store validate \
+              -k ./keys/publisher.json \
+              -b "$ANDROID_HOME/build-tools/${ANDROID_BUILD_TOOLS_VERSION}"
+
+      - name: Upload signed APK as a build artifact (for download)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: solana-signed-apk
+          path: dist/chaching-release-signed.apk

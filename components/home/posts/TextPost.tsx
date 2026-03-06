@@ -67,6 +67,7 @@ export function TextPost({
           <Text className="text-lg mb-1">
             <HtmlRenderText source={post.post} />
           </Text>
+
           {post.tags && post.tags.length > 0 && <PostTags tags={post.tags} />}
         </View>
       )}

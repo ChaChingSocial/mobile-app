@@ -345,32 +345,33 @@ export default function RegisterScreen() {
         </Heading>
 
         {/* Google Sign In Button */}
-        <Button
-          className="w-full flex-row items-center justify-between border rounded-full bg-white h-12"
-          onPress={handleGoogleSignIn}
-          disabled={googleLoading}
-        >
-          <Image
-            source={require("@/assets/images/google-icon.png")}
-            className="h-6 w-6"
-          />
-          <ButtonText className="text-lg items-center font-bold w-full text-center text-typography-black">
-            {googleLoading ? "Signing in..." : "Continue with Google"}
-          </ButtonText>
-        </Button>
+          {/* Google Sign In Button */}
+          <Button
+              className="w-full flex-row items-center justify-center border rounded-full bg-white h-12"
+              onPress={handleGoogleSignIn}
+              disabled={googleLoading}
+          >
+              <Image
+                  source={require("@/assets/images/google-icon.png")}
+                  className="h-5 w-5 mr-2"
+              />
+              <ButtonText className="text-lg font-bold text-typography-black">
+                  {googleLoading ? "Signing in..." : "Continue with Google"}
+              </ButtonText>
+          </Button>
 
-        {/* Email/Username Button */}
-        <Button
-          className="w-full flex-row items-center border rounded-full bg-white h-12"
-          onPress={() => router.push("/register/register-form")}
-        >
-          <FontAwesome5 name="user" size={20} color="#333" className="ml-6" />
-          <ButtonText className="text-lg items-center font-bold w-full text-center text-typography-black">
-            Use email or username
-          </ButtonText>
-        </Button>
+          {/* Email/Username Button */}
+          <Button
+              className="w-full flex-row items-center justify-center border rounded-full bg-white h-12"
+              onPress={() => router.push("/register/register-form")}
+          >
+              <FontAwesome5 name="user" size={18} color="#333" style={{ marginRight: 8 }} />
+              <ButtonText className="text-lg font-bold text-typography-black">
+                  Use email or username
+              </ButtonText>
+          </Button>
 
-        {/* Apple Sign In Button */}
+          {/* Apple Sign In Button */}
         <AppleButton
           buttonStyle={AppleButton.Style.WHITE_OUTLINE}
           buttonType={AppleButton.Type.SIGN_IN}

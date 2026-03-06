@@ -1,10 +1,14 @@
 import NewPost from "@/components/new-post/NewPost";
 import { SafeAreaView } from "react-native-safe-area-context";
+import {Colors} from "@/lib/constants/Colors";
 
 export default function NewPostScreen() {
   return (
-    <SafeAreaView className="flex-1 bg-white pt-6 mt-4">
-      <NewPost />
+      <SafeAreaView
+          style={{ backgroundColor: Colors.dark.tint }}
+          className="flex-1 pt-6"
+      >
+          <NewPost />
     </SafeAreaView>
   );
 }
