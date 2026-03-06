@@ -42,238 +42,239 @@ import {
 } from "@expo/vector-icons";
 import * as ImagePicker from "expo-image-picker";
 import * as MediaLibrary from "expo-media-library";
+import {Colors} from "@/lib/constants/Colors";
 import {
-  useBackpackDeeplinkWalletConnector,
-  useDeeplinkWalletConnector,
+    useBackpackDeeplinkWalletConnector,
+    useDeeplinkWalletConnector,
 } from "@privy-io/expo/connectors";
 import { usePhantomClusterConnector } from "@/lib/wallet/usePhantomClusterConnector";
 import {
-  Connection,
-  PublicKey,
-  SystemProgram,
-  Transaction,
-  TransactionInstruction,
-  clusterApiUrl,
-  SYSVAR_RENT_PUBKEY,
+    Connection,
+    PublicKey,
+    SystemProgram,
+    Transaction,
+    TransactionInstruction,
+    clusterApiUrl,
+    SYSVAR_RENT_PUBKEY,
 } from "@solana/web3.js";
 import { Buffer } from "buffer";
 
 const FALLBACK_COMMUNITY_FUND_WALLET =
-  "Dn5eBy45nbnV6LndYbn3ZXXE34UGAu2ZJAP4yF61XD7x";
+    "Dn5eBy45nbnV6LndYbn3ZXXE34UGAu2ZJAP4yF61XD7x";
 const USDC_MAINNET_MINT = "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v";
 const USDC_DEVNET_MINT = "4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU";
 const TOKEN_PROGRAM_ID = new PublicKey(
-  "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
+    "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
 );
 const ASSOCIATED_TOKEN_PROGRAM_ID = new PublicKey(
-  "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL"
+    "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL"
 );
 const BASE58_ALPHABET =
-  "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
+    "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
 const BASE58_MAP = new Map(
-  BASE58_ALPHABET.split("").map((char, index) => [char, index])
+    BASE58_ALPHABET.split("").map((char, index) => [char, index])
 );
 
 const parseAmountToUnits = (
-  rawAmount: string,
-  decimals: number
+    rawAmount: string,
+    decimals: number
 ): bigint | null => {
-  const normalized = rawAmount.trim();
-  if (!/^(\d+(\.\d*)?|\.\d+)$/.test(normalized)) return null;
-  const [wholePartRaw, fractionalPart = ""] = normalized.split(".");
-  const wholePart = wholePartRaw === "" ? "0" : wholePartRaw;
-  if (fractionalPart.length > decimals) return null;
+    const normalized = rawAmount.trim();
+    if (!/^(\d+(\.\d*)?|\.\d+)$/.test(normalized)) return null;
+    const [wholePartRaw, fractionalPart = ""] = normalized.split(".");
+    const wholePart = wholePartRaw === "" ? "0" : wholePartRaw;
+    if (fractionalPart.length > decimals) return null;
 
-  const wholeUnits = BigInt(wholePart) * 10n ** BigInt(decimals);
-  const paddedFraction = (fractionalPart + "0".repeat(decimals)).slice(
-    0,
-    decimals
-  );
-  const fractionalUnits = BigInt(paddedFraction || "0");
-  return wholeUnits + fractionalUnits;
+    const wholeUnits = BigInt(wholePart) * 10n ** BigInt(decimals);
+    const paddedFraction = (fractionalPart + "0".repeat(decimals)).slice(
+        0,
+        decimals
+    );
+    const fractionalUnits = BigInt(paddedFraction || "0");
+    return wholeUnits + fractionalUnits;
 };
 
 const isWalletAuthorizationOrTimeoutError = (error: unknown) => {
-  const message = (error instanceof Error ? error.message : String(error)).toLowerCase();
-  return (
-    message.includes("timed out") ||
-    message.includes("timeout") ||
-    message.includes("not been authorized") ||
-    message.includes("not authorized") ||
-    message.includes("method is not supported")
-  );
+    const message = (error instanceof Error ? error.message : String(error)).toLowerCase();
+    return (
+        message.includes("timed out") ||
+        message.includes("timeout") ||
+        message.includes("not been authorized") ||
+        message.includes("not authorized") ||
+        message.includes("method is not supported")
+    );
 };
 
 const decodeBase58 = (input: string): Uint8Array => {
-  if (input.length === 0) return new Uint8Array();
-  const bytes = [0];
-  for (let i = 0; i < input.length; i++) {
-    const value = BASE58_MAP.get(input[i]);
-    if (value === undefined) throw new Error("Invalid base58 string");
-    let carry = value;
-    for (let j = 0; j < bytes.length; j++) {
-      carry += bytes[j] * 58;
-      bytes[j] = carry & 0xff;
-      carry >>= 8;
+    if (input.length === 0) return new Uint8Array();
+    const bytes = [0];
+    for (let i = 0; i < input.length; i++) {
+        const value = BASE58_MAP.get(input[i]);
+        if (value === undefined) throw new Error("Invalid base58 string");
+        let carry = value;
+        for (let j = 0; j < bytes.length; j++) {
+            carry += bytes[j] * 58;
+            bytes[j] = carry & 0xff;
+            carry >>= 8;
+        }
+        while (carry > 0) {
+            bytes.push(carry & 0xff);
+            carry >>= 8;
+        }
     }
-    while (carry > 0) {
-      bytes.push(carry & 0xff);
-      carry >>= 8;
+
+    let leadingZeroCount = 0;
+    while (
+        leadingZeroCount < input.length &&
+        input[leadingZeroCount] === BASE58_ALPHABET[0]
+        ) {
+        leadingZeroCount++;
     }
-  }
 
-  let leadingZeroCount = 0;
-  while (
-    leadingZeroCount < input.length &&
-    input[leadingZeroCount] === BASE58_ALPHABET[0]
-  ) {
-    leadingZeroCount++;
-  }
-
-  const decoded = new Uint8Array(leadingZeroCount + bytes.length);
-  for (let i = 0; i < bytes.length; i++) {
-    decoded[decoded.length - 1 - i] = bytes[i];
-  }
-  return decoded;
+    const decoded = new Uint8Array(leadingZeroCount + bytes.length);
+    for (let i = 0; i < bytes.length; i++) {
+        decoded[decoded.length - 1 - i] = bytes[i];
+    }
+    return decoded;
 };
 
 const tryDecodeSignedTransaction = (encodedTransaction: string) => {
-  const decodeAttempts: Array<() => Uint8Array> = [
-    () => decodeBase58(encodedTransaction),
-    () => Uint8Array.from(Buffer.from(encodedTransaction, "base64")),
-  ];
+    const decodeAttempts: Array<() => Uint8Array> = [
+        () => decodeBase58(encodedTransaction),
+        () => Uint8Array.from(Buffer.from(encodedTransaction, "base64")),
+    ];
 
-  for (const decode of decodeAttempts) {
-    try {
-      const decoded = decode();
-      Transaction.from(Buffer.from(decoded));
-      return decoded;
-    } catch {}
-  }
+    for (const decode of decodeAttempts) {
+        try {
+            const decoded = decode();
+            Transaction.from(Buffer.from(decoded));
+            return decoded;
+        } catch {}
+    }
 
-  return null;
+    return null;
 };
 
 const extractSignedTransactionBytes = (response: unknown) => {
-  const candidateKeys = [
-    "transaction",
-    "signedTransaction",
-    "signed_transaction",
-    "serializedTransaction",
-    "serialized_transaction",
-    "signature",
-  ];
-  const responseObject =
-    response && typeof response === "object"
-      ? (response as Record<string, unknown>)
-      : null;
+    const candidateKeys = [
+        "transaction",
+        "signedTransaction",
+        "signed_transaction",
+        "serializedTransaction",
+        "serialized_transaction",
+        "signature",
+    ];
+    const responseObject =
+        response && typeof response === "object"
+            ? (response as Record<string, unknown>)
+            : null;
 
-  if (!responseObject) return null;
+    if (!responseObject) return null;
 
-  for (const key of candidateKeys) {
-    const value = responseObject[key];
-    if (typeof value === "string" && value.length > 0) {
-      const decoded = tryDecodeSignedTransaction(value);
-      if (decoded) return decoded;
+    for (const key of candidateKeys) {
+        const value = responseObject[key];
+        if (typeof value === "string" && value.length > 0) {
+            const decoded = tryDecodeSignedTransaction(value);
+            if (decoded) return decoded;
+        }
+        if (Array.isArray(value) && value.every((item) => typeof item === "number")) {
+            try {
+                const bytes = Uint8Array.from(value as number[]);
+                Transaction.from(Buffer.from(bytes));
+                return bytes;
+            } catch {}
+        }
     }
-    if (Array.isArray(value) && value.every((item) => typeof item === "number")) {
-      try {
-        const bytes = Uint8Array.from(value as number[]);
-        Transaction.from(Buffer.from(bytes));
-        return bytes;
-      } catch {}
-    }
-  }
 
-  return null;
+    return null;
 };
 
 const waitForSignatureConfirmation = async (
-  connection: Connection,
-  signature: string,
-  timeoutMs = 90000
+    connection: Connection,
+    signature: string,
+    timeoutMs = 90000
 ) => {
-  const startedAt = Date.now();
-  while (Date.now() - startedAt < timeoutMs) {
-    const statusResponse = await connection.getSignatureStatuses([signature], {
-      searchTransactionHistory: true,
-    });
-    const status = statusResponse.value[0];
+    const startedAt = Date.now();
+    while (Date.now() - startedAt < timeoutMs) {
+        const statusResponse = await connection.getSignatureStatuses([signature], {
+            searchTransactionHistory: true,
+        });
+        const status = statusResponse.value[0];
 
-    if (status?.err) {
-      throw new Error(`Transaction failed: ${JSON.stringify(status.err)}`);
+        if (status?.err) {
+            throw new Error(`Transaction failed: ${JSON.stringify(status.err)}`);
+        }
+
+        if (
+            status?.confirmationStatus === "confirmed" ||
+            status?.confirmationStatus === "finalized"
+        ) {
+            return;
+        }
+
+        await new Promise((resolve) => setTimeout(resolve, 1500));
     }
 
-    if (
-      status?.confirmationStatus === "confirmed" ||
-      status?.confirmationStatus === "finalized"
-    ) {
-      return;
-    }
-
-    await new Promise((resolve) => setTimeout(resolve, 1500));
-  }
-
-  throw new Error("Signature confirmation timed out");
+    throw new Error("Signature confirmation timed out");
 };
 
 const writeBigUInt64LE = (buffer: Buffer, value: bigint, offset: number) => {
-  let remaining = value;
-  for (let i = 0; i < 8; i++) {
-    buffer[offset + i] = Number(remaining & 0xffn);
-    remaining >>= 8n;
-  }
+    let remaining = value;
+    for (let i = 0; i < 8; i++) {
+        buffer[offset + i] = Number(remaining & 0xffn);
+        remaining >>= 8n;
+    }
 };
 
 const findAssociatedTokenAddress = (owner: PublicKey, mint: PublicKey) =>
-  PublicKey.findProgramAddressSync(
-    [owner.toBuffer(), TOKEN_PROGRAM_ID.toBuffer(), mint.toBuffer()],
-    ASSOCIATED_TOKEN_PROGRAM_ID
-  )[0];
+    PublicKey.findProgramAddressSync(
+        [owner.toBuffer(), TOKEN_PROGRAM_ID.toBuffer(), mint.toBuffer()],
+        ASSOCIATED_TOKEN_PROGRAM_ID
+    )[0];
 
 const createAssociatedTokenAccountInstruction = (
-  payer: PublicKey,
-  associatedTokenAddress: PublicKey,
-  owner: PublicKey,
-  mint: PublicKey
+    payer: PublicKey,
+    associatedTokenAddress: PublicKey,
+    owner: PublicKey,
+    mint: PublicKey
 ) =>
-  new TransactionInstruction({
-    programId: ASSOCIATED_TOKEN_PROGRAM_ID,
-    keys: [
-      { pubkey: payer, isSigner: true, isWritable: true },
-      { pubkey: associatedTokenAddress, isSigner: false, isWritable: true },
-      { pubkey: owner, isSigner: false, isWritable: false },
-      { pubkey: mint, isSigner: false, isWritable: false },
-      { pubkey: SystemProgram.programId, isSigner: false, isWritable: false },
-      { pubkey: TOKEN_PROGRAM_ID, isSigner: false, isWritable: false },
-      { pubkey: SYSVAR_RENT_PUBKEY, isSigner: false, isWritable: false },
-    ],
-    data: Buffer.alloc(0),
-  });
+    new TransactionInstruction({
+        programId: ASSOCIATED_TOKEN_PROGRAM_ID,
+        keys: [
+            { pubkey: payer, isSigner: true, isWritable: true },
+            { pubkey: associatedTokenAddress, isSigner: false, isWritable: true },
+            { pubkey: owner, isSigner: false, isWritable: false },
+            { pubkey: mint, isSigner: false, isWritable: false },
+            { pubkey: SystemProgram.programId, isSigner: false, isWritable: false },
+            { pubkey: TOKEN_PROGRAM_ID, isSigner: false, isWritable: false },
+            { pubkey: SYSVAR_RENT_PUBKEY, isSigner: false, isWritable: false },
+        ],
+        data: Buffer.alloc(0),
+    });
 
 const createTransferCheckedInstruction = (
-  source: PublicKey,
-  mint: PublicKey,
-  destination: PublicKey,
-  owner: PublicKey,
-  amount: bigint,
-  decimals: number
+    source: PublicKey,
+    mint: PublicKey,
+    destination: PublicKey,
+    owner: PublicKey,
+    amount: bigint,
+    decimals: number
 ) => {
-  const data = Buffer.alloc(10);
-  data[0] = 12;
-  writeBigUInt64LE(data, amount, 1);
-  data[9] = decimals;
+    const data = Buffer.alloc(10);
+    data[0] = 12;
+    writeBigUInt64LE(data, amount, 1);
+    data[9] = decimals;
 
-  return new TransactionInstruction({
-    programId: TOKEN_PROGRAM_ID,
-    keys: [
-      { pubkey: source, isSigner: false, isWritable: true },
-      { pubkey: mint, isSigner: false, isWritable: false },
-      { pubkey: destination, isSigner: false, isWritable: true },
-      { pubkey: owner, isSigner: true, isWritable: false },
-    ],
-    data,
-  });
+    return new TransactionInstruction({
+        programId: TOKEN_PROGRAM_ID,
+        keys: [
+            { pubkey: source, isSigner: false, isWritable: true },
+            { pubkey: mint, isSigner: false, isWritable: false },
+            { pubkey: destination, isSigner: false, isWritable: true },
+            { pubkey: owner, isSigner: true, isWritable: false },
+        ],
+        data,
+    });
 };
 
 export default function SingleCommunity() {
@@ -787,7 +788,8 @@ export default function SingleCommunity() {
     <Box className="flex-1 relative">
       {/* Content */}
       <ScrollView
-        className="bg-[#077f5f] flex-1"
+        className="flex-1"
+        style={{backgroundColor: communityData.themeDarkColor || Colors.dark.tint}}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
         onScroll={onScrollNearBottom}
         scrollEventThrottle={32}
@@ -833,9 +835,14 @@ export default function SingleCommunity() {
                 {communityData.interests.map((interest, index) => (
                   <View
                     key={index}
-                    className="bg-[#a3e4d2] px-3 py-1 rounded-full mr-2 mb-2"
+                    className="px-3 py-1 rounded-full mr-2 mb-2"
+                    style={{ backgroundColor: communityData.themeLightColor || Colors.light.tint }}
                   >
-                    <Text className="text-[#077f5f]">{interest}</Text>
+                    <Text
+                        style={{ color: communityData.themeDarkColor || Colors.dark.tint }}
+                    >
+                        {interest}
+                    </Text>
                   </View>
                 ))}
               </View>

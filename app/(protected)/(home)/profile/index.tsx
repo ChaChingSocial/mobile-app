@@ -1,27 +1,34 @@
 import { User } from "@/_sdk";
 import NewsfeedList from "@/components/home/NewsfeedList";
+import { LinkTree } from "@/components/profile/LinkTree";
+import FollowersModal from "@/components/profile/FollowersModal";
+import FriendMeModal from "@/components/profile/FriendMeModal";
 import {
   Avatar,
   AvatarFallbackText,
   AvatarImage,
 } from "@/components/ui/avatar";
 import { Badge, BadgeText } from "@/components/ui/badge";
-import { scoreApi, userApi } from "@/config/backend";
+import { scoreApi, userApi, communityApi } from "@/config/backend";
 import { getPostsByUser } from "@/lib/api/newsfeed";
 import {
   checkIfFinFluencer,
   fetchFollowers,
   fetchFollowing,
+  isFollowing,
+  followUser,
+  unfollowUser,
 } from "@/lib/api/user";
 import { useSession } from "@/lib/providers/AuthContext";
 import { useScoreStore } from "@/lib/store/score";
+import { useUserStore } from "@/lib/store/user";
 import type { Post } from "@/types/post";
-import { AntDesign } from "@expo/vector-icons";
 import {
-  useBackpackDeeplinkWalletConnector,
-  useDeeplinkWalletConnector,
+    useBackpackDeeplinkWalletConnector,
+    useDeeplinkWalletConnector,
 } from "@privy-io/expo/connectors";
 import { usePhantomClusterConnector } from "@/lib/wallet/usePhantomClusterConnector";
+import { AntDesign, Ionicons } from "@expo/vector-icons";
 import * as Linking from "expo-linking";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useFocusEffect } from "@react-navigation/native";
@@ -39,7 +46,6 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
 import {Colors} from "@/lib/constants/Colors";
 import BackgroundImageModal from "@/components/profile/BackgroundImageModal";
 
@@ -82,7 +88,7 @@ export default function Profile() {
 
   const [isFinfluencer, setIsFinfluencer] = useState(false);
   const [followers, setFollowers] = useState(0);
-  const [following, setFollowing] = useState(0);
+  const [userFollowing, setUserFollowing] = useState(false);
   const [posts, setPosts] = useState<Post[]>([]);
   const [userInfo, setUserInfo] = useState<User | null>(null);
   const [lastDoc, setLastDoc] = useState<DocumentSnapshot | null>(null);
@@ -90,30 +96,47 @@ export default function Profile() {
   const [refreshing, setRefreshing] = useState(false);
   const [showAllInterests, setShowAllInterests] = useState(false);
   const [showBgModal, setShowBgModal] = useState(false);
+  const [showFollowersModal, setShowFollowersModal] = useState(false);
+  const [showFriendMeModal, setShowFriendMeModal] = useState(false);
+  const [followLoading, setFollowLoading] = useState(false);
+  const [activeTab, setActiveTab] = useState<"posts" | "links">("posts");
   const [showWalletPicker, setShowWalletPicker] = useState(false);
   const [walletDisconnectedLocally, setWalletDisconnectedLocally] =
-    useState(false);
-  const [bannerOverride, setBannerOverride] = useState<string | undefined>();
-  const walletConnectorAppUrl =
-    process.env.EXPO_PUBLIC_PRIVY_CONNECT_APP_URL || "https://chachingsocial.io";
-  const phantomWalletConnector = usePhantomClusterConnector({
-    appUrl: walletConnectorAppUrl,
-    redirectUri: "/",
-  });
-  const backpackWalletConnector = useBackpackDeeplinkWalletConnector({
-    appUrl: walletConnectorAppUrl,
-    redirectUri: "/",
-  });
-  const solflareWalletConnector = useDeeplinkWalletConnector({
-    appUrl: walletConnectorAppUrl,
-    baseUrl: "https://solflare.com",
-    encryptionPublicKeyName: "solflare_encryption_public_key",
-    redirectUri: "/",
-  });
-
+      useState(false);
+    const [bannerOverride, setBannerOverride] = useState<string | undefined>();
+    const walletConnectorAppUrl =
+        process.env.EXPO_PUBLIC_PRIVY_CONNECT_APP_URL || "https://chachingsocial.io";
+    const phantomWalletConnector = usePhantomClusterConnector({
+        appUrl: walletConnectorAppUrl,
+        redirectUri: "/",
+    });
+    const backpackWalletConnector = useBackpackDeeplinkWalletConnector({
+        appUrl: walletConnectorAppUrl,
+        redirectUri: "/",
+    });
+    const solflareWalletConnector = useDeeplinkWalletConnector({
+        appUrl: walletConnectorAppUrl,
+        baseUrl: "https://solflare.com",
+        encryptionPublicKeyName: "solflare_encryption_public_key",
+        redirectUri: "/",
+    });
   const setCurrentUserScore = useScoreStore(
     (state) => state.setCurrentUserScore
   );
+
+  const communityMemberships = useUserStore((state) => state.userCommunities);
+  const setCommunityMemberships = useUserStore((state) => state.setUserCommunities);
+
+  // Filter communities by meeting type
+  const digitalCommunities = communityMemberships.filter((c: any) => {
+    const meetingType = String(c.meetingType ?? '').trim().toUpperCase();
+    return meetingType === 'VIRTUAL';
+  });
+
+  const irlCommunities = communityMemberships.filter((c: any) => {
+    const meetingType = String(c.meetingType ?? '').trim().toUpperCase();
+    return meetingType === 'IRL';
+  });
 
   // ── Data fetching ────────────────────────────────────────────────────────
   const fetchUserInfo = async () => {
@@ -130,6 +153,19 @@ export default function Profile() {
     }
   };
 
+  const fetchCommunityMemberships = async () => {
+    if (!currentUserId) return;
+    try {
+      const response = await communityApi.getUserCommunityMembership({ userId: currentUserId });
+      if (response) {
+        console.log('Communities fetched:', response);
+        setCommunityMemberships(response);
+      }
+    } catch (error) {
+      console.error('Failed to fetch community memberships:', error);
+    }
+  };
+
   const fetchFinfluencerStatus = async () => {
     if (currentUserId) {
       const res = await checkIfFinFluencer(currentUserId);
@@ -143,14 +179,50 @@ export default function Profile() {
         fetchFollowers(currentUserId),
         fetchFollowing(currentUserId),
       ]);
-      setFollowers(followersRes.size);
-      setFollowing(followingRes.size);
+
+      // Get the IDs of followers and following
+      const followerIds = followersRes.docs.map(doc => doc.id);
+      const followingIds = followingRes.docs.map(doc => doc.id);
+
+      // Calculate mutual follows (people who follow each other)
+      const mutualFollows = followerIds.filter(id => followingIds.includes(id));
+
+      setFollowers(mutualFollows.length); // This is mutual friends count
+    }
+  };
+
+  const fetchFollowStatus = async () => {
+    if (session?.uid && currentUserId) {
+      const following = await isFollowing(currentUserId, session.uid);
+      setUserFollowing(following);
+    }
+  };
+
+  // ── Follow / Unfollow ────────────────────────────────────────────────────
+  const handleFollowToggle = async () => {
+    if (!session?.uid || !currentUserId) return;
+    setFollowLoading(true);
+    try {
+      if (userFollowing) {
+        await unfollowUser(currentUserId, session.uid);
+        setUserFollowing(false);
+      } else {
+        await followUser(currentUserId, session.uid);
+        setUserFollowing(true);
+      }
+      // Recalculate mutual friends after the action
+      await fetchFollowersAndFollowing();
+    } catch (error) {
+      console.error("Error toggling follow:", error);
+    } finally {
+      setFollowLoading(false);
     }
   };
 
   useEffect(() => {
     if (currentUserId) {
       fetchUserInfo();
+      fetchCommunityMemberships();
       (async () => {
         setLoading(true);
         const { posts: initial, lastDoc: initialLastDoc } =
@@ -177,6 +249,7 @@ export default function Profile() {
   useEffect(() => {
     fetchFollowersAndFollowing();
     fetchFinfluencerStatus();
+    fetchFollowStatus();
   }, [currentUserId]);
 
   // ── Pagination / scroll ──────────────────────────────────────────────────
@@ -420,7 +493,7 @@ export default function Profile() {
                 <AvatarFallbackText>{displayName}</AvatarFallbackText>
                 <AvatarImage source={{ uri: displayPic }} />
               </Avatar>
-              <View className="bg-[#1e3a6e] rounded-lg px-3 py-1 mt-2">
+              <View className="bg-[#1e3a6e] rounded-lg px-3 py-1">
                 <Text
                   className="text-white font-bold text-sm"
                   numberOfLines={1}
@@ -440,49 +513,81 @@ export default function Profile() {
             ) : null}
           </View>
 
-          {/* Followers + Following row */}
-          <View className="flex-row gap-3 mt-5 flex-wrap">
-            <View className="bg-[#1e3a6e] rounded-full px-4 py-2.5 flex-row items-center gap-2">
-              <View className="bg-white rounded-full w-7 h-7 items-center justify-center">
-                <Text className="text-[#1e3a6e] font-bold text-xs">
-                  {followers}
-                </Text>
-              </View>
-              <Text className="text-white font-semibold">Friends</Text>
-            </View>
-
-            <View className="bg-white border border-[#1e3a6e] rounded-full px-4 py-2.5 flex-row items-center gap-2">
-              <View className="bg-[#1e3a6e] rounded-full w-7 h-7 items-center justify-center">
-                <Text className="text-white font-bold text-xs">
-                  {following}
-                </Text>
-              </View>
-              <Text className="text-[#1e3a6e] font-semibold">Following</Text>
-            </View>
-
-            {currentUserId === session?.uid && (
-              <TouchableOpacity
-                className="bg-white border border-[#1e3a6e] rounded-full px-4 py-2.5 flex-row items-center gap-2"
-                onPress={handleConnectWallet}
-                activeOpacity={0.8}
-                style={
-                  isWalletConnected
-                    ? {
-                        backgroundColor: "#059669",
-                        borderColor: "#059669",
-                      }
-                    : undefined
-                }
-              >
-                <Text
-                  className="font-semibold"
-                  style={{ color: isWalletConnected ? "#ffffff" : "#1e3a6e" }}
+            {/* Followers + Following + Follow button row */}
+            <View className="flex-row gap-3 mt-4 flex-wrap items-center">
+                <TouchableOpacity
+                    onPress={() => setShowFollowersModal(true)}
+                    className="bg-[#1e3a6e] rounded-full px-4 py-3 flex-row items-center gap-2"
                 >
-                  {walletButtonLabel}
-                </Text>
-              </TouchableOpacity>
-            )}
-          </View>
+                    <View className="bg-white rounded-full w-7 h-7 items-center justify-center">
+                        <Text className="text-[#1e3a6e] font-bold text-xs">
+                            {followers}
+                        </Text>
+                    </View>
+                    <Text className="text-white font-semibold">Friends</Text>
+                </TouchableOpacity>
+
+                {/* Friend Me QR Code button - show if viewing own profile */}
+                {session?.uid && currentUserId && session.uid === currentUserId && (
+                    <TouchableOpacity
+                        onPress={() => setShowFriendMeModal(true)}
+                        className="bg-[#1e3a6e] rounded-full px-4 py-3 flex-row items-center gap-2"
+                    >
+                        <Ionicons name="qr-code" size={20} color="white" />
+                        <Text className="text-white font-semibold">Friend Me</Text>
+                    </TouchableOpacity>
+                )}
+
+                {/* Inbox / Messages button - own profile */}
+                {session?.uid && currentUserId && session.uid === currentUserId && (
+                    <TouchableOpacity
+                        onPress={() => router.push("/(protected)/inbox")}
+                        className="bg-[#1e3a6e] rounded-full px-4 py-3 flex-row items-center gap-2"
+                    >
+                        <Ionicons name="chatbubbles-outline" size={18} color="white" />
+                        <Text className="text-white font-semibold">Messages</Text>
+                    </TouchableOpacity>
+                )}
+
+                {/* Follow / Unfollow button */}
+                {session?.uid && currentUserId && session.uid !== currentUserId && (
+                    <TouchableOpacity
+                        disabled={followLoading}
+                        onPress={handleFollowToggle}
+                        className="bg-[#1e3a6e] rounded-full px-4 py-3.5 flex-row items-center gap-2"
+                    >
+                        <Text className="text-white font-semibold">
+                            {followLoading
+                                ? "..."
+                                : userFollowing
+                                    ? "Pending"
+                                    : "Friend Me"}
+                        </Text>
+                    </TouchableOpacity>
+                )}
+                {currentUserId === session?.uid && (
+                    <TouchableOpacity
+                        className="bg-white border border-[#1e3a6e] rounded-full px-4 py-2.5 flex-row items-center gap-2"
+                        onPress={handleConnectWallet}
+                        activeOpacity={0.8}
+                        style={
+                            isWalletConnected
+                                ? {
+                                    backgroundColor: "#059669",
+                                    borderColor: "#059669",
+                                }
+                                : undefined
+                        }
+                    >
+                        <Text
+                            className="font-semibold"
+                            style={{ color: isWalletConnected ? "#ffffff" : "#1e3a6e" }}
+                        >
+                            {walletButtonLabel}
+                        </Text>
+                    </TouchableOpacity>
+                )}
+            </View>
 
           {/* Social links */}
           {userInfo?.socials && (
@@ -563,98 +668,118 @@ export default function Profile() {
 
         {/* Virtual Communities */}
         <CollapsibleSection title="Virtual Communities">
-          <Text className="px-4 pb-4 text-gray-400 text-sm">
-            No virtual communities yet.
-          </Text>
+          {digitalCommunities.length > 0 ? (
+            <View className="px-4 pb-4 flex-row flex-wrap gap-4">
+              {digitalCommunities.map((community: any, index: number) => (
+                <TouchableOpacity
+                  key={index}
+                  onPress={() => router.push(`/(protected)/communities/${community.communityId}`)}
+                  className="items-center"
+                >
+                  <Image
+                      source={{ uri: community.image }}
+                      className="w-20 h-20 rounded-full mb-1"
+                  />
+                  <Text className="text-gray-700 text-xs text-center max-w-[80px]">
+                    {community.name}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          ) : (
+            <Text className="px-4 pb-4 text-gray-400 text-sm">
+              No virtual communities yet.
+            </Text>
+          )}
         </CollapsibleSection>
 
         {/* IRL Communities */}
         <CollapsibleSection title="IRL Communities">
-          <Text className="px-4 pb-4 text-gray-400 text-sm">
-            No IRL communities yet.
-          </Text>
+          {irlCommunities.length > 0 ? (
+            <View className="px-4 pb-4 flex-row flex-wrap gap-4">
+              {irlCommunities.map((community: any, index: number) => (
+                <TouchableOpacity
+                  key={index}
+                  onPress={() => router.push(`/(protected)/communities/${community.communityId}`)}
+                  className="items-center"
+                >
+                  <Image
+                      source={{ uri: community.image }}
+                      className="w-20 h-20 rounded-full mb-1"
+                  />
+                  <Text className="text-gray-700 text-xs text-center max-w-[80px]">
+                    {community.name}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          ) : (
+            <Text className="px-4 pb-4 text-gray-400 text-sm">
+              No IRL communities yet.
+            </Text>
+          )}
         </CollapsibleSection>
 
         {/* Badges */}
-        <CollapsibleSection title="Badges">
+        <CollapsibleSection title="NFTs">
           <Text className="px-4 pb-4 text-gray-400 text-sm">
             No badges earned yet.
           </Text>
         </CollapsibleSection>
       </View>
 
-      {/* ── Posts ── */}
-      <NewsfeedList posts={posts} communityPage={false} />
-
-      {loading && (
-        <Image
-          source={require("@/assets/images/logo-inverted.png")}
-          alt="Loading..."
-          resizeMode="contain"
-          className="w-full"
-        />
-      )}
-      <Modal
-        animationType="slide"
-        transparent
-        visible={showWalletPicker}
-        onRequestClose={() => setShowWalletPicker(false)}
+      {/* ── Tab bar ── */}
+      <View
+        style={{
+          flexDirection: "row",
+          backgroundColor: "white",
+          borderBottomWidth: 1,
+          borderBottomColor: "#e5e7eb",
+        }}
       >
-        <View className="flex-1 justify-end bg-black/40">
+        {(["posts", "links"] as const).map((tab) => (
           <TouchableOpacity
-            className="flex-1"
-            activeOpacity={1}
-            onPress={() => setShowWalletPicker(false)}
-          />
-          <View className="bg-white rounded-t-3xl px-4 pt-4 pb-6">
-            <Text className="text-[#1e3a6e] font-bold text-lg">
-              Connect Wallet
+            key={tab}
+            onPress={() => setActiveTab(tab)}
+            style={{
+              flex: 1,
+              paddingVertical: 14,
+              alignItems: "center",
+              borderBottomWidth: 2,
+              borderBottomColor: activeTab === tab ? "#1e3a6e" : "transparent",
+            }}
+          >
+            <Text
+              style={{
+                color: activeTab === tab ? "#1e3a6e" : "#9ca3af",
+                fontWeight: "600",
+                fontSize: 14,
+              }}
+            >
+              {tab === "posts" ? "Posts" : "Links"}
             </Text>
-            <Text className="text-gray-600 text-sm mt-1 mb-4">
-              Choose a wallet to connect to your profile.
-            </Text>
+          </TouchableOpacity>
+        ))}
+      </View>
 
-            <TouchableOpacity
-              className="border border-[#1e3a6e] rounded-xl px-4 py-3 mb-2"
-              activeOpacity={0.8}
-              onPress={() => connectWithWallet("phantom")}
-            >
-              <Text className="text-[#1e3a6e] font-semibold">Phantom</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              className="border border-[#1e3a6e] rounded-xl px-4 py-3 mb-2"
-              activeOpacity={0.8}
-              onPress={() => connectWithWallet("backpack")}
-            >
-              <Text className="text-[#1e3a6e] font-semibold">Backpack</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              className="border border-[#1e3a6e] rounded-xl px-4 py-3"
-              activeOpacity={0.8}
-              onPress={() => connectWithWallet("solflare")}
-            >
-              <Text className="text-[#1e3a6e] font-semibold">Solflare</Text>
-            </TouchableOpacity>
-
-            <Text className="text-gray-500 text-xs mt-4">
-              Existing wallets require approving the connection in the wallet
-              app.
-            </Text>
-
-            <TouchableOpacity
-              className="mt-4 rounded-xl px-4 py-3 bg-gray-100"
-              activeOpacity={0.8}
-              onPress={() => setShowWalletPicker(false)}
-            >
-              <Text className="text-center text-gray-700 font-semibold">
-                Cancel
-              </Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </Modal>
+      {activeTab === "posts" ? (
+        <>
+          <NewsfeedList posts={posts} communityPage={false} />
+          {loading && (
+            <Image
+              source={require("@/assets/images/logo-inverted.png")}
+              alt="Loading..."
+              resizeMode="contain"
+              className="w-full"
+            />
+          )}
+        </>
+      ) : currentUserId ? (
+        <LinkTree
+          userId={currentUserId}
+          isOwnProfile={session?.uid === currentUserId}
+        />
+      ) : null}
 
       {/* Background image picker modal */}
       <BackgroundImageModal
@@ -666,6 +791,20 @@ export default function Profile() {
           setBannerOverride(url);
           setShowBgModal(false);
         }}
+      />
+
+      <FollowersModal
+        isOpen={showFollowersModal}
+        onClose={() => setShowFollowersModal(false)}
+        userId={currentUserId || ""}
+        initialTab="friends"
+      />
+
+      <FriendMeModal
+        isOpen={showFriendMeModal}
+        onClose={() => setShowFriendMeModal(false)}
+        userId={currentUserId || ""}
+        username={displayName}
       />
     </ScrollView>
   );

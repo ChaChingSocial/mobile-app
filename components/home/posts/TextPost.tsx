@@ -1,12 +1,10 @@
 import HtmlRenderText from "@/components/common/HtmlRenderText";
-import { Badge, BadgeText } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { updatePost } from "@/lib/api/newsfeed";
 import { Post as PostType } from "@/types/post";
 import React, { useState } from "react";
-import { Text, View } from "react-native";
+import { Text, View, LayoutChangeEvent } from "react-native";
 import PostEditor from "../post-editor/PostEditor";
-import { HStack } from "@/components/ui/hstack";
 import PostTags from "../post-editor/PostTag";
 
 export function TextPost({
@@ -19,6 +17,8 @@ export function TextPost({
   onEditingChange: (editing: boolean) => void;
 }) {
   const [editedContent, setEditedContent] = useState(post.post);
+  const [readMore, setReadMore] = useState(false);
+  const [showReadMoreButton, setShowReadMoreButton] = useState(false);
 
   const handleSave = () => {
     if (!post.id) return;
@@ -31,6 +31,14 @@ export function TextPost({
   const handleCancel = () => {
     setEditedContent(post.post);
     onEditingChange(false);
+  };
+
+  const handleContentLayout = (event: LayoutChangeEvent) => {
+    const { height } = event.nativeEvent.layout;
+    // Show "Read More" button if content is taller than 120px
+    if (height > 120) {
+      setShowReadMoreButton(true);
+    }
   };
 
   return (
@@ -64,9 +72,58 @@ export function TextPost({
             <Text className="text-xl font-semibold mb-3">{post.title}</Text>
           )}
 
-          <Text className="text-lg mb-1">
-            <HtmlRenderText source={post.post} />
-          </Text>
+          {/* Content container with Read More functionality */}
+          <View>
+            {/* Measure full content first */}
+            {!readMore && (
+              <View style={{ position: 'absolute', opacity: 0, width: '100%' }} onLayout={handleContentLayout}>
+                <Text className="text-lg mb-1">
+                  <HtmlRenderText source={post.post} />
+                </Text>
+              </View>
+            )}
+
+            {/* Display truncated or full content */}
+            <View
+              style={{
+                maxHeight: readMore ? '100%' : 120,
+                overflow: 'hidden',
+              }}
+            >
+              <Text className="text-lg mb-1">
+                <HtmlRenderText source={post.post} />
+              </Text>
+            </View>
+
+            {/* Gradient mask overlay when content is collapsed */}
+            {!readMore && showReadMoreButton && (
+              <View
+                style={{
+                  position: 'absolute',
+                  bottom: 0,
+                  left: 0,
+                  right: 0,
+                  height: 50,
+                  backgroundColor: 'rgba(255, 255, 255, 0.8)',
+                  pointerEvents: 'none',
+                }}
+              />
+            )}
+          </View>
+
+          {/* Read More / Read Less button */}
+          {showReadMoreButton && (
+            <Button
+              onPress={() => setReadMore(!readMore)}
+              variant="outline"
+              size="sm"
+              className="mt-3 px-0 py-0 bg-transparent border-0"
+            >
+              <Text className="text-blue-600 font-semibold text-sm">
+                {readMore ? 'Read Less' : 'Read More'}
+              </Text>
+            </Button>
+          )}
 
           {post.tags && post.tags.length > 0 && <PostTags tags={post.tags} />}
         </View>
