@@ -20,8 +20,8 @@ import { AntDesign } from "@expo/vector-icons";
 import {
   useBackpackDeeplinkWalletConnector,
   useDeeplinkWalletConnector,
-  usePhantomDeeplinkWalletConnector,
 } from "@privy-io/expo/connectors";
+import { usePhantomClusterConnector } from "@/lib/wallet/usePhantomClusterConnector";
 import * as Linking from "expo-linking";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useFocusEffect } from "@react-navigation/native";
@@ -91,14 +91,15 @@ export default function Profile() {
   const [showAllInterests, setShowAllInterests] = useState(false);
   const [showBgModal, setShowBgModal] = useState(false);
   const [showWalletPicker, setShowWalletPicker] = useState(false);
+  const [walletDisconnectedLocally, setWalletDisconnectedLocally] =
+    useState(false);
   const [bannerOverride, setBannerOverride] = useState<string | undefined>();
   const walletConnectorAppUrl =
     process.env.EXPO_PUBLIC_PRIVY_CONNECT_APP_URL || "https://chachingsocial.io";
-  const phantomWalletConnector =
-    usePhantomDeeplinkWalletConnector({
-      appUrl: walletConnectorAppUrl,
-      redirectUri: "/",
-    });
+  const phantomWalletConnector = usePhantomClusterConnector({
+    appUrl: walletConnectorAppUrl,
+    redirectUri: "/",
+  });
   const backpackWalletConnector = useBackpackDeeplinkWalletConnector({
     appUrl: walletConnectorAppUrl,
     redirectUri: "/",
@@ -240,6 +241,7 @@ export default function Profile() {
     setShowWalletPicker(false);
     try {
       await connector.connect();
+      setWalletDisconnectedLocally(false);
     } catch (error) {
       console.error(`Error connecting ${walletName} wallet:`, error);
       Alert.alert(
@@ -250,7 +252,68 @@ export default function Profile() {
   };
 
   const handleConnectWallet = () => {
-    setShowWalletPicker(true);
+    if (walletDisconnectedLocally) {
+      setShowWalletPicker(true);
+      return;
+    }
+    const activeWallet =
+      phantomWalletConnector.isConnected && phantomWalletConnector.address
+        ? {
+            name: "Phantom",
+            address: phantomWalletConnector.address,
+            connector: phantomWalletConnector,
+          }
+        : backpackWalletConnector.isConnected && backpackWalletConnector.address
+          ? {
+              name: "Backpack",
+              address: backpackWalletConnector.address,
+              connector: backpackWalletConnector,
+            }
+          : solflareWalletConnector.isConnected && solflareWalletConnector.address
+            ? {
+                name: "Solflare",
+                address: solflareWalletConnector.address,
+                connector: solflareWalletConnector,
+              }
+            : null;
+
+    if (!activeWallet) {
+      setShowWalletPicker(true);
+      return;
+    }
+
+    Alert.alert(
+      "Disconnect wallet?",
+      `Disconnect ${activeWallet.name} (${activeWallet.address.slice(0, 4)}...${activeWallet.address.slice(-4)}) from your profile?`,
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Disconnect",
+          style: "destructive",
+          onPress: async () => {
+            setWalletDisconnectedLocally(true);
+            try {
+              await activeWallet.connector.disconnect();
+            } catch (error) {
+              const errorMessage =
+                error instanceof Error ? error.message : String(error);
+              const normalized = errorMessage.toLowerCase();
+              if (
+                normalized.includes("not been authorized") ||
+                normalized.includes("timed out")
+              ) {
+                return;
+              }
+              console.error("Error disconnecting wallet:", error);
+              Alert.alert(
+                "Disconnect failed",
+                "Could not disconnect wallet. Please try again."
+              );
+            }
+          },
+        },
+      ]
+    );
   };
 
   // ── Render ───────────────────────────────────────────────────────────────
@@ -267,23 +330,27 @@ export default function Profile() {
     currentUserId === session?.uid && session?.profilePic
       ? session.profilePic
       : userInfo?.profilePic;
-  const connectedWallet =
+  const connectedWalletRaw =
     phantomWalletConnector.isConnected && phantomWalletConnector.address
       ? {
           name: "Phantom",
           address: phantomWalletConnector.address,
+          connector: phantomWalletConnector,
         }
       : backpackWalletConnector.isConnected && backpackWalletConnector.address
         ? {
             name: "Backpack",
             address: backpackWalletConnector.address,
+            connector: backpackWalletConnector,
           }
         : solflareWalletConnector.isConnected && solflareWalletConnector.address
           ? {
               name: "Solflare",
               address: solflareWalletConnector.address,
+              connector: solflareWalletConnector,
             }
           : null;
+  const connectedWallet = walletDisconnectedLocally ? null : connectedWalletRaw;
   const isWalletConnected = !!connectedWallet;
   const walletButtonLabel = connectedWallet
     ? `${connectedWallet.name} ${connectedWallet.address.slice(0, 4)}...${connectedWallet.address.slice(-4)}`
