@@ -36,6 +36,7 @@ import {
   Modal,
   Platform,
   Pressable,
+  Switch,
   Text,
   TextInput,
   TouchableOpacity,
@@ -392,6 +393,7 @@ function BudgetSetupSheet({
 }) {
   const [selectedCount, setSelectedCount] = useState(10);
   const [paying, setPaying] = useState(false);
+  const [useDevnet, setUseDevnet] = useState(true);
   const pricePerMsg = recipientPricing.messagePrice;
   const totalCost = parseFloat((selectedCount * pricePerMsg).toFixed(6));
 
@@ -405,7 +407,7 @@ function BudgetSetupSheet({
     }
     setPaying(true);
     try {
-      const sig = await usdcTransfer.transferUsdc(recipientPricing.walletAddress, totalCost);
+      const sig = await usdcTransfer.transferUsdc(recipientPricing.walletAddress, totalCost, useDevnet);
       await onTopUp(selectedCount, sig, pricePerMsg, totalCost);
     } catch (error) {
       const msg = (error instanceof Error ? error.message : String(error)).toLowerCase();
@@ -506,6 +508,19 @@ function BudgetSetupSheet({
             <Text style={{ fontSize: 18, fontWeight: "700", color: "#1e3a6e" }}>
               ${totalCost.toFixed(2)} USDC
             </Text>
+          </View>
+
+          {/* Network toggle */}
+          <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
+            <Text style={{ fontSize: 13, color: "#374151", fontWeight: "600" }}>
+              Use Devnet
+            </Text>
+            <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+              <Text style={{ fontSize: 12, color: "#6b7280" }}>
+                {useDevnet ? "Devnet" : "Mainnet"}
+              </Text>
+              <Switch value={useDevnet} onValueChange={setUseDevnet} disabled={paying || usdcTransfer.isTransferring} />
+            </View>
           </View>
 
           {/* Wallet status */}

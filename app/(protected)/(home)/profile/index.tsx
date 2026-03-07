@@ -20,6 +20,7 @@ import {
   followUser,
   unfollowUser,
   getUserMessagePricing,
+  getUserProfile,
   setMessagePricing,
 } from "@/lib/api/user";
 import { useSession } from "@/lib/providers/AuthContext";
@@ -36,6 +37,9 @@ import * as Linking from "expo-linking";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useFocusEffect } from "@react-navigation/native";
 import { DocumentSnapshot } from "firebase/firestore";
+import { getDownloadURL, getStorage, ref as storageRef } from "firebase/storage";
+import { resolveLocalBgImage } from "@/lib/constants/bgImages";
+import { ImageSourcePropType } from "react-native";
 import React, { useEffect, useState, useCallback } from "react";
 import {
   Alert,
@@ -53,6 +57,7 @@ import {
 } from "react-native";
 import {Colors} from "@/lib/constants/Colors";
 import BackgroundImageModal from "@/components/profile/BackgroundImageModal";
+import EarningsTab from "@/components/profile/EarningsTab";
 import { Connection, PublicKey, clusterApiUrl } from "@solana/web3.js";
 
 // ── Collapsible section row ──────────────────────────────────────────────────
@@ -136,7 +141,7 @@ export default function Profile() {
   const [showFollowersModal, setShowFollowersModal] = useState(false);
   const [showFriendMeModal, setShowFriendMeModal] = useState(false);
   const [followLoading, setFollowLoading] = useState(false);
-  const [activeTab, setActiveTab] = useState<"posts" | "links">("posts");
+  const [activeTab, setActiveTab] = useState<"posts" | "links" | "earnings">("posts");
   const [showWalletPicker, setShowWalletPicker] = useState(false);
   const [walletDisconnectedLocally, setWalletDisconnectedLocally] =
       useState(false);
@@ -147,7 +152,8 @@ export default function Profile() {
   const [messagePriceEnabled, setMessagePriceEnabled] = useState(false);
   const [messagePriceInput, setMessagePriceInput] = useState("0.10");
   const [savingMsgPrice, setSavingMsgPrice] = useState(false);
-    const [bannerOverride, setBannerOverride] = useState<string | undefined>();
+    const [bannerOverride, setBannerOverride] = useState<ImageSourcePropType | undefined>();
+    const [firestoreBannerUri, setFirestoreBannerUri] = useState<ImageSourcePropType | undefined>();
     const walletConnectorAppUrl =
         process.env.EXPO_PUBLIC_PRIVY_CONNECT_APP_URL || "https://chachingsocial.io";
     const phantomWalletConnector = usePhantomClusterConnector({
@@ -187,8 +193,33 @@ export default function Profile() {
   const fetchUserInfo = async () => {
     try {
       if (!currentUserId) return;
-      const res = await userApi.getUserById({ userId: currentUserId });
+      // Fetch SDK user + Firestore profile in parallel so we get backgroundImage
+      const [res, profile] = await Promise.all([
+        userApi.getUserById({ userId: currentUserId }),
+        getUserProfile(currentUserId),
+      ]);
       setUserInfo(res);
+      if (profile?.backgroundImage) {
+        const raw = profile.backgroundImage as string;
+        if (raw.startsWith("http")) {
+          // Already a full Firebase Storage download URL
+          setFirestoreBannerUri({ uri: raw });
+        } else {
+          // Check the local bundle first (e.g. "/bg-images/bg3.jpg")
+          const local = resolveLocalBgImage(raw);
+          if (local !== null) {
+            setFirestoreBannerUri(local);
+          } else {
+            // Fall back to resolving via Firebase Storage
+            try {
+              const url = await getDownloadURL(storageRef(getStorage(), raw));
+              setFirestoreBannerUri({ uri: url });
+            } catch (e) {
+              console.warn("Could not resolve banner path:", raw, e);
+            }
+          }
+        }
+      }
       if (currentUserId === session?.uid) {
         const scoreRes = await scoreApi.getScore({ userId: currentUserId });
         setCurrentUserScore(scoreRes);
@@ -478,7 +509,7 @@ export default function Profile() {
   };
 
   // ── Render ───────────────────────────────────────────────────────────────
-  const bannerUri = bannerOverride ?? (userInfo as any)?.backgroundPic ?? (userInfo as any)?.backgroundImage;
+  const bannerSource: ImageSourcePropType | undefined = bannerOverride ?? firestoreBannerUri;
   const displayName =
     currentUserId === session?.uid
       ? session?.displayName || userInfo?.username
@@ -595,9 +626,9 @@ export default function Profile() {
 
         {/* Banner */}
         <View className="w-full h-44 relative">
-          {bannerUri ? (
+          {bannerSource ? (
             <Image
-              source={{ uri: bannerUri }}
+              source={bannerSource}
               className="w-full h-full"
               resizeMode="cover"
             />
@@ -827,8 +858,8 @@ export default function Profile() {
                   <TouchableOpacity
                     key={index}
                     onPress={() => router.push({
-                      pathname: `/(protected)/communities/${community.communityId}` as any,
-                      params: { communityId: community.communityId },
+                      pathname: `/(protected)/communities/${community.slug}` as any,
+                      params: { title: community.title, slug: community.slug, communityId: community.id, themeLightColor: community.themeLightColor, themeDarkColor: community.themeDarkColor }
                     })}
                     className="items-center"
                   >
@@ -867,8 +898,8 @@ export default function Profile() {
                   <TouchableOpacity
                     key={index}
                     onPress={() => router.push({
-                      pathname: `/(protected)/communities/${community.communityId}` as any,
-                      params: { communityId: community.communityId },
+                      pathname: `/(protected)/communities/${community.slug}` as any,
+                      params: { title: community.title, slug: community.slug, communityId: community.id, themeLightColor: community.themeLightColor, themeDarkColor: community.themeDarkColor }
                     })}
                     className="items-center"
                   >
@@ -1022,26 +1053,34 @@ export default function Profile() {
           borderBottomColor: "#e5e7eb",
         }}
       >
-        {(["posts", "links"] as const).map((tab) => (
+        {(
+          [
+            { key: "posts", label: "Posts" },
+            { key: "links", label: "Links" },
+            ...(currentUserId === session?.uid
+              ? [{ key: "earnings", label: "Earnings" }]
+              : []),
+          ] as { key: "posts" | "links" | "earnings"; label: string }[]
+        ).map(({ key, label }) => (
           <TouchableOpacity
-            key={tab}
-            onPress={() => setActiveTab(tab)}
+            key={key}
+            onPress={() => setActiveTab(key)}
             style={{
               flex: 1,
               paddingVertical: 14,
               alignItems: "center",
               borderBottomWidth: 2,
-              borderBottomColor: activeTab === tab ? "#1e3a6e" : "transparent",
+              borderBottomColor: activeTab === key ? "#1e3a6e" : "transparent",
             }}
           >
             <Text
               style={{
-                color: activeTab === tab ? "#1e3a6e" : "#9ca3af",
+                color: activeTab === key ? "#1e3a6e" : "#9ca3af",
                 fontWeight: "600",
                 fontSize: 14,
               }}
             >
-              {tab === "posts" ? "Posts" : "Links"}
+              {label}
             </Text>
           </TouchableOpacity>
         ))}
@@ -1059,11 +1098,13 @@ export default function Profile() {
             />
           )}
         </>
-      ) : currentUserId ? (
+      ) : activeTab === "links" && currentUserId ? (
         <LinkTree
           userId={currentUserId}
           isOwnProfile={session?.uid === currentUserId}
         />
+      ) : activeTab === "earnings" && currentUserId ? (
+        <EarningsTab userId={currentUserId} />
       ) : null}
       <Modal
         animationType="slide"
@@ -1131,10 +1172,10 @@ export default function Profile() {
       <BackgroundImageModal
         visible={showBgModal}
         userId={currentUserId}
-        currentBanner={bannerUri}
+        currentBanner={bannerSource}
         onClose={() => setShowBgModal(false)}
         onSaved={(url) => {
-          setBannerOverride(url);
+          setBannerOverride({ uri: url });
           setShowBgModal(false);
         }}
       />

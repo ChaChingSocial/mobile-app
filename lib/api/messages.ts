@@ -426,3 +426,43 @@ export async function getMessageBudget(
   return (data.budgets?.[senderId] as MessageBudget) ?? null;
 }
 
+/** A single earning entry — one sender paid into a conversation with this user. */
+export interface MessageEarning {
+  conversationId: string;
+  senderId: string;
+  totalPaid: number;       // cumulative USDC paid by this sender
+  pricePerMsg: number;
+  lastTopUpAt: Timestamp | null;
+}
+
+/**
+ * Fetch all USDC message earnings for a recipient user.
+ * Scans all conversations the user participates in and collects
+ * budget entries from *other* senders who have paid to message them.
+ */
+export async function getMessageEarnings(
+  userId: string
+): Promise<MessageEarning[]> {
+  const conversations = await getConversations(userId);
+  const earnings: MessageEarning[] = [];
+
+  for (const conv of conversations) {
+    if (!conv.budgets) continue;
+    for (const [senderId, budget] of Object.entries(conv.budgets)) {
+      if (senderId === userId) continue; // skip budgets the user themselves created
+      const b = budget as MessageBudget;
+      if (b.totalPaid > 0) {
+        earnings.push({
+          conversationId: conv.id,
+          senderId,
+          totalPaid: b.totalPaid,
+          pricePerMsg: b.pricePerMsg,
+          lastTopUpAt: b.lastTopUpAt,
+        });
+      }
+    }
+  }
+
+  return earnings;
+}
+
