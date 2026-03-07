@@ -77,6 +77,27 @@ export async function getOrCreateConversation(
 }
 
 /**
+ * Create a new group conversation with a custom title and multiple participants.
+ * Returns the new conversation ID.
+ */
+export async function createGroupConversation(
+  creatorId: string,
+  participantIds: string[],
+  title: string
+): Promise<string> {
+  const allParticipants = Array.from(new Set([creatorId, ...participantIds]));
+  const conversationRef = await addDoc(collection(db, "conversations"), {
+    participants: allParticipants,
+    title: title.trim() || null,
+    lastMessage: "",
+    lastMessageAt: serverTimestamp(),
+    lastMessageBy: "",
+    createdAt: serverTimestamp(),
+  });
+  return conversationRef.id;
+}
+
+/**
  * Send a message in a conversation, optionally with media.
  */
 export async function sendMessage(
@@ -269,6 +290,24 @@ export async function deleteConversation(
   // Delete the conversation itself
   const conversationRef = doc(db, "conversations", conversationId);
   await deleteDoc(conversationRef);
+}
+
+/**
+ * Delete a single message from a conversation.
+ * Only the sender should call this.
+ */
+export async function deleteMessage(
+  conversationId: string,
+  messageId: string
+): Promise<void> {
+  const messageRef = doc(
+    db,
+    "conversations",
+    conversationId,
+    "messages",
+    messageId
+  );
+  await deleteDoc(messageRef);
 }
 
 /**

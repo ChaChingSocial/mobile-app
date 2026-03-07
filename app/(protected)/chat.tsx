@@ -10,6 +10,7 @@ import {
   Conversation,
   updateConversationTitle,
   deleteConversation,
+  deleteMessage,
 } from "@/lib/api/messages";
 import { getAllUsers, getUserProfile } from "@/lib/api/user";
 import { useSession } from "@/lib/providers/AuthContext";
@@ -40,6 +41,7 @@ import {
   AvatarFallbackText,
   AvatarImage,
 } from "@/components/ui/avatar";
+import { VideoView, useVideoPlayer } from "expo-video";
 
 const EMOJIS = ["❤️", "😂", "😮", "😢", "👍", "🔥"];
 
@@ -188,6 +190,23 @@ function ImageViewer({ uri, onClose }: { uri: string; onClose: () => void }) {
         </TouchableOpacity>
       </Pressable>
     </Modal>
+  );
+}
+
+// ── Inline video player ───────────────────────────────────────────────────────
+function VideoMessagePlayer({ uri }: { uri: string }) {
+  const player = useVideoPlayer({ uri }, (p) => {
+    p.loop = false;
+    p.muted = false;
+  });
+
+  return (
+    <VideoView
+      player={player}
+      style={{ width: 220, height: 150 }}
+      nativeControls
+      allowsFullscreen
+    />
   );
 }
 
@@ -348,10 +367,11 @@ function AddUserSheet({
 
 // ── Main screen ───────────────────────────────────────────────────────────────
 export default function ChatScreen() {
-  const { otherUserId, otherUserName, otherUserPic } = useLocalSearchParams<{
+  const { otherUserId, otherUserName, otherUserPic, conversationId: paramConversationId } = useLocalSearchParams<{
     otherUserId: string;
     otherUserName: string;
     otherUserPic: string;
+    conversationId: string;
   }>();
   const { session } = useSession();
   const navigation = useNavigation();
@@ -414,16 +434,27 @@ export default function ChatScreen() {
 
   // Boot
   useEffect(() => {
-    if (!session?.uid || !otherUserId) return;
+    if (!session?.uid) return;
+    if (!otherUserId && !paramConversationId) return;
     (async () => {
       setLoading(true);
       try {
-        const [convId, profile] = await Promise.all([
-          getOrCreateConversation(session.uid, otherUserId),
-          getUserProfile(otherUserId),
-        ]);
+        let convId: string;
+
+        if (paramConversationId) {
+          // Group chat navigated from New Chat modal — use the ID directly
+          convId = paramConversationId;
+        } else {
+          // 1:1 chat via profile — get or create conversation
+          const [id, profile] = await Promise.all([
+            getOrCreateConversation(session.uid, otherUserId),
+            getUserProfile(otherUserId),
+          ]);
+          convId = id;
+          setOtherProfile(profile ?? null);
+        }
+
         setConversationId(convId);
-        setOtherProfile(profile ?? null);
 
         // Fetch the conversation document to get all participants and title
         const db = getFirestore(app);
@@ -456,7 +487,7 @@ export default function ChatScreen() {
         setLoading(false);
       }
     })();
-  }, [session?.uid, otherUserId]);
+  }, [session?.uid, otherUserId, paramConversationId]);
 
   // Real-time messages
   useEffect(() => {
@@ -531,6 +562,33 @@ export default function ChatScreen() {
       console.error("Error toggling reaction:", e);
     }
     setSelectedMessageId(null);
+  };
+
+  // ── Delete message ────────────────────────────────────────────────────────
+  const handleDeleteMessage = async (messageId: string) => {
+    if (!conversationId) return;
+    try {
+      await deleteMessage(conversationId, messageId);
+    } catch (e) {
+      console.error("Error deleting message:", e);
+      Alert.alert("Error", "Failed to delete message. Please try again.");
+    }
+  };
+
+  const handleMessageLongPress = (messageId: string, isOwn: boolean) => {
+    if (isOwn) {
+      Alert.alert("Message", undefined, [
+        { text: "React", onPress: () => openPicker(messageId) },
+        {
+          text: "Delete",
+          style: "destructive",
+          onPress: () => handleDeleteMessage(messageId),
+        },
+        { text: "Cancel", style: "cancel" },
+      ]);
+    } else {
+      openPicker(messageId);
+    }
   };
 
   // ── Title management ──────────────────────────────────────────────────────
@@ -653,7 +711,7 @@ export default function ChatScreen() {
 
         <View style={{ maxWidth: "72%" }}>
           <Pressable
-            onLongPress={() => openPicker(item.id)}
+            onLongPress={() => handleMessageLongPress(item.id, isMe)}
             delayLongPress={350}
             style={{
               backgroundColor: isMe ? "#1e3a6e" : "white",
@@ -677,20 +735,7 @@ export default function ChatScreen() {
               </TouchableOpacity>
             )}
             {hasMedia && item.mediaType === "video" && (
-              <View
-                style={{
-                  width: 220,
-                  height: 150,
-                  backgroundColor: "#111827",
-                  alignItems: "center",
-                  justifyContent: "center",
-                }}
-              >
-                <Ionicons name="play-circle" size={52} color="rgba(255,255,255,0.85)" />
-                <Text style={{ color: "rgba(255,255,255,0.6)", fontSize: 12, marginTop: 6 }}>
-                  Video
-                </Text>
-              </View>
+              <VideoMessagePlayer uri={item.mediaUrl!} />
             )}
 
             {/* Text */}

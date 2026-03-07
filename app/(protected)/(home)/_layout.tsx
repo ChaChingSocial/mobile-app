@@ -115,7 +115,7 @@ export default function TabLayout() {
         options={{
           title: "Discover",
           tabBarIcon: ({ color }) => (
-            <FontAwesome size={28} name="star-o" color={color} />
+            <FontAwesome size={28} name="hand-scissors-o" color={color} />
           ),
         }}
       />
@@ -124,7 +124,7 @@ export default function TabLayout() {
         options={{
           title: "Connect",
           tabBarIcon: ({ color }) => (
-            <FontAwesome size={22} name="hand-scissors-o" color={color} />
+            <FontAwesome size={22} name="handshake-o" color={color} />
           ),
         }}
       />
