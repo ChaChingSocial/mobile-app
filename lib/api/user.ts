@@ -423,6 +423,41 @@ async function createAbuseReport(
   }
 }
 
+/**
+ * Save this user's per-message price and receiving wallet address to their profile.
+ * Pass priceUsdc = 0 to disable pricing.
+ */
+export async function setMessagePricing(
+  userId: string,
+  priceUsdc: number,
+  walletAddress: string
+): Promise<void> {
+  const userDocRef = doc(db, "users", userId, "profile", userId);
+  await setDoc(userDocRef, { messagePrice: priceUsdc, walletAddress }, { merge: true });
+}
+
+/**
+ * Fetch a user's message pricing settings.
+ * Returns null if profile doesn't exist; messagePrice = 0 means free.
+ */
+export async function getUserMessagePricing(
+  userId: string
+): Promise<{ messagePrice: number; walletAddress: string | null } | null> {
+  try {
+    const userDocRef = doc(db, "users", userId, "profile", userId);
+    const snap = await getDoc(userDocRef);
+    if (!snap.exists()) return null;
+    const data = snap.data();
+    return {
+      messagePrice: data.messagePrice ?? 0,
+      walletAddress: data.walletAddress ?? null,
+    };
+  } catch (error) {
+    console.error("Error fetching message pricing:", error);
+    return null;
+  }
+}
+
 export {
   updateUserPreferences,
   getAllUsers,

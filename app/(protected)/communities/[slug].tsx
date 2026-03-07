@@ -10,7 +10,12 @@ import {
   ModalContent,
 } from "@/components/ui/modal";
 import { VStack } from "@/components/ui/vstack";
-import { getSingleCommunityBySlug } from "@/lib/api/communities";
+import {
+  getSingleCommunityBySlug,
+  addCommunityPaidContribution,
+  getCommunityContributors,
+  CommunityContributor,
+} from "@/lib/api/communities";
 import { getPostsByNewsfeedIdPaged } from "@/lib/api/newsfeed";
 import { useSession } from "@/lib/providers/AuthContext";
 import { usePostStore } from "@/lib/store/post";
@@ -31,6 +36,8 @@ import {
   Modal as RNModal,
   Switch,
   TextInput,
+  KeyboardAvoidingView,
+  Linking,
 } from "react-native";
 import { Center } from "@/components/ui/center";
 import { Spinner } from "@/components/ui/spinner";
@@ -357,8 +364,9 @@ export default function SingleCommunity() {
   const [showFundModal, setShowFundModal] = useState(false);
   const [fundingAsset, setFundingAsset] = useState<"SOL" | "USDC">("SOL");
   const [fundAmount, setFundAmount] = useState("");
-  const [useDevnet, setUseDevnet] = useState(false);
+  const [useDevnet, setUseDevnet] = useState(true);
   const [isFunding, setIsFunding] = useState(false);
+  const [contributors, setContributors] = useState<CommunityContributor[]>([]);
 
   // Post store setters for preselecting/locking community and passing media
   const setCreatedPostImage = usePostStore((state) => state.setCreatedPostImage);
@@ -426,16 +434,20 @@ export default function SingleCommunity() {
     }
 
     fetchCommunityData();
-    // Initial page with fetched 3 posts
+
+    const cid = Array.isArray(communityId) ? communityId[0] : (communityId as string);
+
+    // Initial page of posts
     setInitialLoading(true);
-    getPostsByNewsfeedIdPaged(
-      Array.isArray(communityId) ? communityId[0] : (communityId as string),
-      null,
-      PAGE_SIZE
-    ).then(({ posts: first, lastDoc: ld }) => {
-      setPosts(first);
-      setLastDoc(ld);
-    }).finally(() => setInitialLoading(false));
+    getPostsByNewsfeedIdPaged(cid, null, PAGE_SIZE)
+      .then(({ posts: first, lastDoc: ld }) => {
+        setPosts(first);
+        setLastDoc(ld);
+      })
+      .finally(() => setInitialLoading(false));
+
+    // Load contributor avatars
+    getCommunityContributors(cid).then(setContributors).catch(() => {});
   }, [communityId]);
 
   if (!communityData) {
@@ -760,11 +772,48 @@ export default function SingleCommunity() {
 
       await waitForSignatureConfirmation(connection, signature);
 
+      // Capture values before clearing state
+      const donatedAmount = Number(fundAmount.trim()) || 0;
+      const donatedAsset = fundingAsset;
+      const donatedNetwork = useDevnet ? "devnet" : "mainnet-beta";
+
       setShowFundModal(false);
       setFundAmount("");
+
+      // Persist the contribution (best-effort — don't block the success alert)
+      const cid = Array.isArray(communityId)
+        ? communityId[0]
+        : (communityId as string);
+      addCommunityPaidContribution(cid, {
+        userId: session?.uid ?? "",
+        displayName: session?.displayName ?? "Anonymous",
+        profilePic: session?.profilePic ?? null,
+        amount: donatedAmount,
+        asset: donatedAsset,
+        transactionId: signature,
+        network: donatedNetwork,
+        status: "COMPLETED",
+        date: new Date().toISOString(),
+      })
+        .then(() => getCommunityContributors(cid))
+        .then(setContributors)
+        .catch((err) =>
+          console.warn("Failed to persist contribution:", err)
+        );
+
+      const solscanUrl = `https://solscan.io/tx/${signature}${
+        donatedNetwork === "devnet" ? "?cluster=devnet" : ""
+      }`;
       Alert.alert(
-        "Funding submitted",
-        `${fundingAsset} was sent to this community wallet.`
+        "Funding submitted ✅",
+        `${donatedAsset} was sent to this community wallet.`,
+        [
+          {
+            text: "View on Solscan",
+            onPress: () => Linking.openURL(solscanUrl).catch(() => {}),
+          },
+          { text: "Close", style: "cancel" },
+        ]
       );
     } catch (error) {
       console.error("Error funding community:", error);
@@ -849,13 +898,77 @@ export default function SingleCommunity() {
             </View>
           )}
 
+          {/* ── Contributor avatars ── */}
+          {contributors.length > 0 && (
+            <View className="mb-4">
+              <Text className="text-white text-xs font-semibold mb-2 uppercase tracking-wide">
+                {contributors.length === 1
+                  ? "1 Supporter"
+                  : `${contributors.length} Supporters`}
+              </Text>
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={{ gap: 10 }}
+              >
+                {contributors.map((c) => (
+                  <View key={c.userId} className="items-center" style={{ width: 52 }}>
+                    {c.profilePic ? (
+                      <Image
+                        source={{ uri: c.profilePic }}
+                        style={{
+                          width: 40,
+                          height: 40,
+                          borderRadius: 20,
+                          borderWidth: 2,
+                          borderColor: "rgba(255,255,255,0.6)",
+                        }}
+                        resizeMode="cover"
+                      />
+                    ) : (
+                      <View
+                        style={{
+                          width: 40,
+                          height: 40,
+                          borderRadius: 20,
+                          borderWidth: 2,
+                          borderColor: "rgba(255,255,255,0.6)",
+                          backgroundColor: "rgba(255,255,255,0.2)",
+                          alignItems: "center",
+                          justifyContent: "center",
+                        }}
+                      >
+                        <Text
+                          style={{ color: "white", fontWeight: "700", fontSize: 14 }}
+                        >
+                          {(c.displayName ?? "?").charAt(0).toUpperCase()}
+                        </Text>
+                      </View>
+                    )}
+                    <Text
+                      className="text-white text-xs mt-1 text-center"
+                      numberOfLines={1}
+                      style={{ width: 52 }}
+                    >
+                      {c.displayName.length > 7
+                        ? `${c.displayName.slice(0, 7)}…`
+                        : c.displayName}
+                    </Text>
+                  </View>
+                ))}
+              </ScrollView>
+            </View>
+          )}
+
           <View className="mb-2">
             <TouchableOpacity
-              className="w-full bg-white rounded-xl py-3 px-4"
+              className="w-full rounded-xl py-3 px-4"
+              style={{backgroundColor: communityData.themeLightColor || Colors.light.tint}}
               activeOpacity={0.85}
               onPress={handleFundCommunityPress}
             >
-              <Text className="text-[#077f5f] text-base font-semibold text-center">
+              <Text className="text-base font-semibold text-center"
+              style={{ color: communityData.themeDarkColor || Colors.dark.tint }}>
                 Fund Community
               </Text>
             </TouchableOpacity>
@@ -908,13 +1021,17 @@ export default function SingleCommunity() {
         visible={showFundModal}
         onRequestClose={() => !isFunding && setShowFundModal(false)}
       >
-        <View className="flex-1 justify-end bg-black/40">
-          <TouchableOpacity
-            className="flex-1"
-            activeOpacity={1}
-            onPress={() => !isFunding && setShowFundModal(false)}
-          />
-          <View className="bg-white rounded-t-3xl px-4 pt-4 pb-6">
+        <KeyboardAvoidingView
+          behavior={Platform.OS === "ios" ? "padding" : "height"}
+          style={{ flex: 1 }}
+        >
+          <View className="flex-1 justify-end bg-black/40">
+            <TouchableOpacity
+              className="flex-1"
+              activeOpacity={1}
+              onPress={() => !isFunding && setShowFundModal(false)}
+            />
+            <View className="bg-white rounded-t-3xl px-4 pt-4 pb-6">
             <Text className="text-[#1e3a6e] text-xl font-bold">
               Fund Community
             </Text>
@@ -973,6 +1090,11 @@ export default function SingleCommunity() {
               editable={!isFunding}
               className="border border-[#d1d5db] rounded-xl px-3 py-3 text-gray-900 mb-4"
             />
+            <Text className="text-gray-500 text-xs mb-4">
+              {fundingAsset === "USDC"
+                ? "Up to 6 decimal places (e.g. 0.01, 0.001)."
+                : "Up to 9 decimal places (e.g. 0.01, 0.001)."}
+            </Text>
 
             <View className="flex-row items-center justify-between mb-2">
               <Text className="text-gray-800 font-semibold">Use devnet</Text>
@@ -1017,6 +1139,7 @@ export default function SingleCommunity() {
             </View>
           </View>
         </View>
+        </KeyboardAvoidingView>
       </RNModal>
 
       {/* Floating Action Button (same as HomePage) */}
@@ -1037,6 +1160,7 @@ export default function SingleCommunity() {
           <AddIcon color="white" className="p-5 w-2 h-2" />
         </TouchableOpacity>
       </Animated.View>
+
 
       {/* Post Options Modal */}
       <Modal isOpen={showOptions} onClose={() => setShowOptions(false)}>

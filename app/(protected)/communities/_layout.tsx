@@ -44,7 +44,6 @@ export default function CommunitiesLayout() {
           userId: session?.uid ?? "",
         });
         if (res) {
-          console.log("Community data fetched:", res);
           setIsMember(Array.isArray(res) && res.length > 0);
         }
       } catch (error) {

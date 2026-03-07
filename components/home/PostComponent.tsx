@@ -102,7 +102,6 @@ export function PostComponent({ post }: { post: PostType }) {
     };
 
     fetchCommunityData();
-    console.log("Community name:", communityName, post.newsfeedId);
   }, []);
 
   const handleLike = () => {

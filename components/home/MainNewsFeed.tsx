@@ -1,6 +1,6 @@
 import useFeaturedPosts from "@/hooks/useSubscribeToPosts";
 import React, { forwardRef, useImperativeHandle } from "react";
-import { Image, TouchableOpacity } from "react-native";
+import {ActivityIndicator, Image, TouchableOpacity} from "react-native";
 import { Box } from "../ui/box";
 import { Text } from "../ui/text";
 import NewsfeedList from "./NewsfeedList";
@@ -14,12 +14,7 @@ export const MainNewsfeed = forwardRef(function MainNewsfeed(_props, ref: any) {
       <Box className="flex-1">
         <NewsfeedList posts={posts} communityPage={false} />
         {loading && (
-          <Image
-            source={require("@/assets/images/logo-inverted.png")}
-            alt="Loading..."
-            resizeMode="contain"
-            className="w-full"
-          />
+            <ActivityIndicator size="small" color="#ffffff" />
         )}
         {/*
         <TouchableOpacity

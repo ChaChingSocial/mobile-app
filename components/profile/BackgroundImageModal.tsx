@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import {
   ActivityIndicator,
   Image,
+  ImageSourcePropType,
   Modal,
   ScrollView,
   Text,
@@ -16,7 +17,7 @@ import { updateBackgroundImage } from "@/lib/api/user";
 type Props = {
   visible: boolean;
   userId: string;
-  currentBanner?: string;
+  currentBanner?: ImageSourcePropType;
   onClose: () => void;
   onSaved: (url: string) => void;
 };
@@ -28,7 +29,7 @@ export default function BackgroundImageModal({
   onClose,
   onSaved,
 }: Props) {
-  const [preview, setPreview] = useState<string | undefined>(currentBanner);
+  const [preview, setPreview] = useState<ImageSourcePropType | undefined>(currentBanner);
   const [localUri, setLocalUri] = useState<string | null>(null); // local file to upload
   const [presets, setPresets] = useState<string[]>([]);
   const [chosenPreset, setChosenPreset] = useState<string | null>(null);
@@ -72,7 +73,7 @@ export default function BackgroundImageModal({
     if (!result.canceled && result.assets?.length) {
       const uri = result.assets[0].uri;
       setLocalUri(uri);
-      setPreview(uri);
+      setPreview({ uri });
       setChosenPreset(null);
     }
   };
@@ -93,13 +94,15 @@ export default function BackgroundImageModal({
     if (!preview) return;
     setUploading(true);
     try {
-      let finalUrl = preview;
+      // If user picked from gallery, upload it and get the URL
+      let finalUrl = localUri ? await uploadToStorage(localUri) : (
+        // For Firebase Storage presets the preview is { uri: url }
+        typeof preview === "object" && "uri" in (preview as any)
+          ? (preview as { uri: string }).uri
+          : ""
+      );
 
-      // If the user picked a local file, upload it first
-      if (localUri) {
-        finalUrl = await uploadToStorage(localUri);
-      }
-
+      if (!finalUrl) return;
       await updateBackgroundImage(userId, finalUrl);
       onSaved(finalUrl);
       onClose();
@@ -117,7 +120,7 @@ export default function BackgroundImageModal({
       presentationStyle="pageSheet"
       onRequestClose={onClose}
     >
-      <View className="flex-1 bg-white">
+      <View className="flex-1 bg-white mt-16">
         {/* Header */}
         <View className="flex-row items-center justify-between px-4 py-4 border-b border-gray-100">
           <TouchableOpacity onPress={onClose} disabled={uploading}>
@@ -146,7 +149,7 @@ export default function BackgroundImageModal({
           <View className="mx-4 mt-4 rounded-xl overflow-hidden bg-gray-100 h-44 items-center justify-center">
             {preview ? (
               <Image
-                source={{ uri: preview }}
+                source={preview}
                 className="w-full h-full"
                 resizeMode="cover"
               />
@@ -187,7 +190,7 @@ export default function BackgroundImageModal({
                     key={url}
                     onPress={() => {
                       setChosenPreset(url);
-                      setPreview(url);
+                      setPreview({ uri: url });
                       setLocalUri(null);
                     }}
                     className="rounded-lg overflow-hidden"
