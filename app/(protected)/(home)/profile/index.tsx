@@ -48,6 +48,7 @@ import {
 } from "react-native";
 import {Colors} from "@/lib/constants/Colors";
 import BackgroundImageModal from "@/components/profile/BackgroundImageModal";
+import { Connection, PublicKey, clusterApiUrl } from "@solana/web3.js";
 
 // ── Collapsible section row ──────────────────────────────────────────────────
 function CollapsibleSection({
@@ -78,6 +79,37 @@ function CollapsibleSection({
   );
 }
 
+type WalletNftPreview = {
+  mint: string;
+};
+
+const SOLANA_TOKEN_PROGRAM_ID = new PublicKey(
+  "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
+);
+const SOLANA_TOKEN_2022_PROGRAM_ID = new PublicKey(
+  "TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb"
+);
+
+const extractNftMints = (accounts: any[]) => {
+  const mints = new Set<string>();
+
+  for (const account of accounts) {
+    const info = account?.account?.data?.parsed?.info;
+    const tokenAmount = info?.tokenAmount;
+    const mint = info?.mint;
+
+    if (!mint || typeof mint !== "string") continue;
+
+    const decimals = Number(tokenAmount?.decimals ?? -1);
+    const rawAmount = String(tokenAmount?.amount ?? "0");
+    if (decimals === 0 && rawAmount === "1") {
+      mints.add(mint);
+    }
+  }
+
+  return mints;
+};
+
 // ── Main screen ───────────────────────────────────────────────────────────────
 export default function Profile() {
   const { id: UserId } = useLocalSearchParams();
@@ -103,6 +135,8 @@ export default function Profile() {
   const [showWalletPicker, setShowWalletPicker] = useState(false);
   const [walletDisconnectedLocally, setWalletDisconnectedLocally] =
       useState(false);
+  const [walletNfts, setWalletNfts] = useState<WalletNftPreview[]>([]);
+  const [walletNftsLoading, setWalletNftsLoading] = useState(false);
     const [bannerOverride, setBannerOverride] = useState<string | undefined>();
     const walletConnectorAppUrl =
         process.env.EXPO_PUBLIC_PRIVY_CONNECT_APP_URL || "https://chachingsocial.io";
@@ -426,8 +460,71 @@ export default function Profile() {
   const connectedWallet = walletDisconnectedLocally ? null : connectedWalletRaw;
   const isWalletConnected = !!connectedWallet;
   const walletButtonLabel = connectedWallet
-    ? `${connectedWallet.name} ${connectedWallet.address.slice(0, 4)}...${connectedWallet.address.slice(-4)}`
+    ? `${connectedWallet.address.slice(0, 4)}...${connectedWallet.address.slice(-4)}`
     : "Connect Wallet";
+
+  useEffect(() => {
+    let isCancelled = false;
+
+    const fetchWalletNfts = async () => {
+      if (!connectedWallet?.address) {
+        setWalletNfts([]);
+        setWalletNftsLoading(false);
+        return;
+      }
+
+      setWalletNftsLoading(true);
+      try {
+        const ownerPublicKey = new PublicKey(connectedWallet.address);
+        const clusters: Array<"mainnet-beta" | "devnet"> = [
+          "mainnet-beta",
+          "devnet",
+        ];
+        const nftMints = new Set<string>();
+
+        for (const cluster of clusters) {
+          const connection = new Connection(clusterApiUrl(cluster), "confirmed");
+          const [tokenAccounts, token2022Accounts] = await Promise.all([
+            connection.getParsedTokenAccountsByOwner(ownerPublicKey, {
+              programId: SOLANA_TOKEN_PROGRAM_ID,
+            }),
+            connection.getParsedTokenAccountsByOwner(ownerPublicKey, {
+              programId: SOLANA_TOKEN_2022_PROGRAM_ID,
+            }),
+          ]);
+
+          const clusterNfts = extractNftMints([
+            ...tokenAccounts.value,
+            ...token2022Accounts.value,
+          ]);
+          clusterNfts.forEach((mint) => nftMints.add(mint));
+        }
+
+        if (!isCancelled) {
+          setWalletNfts(
+            Array.from(nftMints)
+              .slice(0, 24)
+              .map((mint) => ({ mint }))
+          );
+        }
+      } catch (error) {
+        console.error("Error fetching connected wallet NFTs:", error);
+        if (!isCancelled) {
+          setWalletNfts([]);
+        }
+      } finally {
+        if (!isCancelled) {
+          setWalletNftsLoading(false);
+        }
+      }
+    };
+
+    fetchWalletNfts();
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [connectedWallet?.address]);
 
   return (
     <ScrollView
@@ -573,8 +670,8 @@ export default function Profile() {
                         style={
                             isWalletConnected
                                 ? {
-                                    backgroundColor: "#059669",
-                                    borderColor: "#059669",
+                                    backgroundColor: "#1e3a6e",
+                                    borderColor: "#1e3a6e",
                                 }
                                 : undefined
                         }
@@ -722,9 +819,33 @@ export default function Profile() {
 
         {/* Badges */}
         <CollapsibleSection title="NFTs">
-          <Text className="px-4 pb-4 text-gray-400 text-sm">
-            No badges earned yet.
-          </Text>
+          {!isWalletConnected ? (
+            <Text className="px-4 pb-4 text-gray-400 text-sm">
+              Please connect your wallet to showcase your NFTs.
+            </Text>
+          ) : walletNftsLoading ? (
+            <Text className="px-4 pb-4 text-gray-400 text-sm">
+              Loading connected wallet NFTs...
+            </Text>
+          ) : walletNfts.length === 0 ? (
+            <Text className="px-4 pb-4 text-gray-400 text-sm">
+              No NFTs are owned or connected with this wallet.
+            </Text>
+          ) : (
+            <View className="px-4 pb-4 gap-2">
+              {walletNfts.map((nft, index) => (
+                <View
+                  key={`${nft.mint}-${index}`}
+                  className="bg-[#f3f4f6] rounded-lg px-3 py-2"
+                >
+                  <Text className="text-gray-700 text-xs">
+                    NFT {index + 1}: {nft.mint.slice(0, 6)}...
+                    {nft.mint.slice(-6)}
+                  </Text>
+                </View>
+              ))}
+            </View>
+          )}
         </CollapsibleSection>
       </View>
 
@@ -780,6 +901,67 @@ export default function Profile() {
           isOwnProfile={session?.uid === currentUserId}
         />
       ) : null}
+      <Modal
+        animationType="slide"
+        transparent
+        visible={showWalletPicker}
+        onRequestClose={() => setShowWalletPicker(false)}
+      >
+        <View className="flex-1 justify-end bg-black/40">
+          <TouchableOpacity
+            className="flex-1"
+            activeOpacity={1}
+            onPress={() => setShowWalletPicker(false)}
+          />
+          <View className="bg-white rounded-t-3xl px-4 pt-4 pb-6">
+            <Text className="text-[#1e3a6e] font-bold text-lg">
+              Connect Wallet
+            </Text>
+            <Text className="text-gray-600 text-sm mt-1 mb-4">
+              Choose a wallet to connect to your profile.
+            </Text>
+
+            <TouchableOpacity
+              className="border border-[#1e3a6e] rounded-xl px-4 py-3 mb-2"
+              activeOpacity={0.8}
+              onPress={() => connectWithWallet("phantom")}
+            >
+              <Text className="text-[#1e3a6e] font-semibold">Phantom</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              className="border border-[#1e3a6e] rounded-xl px-4 py-3 mb-2"
+              activeOpacity={0.8}
+              onPress={() => connectWithWallet("backpack")}
+            >
+              <Text className="text-[#1e3a6e] font-semibold">Backpack</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              className="border border-[#1e3a6e] rounded-xl px-4 py-3"
+              activeOpacity={0.8}
+              onPress={() => connectWithWallet("solflare")}
+            >
+              <Text className="text-[#1e3a6e] font-semibold">Solflare</Text>
+            </TouchableOpacity>
+
+            <Text className="text-gray-500 text-xs mt-4">
+              Existing wallets require approving the connection in the wallet
+              app.
+            </Text>
+
+            <TouchableOpacity
+              className="mt-4 rounded-xl px-4 py-3 bg-gray-100"
+              activeOpacity={0.8}
+              onPress={() => setShowWalletPicker(false)}
+            >
+              <Text className="text-center text-gray-700 font-semibold">
+                Cancel
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
 
       {/* Background image picker modal */}
       <BackgroundImageModal

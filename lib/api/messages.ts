@@ -9,6 +9,7 @@ import {
   getDoc,
   getDocs,
   getFirestore,
+  increment,
   limit,
   onSnapshot,
   orderBy,
@@ -39,7 +40,7 @@ export interface Conversation {
   lastMessage: string;
   lastMessageAt: Timestamp | null;
   lastMessageBy: string;
-  unreadCount?: number;
+  unreadCounts?: Record<string, number>; // { userId: unreadCount }
   title?: string; // Custom title for the conversation
 }
 
@@ -124,13 +125,26 @@ export async function sendMessage(
     ...(media ?? {}),
   });
 
-  // Update conversation summary
+  // Update conversation summary + increment unread counts for other participants
   const conversationRef = doc(db, "conversations", conversationId);
-  await updateDoc(conversationRef, {
-    lastMessage: trimmed,
+  const convSnap = await getDoc(conversationRef);
+
+  const updateData: Record<string, any> = {
+    lastMessage: trimmed || (media ? `[${media.mediaType}]` : ""),
     lastMessageAt: serverTimestamp(),
     lastMessageBy: senderId,
-  });
+  };
+
+  if (convSnap.exists()) {
+    const participants: string[] = convSnap.data().participants ?? [];
+    participants.forEach((pid) => {
+      if (pid !== senderId) {
+        updateData[`unreadCounts.${pid}`] = increment(1);
+      }
+    });
+  }
+
+  await updateDoc(conversationRef, updateData);
 }
 
 /**
@@ -253,6 +267,10 @@ export async function markMessagesAsRead(
     .map((doc) => updateDoc(doc.ref, { read: true }));
 
   await Promise.all(updates);
+
+  // Reset unread count for this user in the conversation
+  const conversationRef = doc(db, "conversations", conversationId);
+  await updateDoc(conversationRef, { [`unreadCounts.${userId}`]: 0 });
 }
 
 /**
@@ -330,5 +348,21 @@ export async function removeParticipantFromConversation(
 ): Promise<void> {
   const conversationRef = doc(db, "conversations", conversationId);
   await updateDoc(conversationRef, { participants: arrayRemove(userId) });
+}
+
+/**
+ * Subscribe to the total unread message count across all conversations for a user.
+ * Returns an unsubscribe function.
+ */
+export function subscribeToTotalUnreadCount(
+  userId: string,
+  callback: (count: number) => void
+): () => void {
+  return subscribeToConversations(userId, (conversations) => {
+    const total = conversations.reduce((sum, conv) => {
+      return sum + (conv.unreadCounts?.[userId] ?? 0);
+    }, 0);
+    callback(total);
+  });
 }
 

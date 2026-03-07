@@ -1087,76 +1087,69 @@ export default function ChatScreen() {
       {/* Input bar */}
       <View
         style={{
-          flexDirection: "row",
-          alignItems: "center",
           paddingHorizontal: 16,
           paddingBottom: Platform.OS === "ios" ? 20 : 15,
           paddingTop: 12,
           backgroundColor: Colors.dark.tint,
           borderTopWidth: 1,
           borderTopColor: "rgba(255,255,255,0.1)",
-          gap: 10,
         }}
       >
-        {/* Attachment button */}
-        <TouchableOpacity
-          onPress={() => setMediaSheetVisible(true)}
-          style={{
-            width: 38,
-            height: 38,
-            borderRadius: 19,
-            alignItems: "center",
-            justifyContent: "center",
-            backgroundColor: Colors.light.tint,
-          }}
-        >
-          <Ionicons name="add" size={22} color="black" />
-        </TouchableOpacity>
+        <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
+          {/* Attachment button */}
+          <TouchableOpacity
+            onPress={() => setMediaSheetVisible(true)}
+            style={{
+              width: 38,
+              height: 38,
+              borderRadius: 19,
+              alignItems: "center",
+              justifyContent: "center",
+              backgroundColor: Colors.light.tint,
+            }}
+          >
+            <Ionicons name="add" size={22} color="black" />
+          </TouchableOpacity>
 
-        <TextInput
-          style={{
-            flex: 1,
-            backgroundColor: Colors.light.tint,
-            borderRadius: 22,
-            paddingHorizontal: 16,
-            paddingVertical: 10,
-            fontSize: 14,
-            color: "black",
-            maxHeight: 100,
-          }}
-          placeholder="Message..."
-          placeholderTextColor="black"
-          value={inputText}
-          onChangeText={setInputText}
-          multiline
-          maxLength={1000}
-          returnKeyType="default"
-        />
+          <TextInput
+            style={{
+              flex: 1,
+              backgroundColor: Colors.light.tint,
+              borderRadius: 22,
+              paddingHorizontal: 16,
+              paddingVertical: 10,
+              fontSize: 14,
+              color: "black",
+              maxHeight: 100,
+            }}
+            placeholder="Message..."
+            placeholderTextColor="black"
+            value={inputText}
+            onChangeText={setInputText}
+            multiline
+            maxLength={1000}
+            returnKeyType="default"
+          />
 
-        {/* Send button */}
-        <TouchableOpacity
-          onPress={handleSend}
-          disabled={sending || uploading || (!inputText.trim() && !pendingMedia)}
-          style={{
-            width: 38,
-            height: 38,
-            borderRadius: 19,
-            backgroundColor:
-              inputText.trim() || pendingMedia ? "white" : Colors.light.tint,
-            alignItems: "center",
-            justifyContent: "center",
-          }}
-        >
-          {sending || uploading ? (
-            <ActivityIndicator size="small" color={Colors.dark.tint} />
-          ) : (
-            <Ionicons
-              name="send"
-              size={17}
-              color={Colors.dark.tint}
-            />
-          )}
-        </TouchableOpacity>
+          <TouchableOpacity
+            onPress={handleSend}
+            disabled={sending || uploading || (!inputText.trim() && !pendingMedia)}
+            style={{
+              width: 38,
+              height: 38,
+              borderRadius: 19,
+              backgroundColor: inputText.trim() || pendingMedia ? "white" : Colors.light.tint,
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
+            {sending || uploading ? (
+              <ActivityIndicator size="small" color={Colors.dark.tint} />
+            ) : (
+              <Ionicons name="send" size={17} color={Colors.dark.tint} />
+            )}
+          </TouchableOpacity>
+        </View>
       </View>
 
       {/* ── Modals ── */}
