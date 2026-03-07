@@ -3,6 +3,7 @@ import {
   getOrCreateConversation,
   markMessagesAsRead,
   Message,
+  MessageBudget,
   removeParticipantFromConversation,
   sendMessage,
   subscribeToMessages,
@@ -11,8 +12,12 @@ import {
   updateConversationTitle,
   deleteConversation,
   deleteMessage,
+  topUpMessageBudget,
+  decrementMessageBudget,
+  getMessageBudget,
 } from "@/lib/api/messages";
-import { getAllUsers, getUserProfile } from "@/lib/api/user";
+import { getAllUsers, getUserProfile, getUserMessagePricing } from "@/lib/api/user";
+import { useUsdcTransfer, UsdcTransferHook } from "@/lib/wallet/useUsdcTransfer";
 import { useSession } from "@/lib/providers/AuthContext";
 import { Colors } from "@/lib/constants/Colors";
 import { app } from "@/config/firebase";
@@ -365,6 +370,214 @@ function AddUserSheet({
   );
 }
 
+// ── Budget setup / top-up bottom sheet ───────────────────────────────────────
+const MESSAGE_COUNT_PRESETS = [5, 10, 20, 50];
+
+function BudgetSetupSheet({
+  visible,
+  onClose,
+  onTopUp,
+  recipientName,
+  recipientPricing,
+  currentBudget,
+  usdcTransfer,
+}: {
+  visible: boolean;
+  onClose: () => void;
+  onTopUp: (count: number, txSignature: string, pricePerMsg: number, totalPaid: number) => Promise<void>;
+  recipientName: string;
+  recipientPricing: { messagePrice: number; walletAddress: string };
+  currentBudget: MessageBudget | null;
+  usdcTransfer: UsdcTransferHook;
+}) {
+  const [selectedCount, setSelectedCount] = useState(10);
+  const [paying, setPaying] = useState(false);
+  const pricePerMsg = recipientPricing.messagePrice;
+  const totalCost = parseFloat((selectedCount * pricePerMsg).toFixed(6));
+
+  const isTopUp = currentBudget !== null && currentBudget.messagesRemaining > 0;
+  const title = isTopUp ? "Top Up Messages" : `Message ${recipientName}`;
+
+  const handlePay = async () => {
+    if (!usdcTransfer.isConnected) {
+      usdcTransfer.setShowWalletPicker(true);
+      return;
+    }
+    setPaying(true);
+    try {
+      const sig = await usdcTransfer.transferUsdc(recipientPricing.walletAddress, totalCost);
+      await onTopUp(selectedCount, sig, pricePerMsg, totalCost);
+    } catch (error) {
+      const msg = (error instanceof Error ? error.message : String(error)).toLowerCase();
+      if (msg.includes("usdc account not found")) {
+        Alert.alert("No USDC", "Your wallet doesn't have USDC on this network. Top up your wallet first.");
+      } else if (
+        msg.includes("timed out") ||
+        msg.includes("not been authorized") ||
+        msg.includes("not authorized") ||
+        msg.includes("method is not supported")
+      ) {
+        // User cancelled wallet interaction — silent
+      } else {
+        Alert.alert("Payment failed", "Could not process the USDC payment. Please try again.");
+      }
+    } finally {
+      setPaying(false);
+    }
+  };
+
+  if (!visible) return null;
+
+  return (
+    <Modal transparent animationType="slide" visible={visible} onRequestClose={onClose}>
+      <Pressable
+        style={{ flex: 1, backgroundColor: "rgba(0,0,0,0.45)", justifyContent: "flex-end" }}
+        onPress={onClose}
+      >
+        <Pressable
+          onPress={() => {}}
+          style={{
+            backgroundColor: "white",
+            borderTopLeftRadius: 24,
+            borderTopRightRadius: 24,
+            paddingHorizontal: 24,
+            paddingBottom: 40,
+          }}
+        >
+          {/* Handle */}
+          <View style={{ width: 40, height: 4, backgroundColor: "#e5e7eb", borderRadius: 2, alignSelf: "center", marginTop: 12, marginBottom: 20 }} />
+
+          {/* Title */}
+          <Text style={{ fontSize: 18, fontWeight: "700", color: "#1f2937", marginBottom: 4 }}>
+            {title}
+          </Text>
+          <Text style={{ fontSize: 14, color: "#6b7280", marginBottom: 20 }}>
+            {recipientName} charges{" "}
+            <Text style={{ fontWeight: "700", color: "#1e3a6e" }}>${pricePerMsg.toFixed(2)} USDC</Text>
+            {" "}per message · Replies are free
+          </Text>
+
+          {/* Count presets */}
+          <Text style={{ fontSize: 13, fontWeight: "600", color: "#374151", marginBottom: 10 }}>
+            How many messages?
+          </Text>
+          <View style={{ flexDirection: "row", gap: 10, marginBottom: 20 }}>
+            {MESSAGE_COUNT_PRESETS.map((count) => (
+              <TouchableOpacity
+                key={count}
+                onPress={() => setSelectedCount(count)}
+                style={{
+                  flex: 1,
+                  paddingVertical: 12,
+                  borderRadius: 12,
+                  alignItems: "center",
+                  backgroundColor: selectedCount === count ? "#1e3a6e" : "#f3f4f6",
+                }}
+              >
+                <Text style={{ fontSize: 16, fontWeight: "700", color: selectedCount === count ? "white" : "#374151" }}>
+                  {count}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+
+          {/* Total summary */}
+          <View
+            style={{
+              backgroundColor: "#f0f4ff",
+              borderRadius: 12,
+              padding: 14,
+              marginBottom: 20,
+              flexDirection: "row",
+              justifyContent: "space-between",
+              alignItems: "center",
+            }}
+          >
+            <Text style={{ fontSize: 14, color: "#6b7280" }}>
+              {selectedCount} messages
+            </Text>
+            <Text style={{ fontSize: 18, fontWeight: "700", color: "#1e3a6e" }}>
+              ${totalCost.toFixed(2)} USDC
+            </Text>
+          </View>
+
+          {/* Wallet status */}
+          {usdcTransfer.isConnected ? (
+            <Text style={{ fontSize: 12, color: "#6b7280", marginBottom: 12, textAlign: "center" }}>
+              Paying from {usdcTransfer.connectedAddress?.slice(0, 4)}…{usdcTransfer.connectedAddress?.slice(-4)}
+            </Text>
+          ) : (
+            <Text style={{ fontSize: 12, color: "#d97706", marginBottom: 12, textAlign: "center" }}>
+              No wallet connected — tap Pay to connect
+            </Text>
+          )}
+
+          {/* Pay button */}
+          <TouchableOpacity
+            onPress={handlePay}
+            disabled={paying || usdcTransfer.isTransferring}
+            style={{
+              backgroundColor: paying || usdcTransfer.isTransferring ? "#9ca3af" : "#1e3a6e",
+              borderRadius: 14,
+              paddingVertical: 16,
+              alignItems: "center",
+              marginBottom: 12,
+            }}
+          >
+            {paying || usdcTransfer.isTransferring ? (
+              <ActivityIndicator color="white" />
+            ) : (
+              <Text style={{ color: "white", fontSize: 16, fontWeight: "700" }}>
+                {usdcTransfer.isConnected ? `Pay $${totalCost.toFixed(2)} USDC` : "Connect Wallet & Pay"}
+              </Text>
+            )}
+          </TouchableOpacity>
+
+          <TouchableOpacity onPress={onClose} style={{ alignItems: "center", paddingVertical: 8 }}>
+            <Text style={{ fontSize: 14, color: "#9ca3af" }}>Cancel</Text>
+          </TouchableOpacity>
+        </Pressable>
+      </Pressable>
+    </Modal>
+  );
+}
+
+// ── Wallet picker modal (reused by BudgetSetupSheet) ─────────────────────────
+function WalletPickerModal({
+  visible,
+  onClose,
+  onConnect,
+}: {
+  visible: boolean;
+  onClose: () => void;
+  onConnect: (wallet: "phantom" | "backpack" | "solflare") => void;
+}) {
+  if (!visible) return null;
+  return (
+    <Modal transparent animationType="slide" visible={visible} onRequestClose={onClose}>
+      <Pressable
+        style={{ flex: 1, backgroundColor: "rgba(0,0,0,0.4)", justifyContent: "flex-end" }}
+        onPress={onClose}
+      >
+        <View style={{ backgroundColor: "white", borderTopLeftRadius: 24, borderTopRightRadius: 24, paddingHorizontal: 24, paddingBottom: 40 }}>
+          <View style={{ width: 40, height: 4, backgroundColor: "#e5e7eb", borderRadius: 2, alignSelf: "center", marginTop: 12, marginBottom: 20 }} />
+          <Text style={{ fontSize: 17, fontWeight: "700", color: "#1f2937", marginBottom: 6 }}>Connect Wallet</Text>
+          <Text style={{ fontSize: 13, color: "#6b7280", marginBottom: 20 }}>Choose a wallet to send USDC</Text>
+          {(["phantom", "backpack", "solflare"] as const).map((w) => (
+            <TouchableOpacity
+              key={w}
+              onPress={() => { onClose(); onConnect(w); }}
+              style={{ borderWidth: 1, borderColor: "#e5e7eb", borderRadius: 12, paddingVertical: 14, paddingHorizontal: 16, marginBottom: 10 }}
+            >
+              <Text style={{ fontSize: 15, fontWeight: "600", color: "#1e3a6e", textTransform: "capitalize" }}>{w}</Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+      </Pressable>
+    </Modal>
+  );
+}
+
 // ── Main screen ───────────────────────────────────────────────────────────────
 export default function ChatScreen() {
   const { otherUserId, otherUserName, otherUserPic, conversationId: paramConversationId } = useLocalSearchParams<{
@@ -391,6 +604,16 @@ export default function ChatScreen() {
   const [editingTitle, setEditingTitle] = useState("");
   const [deleting, setDeleting] = useState(false);
   const [addingUserId, setAddingUserId] = useState<string | null>(null);
+
+  // ── Per-message payment state ──────────────────────────────────────────────
+  const usdcTransfer = useUsdcTransfer();
+  const [recipientPricing, setRecipientPricing] = useState<{
+    messagePrice: number;
+    walletAddress: string | null;
+  } | null>(null);
+  const [senderBudget, setSenderBudget] = useState<MessageBudget | null>(null);
+  const [budgetSetupVisible, setBudgetSetupVisible] = useState(false);
+  const initialBudgetCheckDoneRef = useRef(false);
 
   // Pending media (picked but not yet sent)
   const [pendingMedia, setPendingMedia] = useState<{
@@ -489,6 +712,38 @@ export default function ChatScreen() {
     })();
   }, [session?.uid, otherUserId, paramConversationId]);
 
+  // ── Pricing + budget loader (fires when participants list is ready) ──────────
+  useEffect(() => {
+    if (!session?.uid || !conversationId || allParticipants.length === 0) return;
+    // Only apply pricing for 1-on-1 conversations
+    if (allParticipants.length !== 2) return;
+    if (initialBudgetCheckDoneRef.current) return;
+
+    const other = allParticipants.find(
+      (p) => (p.userId || p.id) !== session.uid
+    );
+    if (!other) return;
+    const otherParticipantId: string = other.userId || other.id || "";
+    if (!otherParticipantId) return;
+
+    (async () => {
+      const [pricing, budget] = await Promise.all([
+        getUserMessagePricing(otherParticipantId),
+        getMessageBudget(conversationId, session.uid!),
+      ]);
+      setRecipientPricing(pricing);
+      setSenderBudget(budget);
+      initialBudgetCheckDoneRef.current = true;
+
+      // Auto-open budget sheet if recipient charges and sender has no budget
+      if (pricing && pricing.messagePrice > 0 && pricing.walletAddress) {
+        if (!budget || budget.messagesRemaining <= 0) {
+          setBudgetSetupVisible(true);
+        }
+      }
+    })();
+  }, [allParticipants, conversationId, session?.uid]);
+
   // Real-time messages
   useEffect(() => {
     if (!conversationId || !session?.uid) return;
@@ -506,9 +761,47 @@ export default function ChatScreen() {
     }
   }, [messages]);
 
+  // ── Per-message budget top-up callback ────────────────────────────────────
+  const handleBudgetTopUp = async (
+    count: number,
+    txSignature: string,
+    pricePerMsg: number,
+    totalPaid: number
+  ) => {
+    if (!conversationId || !session?.uid) return;
+    await topUpMessageBudget(
+      conversationId,
+      session.uid,
+      count,
+      pricePerMsg,
+      totalPaid,
+      txSignature
+    );
+    setSenderBudget((prev) => ({
+      messagesRemaining: (prev?.messagesRemaining ?? 0) + count,
+      pricePerMsg,
+      totalPaid: (prev?.totalPaid ?? 0) + totalPaid,
+      txSignature,
+      lastTopUpAt: null, // will be server timestamp on next read
+    }));
+    setBudgetSetupVisible(false);
+  };
+
+  const isPricedChat =
+    (recipientPricing?.messagePrice ?? 0) > 0 &&
+    !!recipientPricing?.walletAddress;
+
   // ── Send ──────────────────────────────────────────────────────────────────
   const handleSend = async () => {
     if ((!inputText.trim() && !pendingMedia) || !conversationId || !session?.uid) return;
+
+    // Block send if recipient charges and sender has no / exhausted budget
+    if (isPricedChat) {
+      if (!senderBudget || senderBudget.messagesRemaining <= 0) {
+        setBudgetSetupVisible(true);
+        return;
+      }
+    }
 
     setSending(true);
     const text = inputText;
@@ -538,6 +831,14 @@ export default function ChatScreen() {
       }
 
       await sendMessage(conversationId, session.uid, text, uploadedMedia);
+
+      // Decrement budget optimistically after successful send
+      if (isPricedChat && senderBudget && senderBudget.messagesRemaining > 0) {
+        decrementMessageBudget(conversationId, session.uid).catch(console.error);
+        setSenderBudget((prev) =>
+          prev ? { ...prev, messagesRemaining: prev.messagesRemaining - 1 } : null
+        );
+      }
     } catch (e) {
       console.error("Error sending message:", e);
       setInputText(text);
@@ -1084,6 +1385,65 @@ export default function ChatScreen() {
         </View>
       )}
 
+      {/* Budget indicator – shown in priced 1:1 chats */}
+      {isPricedChat && (
+        senderBudget && senderBudget.messagesRemaining > 0 ? (
+          <View
+            style={{
+              flexDirection: "row",
+              alignItems: "center",
+              paddingHorizontal: 16,
+              paddingVertical: 6,
+              backgroundColor: senderBudget.messagesRemaining <= 3 ? "#fef2f2" : "#f0f9ff",
+              borderTopWidth: 1,
+              borderTopColor: senderBudget.messagesRemaining <= 3 ? "#fecaca" : "#bae6fd",
+            }}
+          >
+            <Ionicons
+              name={senderBudget.messagesRemaining <= 3 ? "warning-outline" : "wallet-outline"}
+              size={13}
+              color={senderBudget.messagesRemaining <= 3 ? "#ef4444" : "#0284c7"}
+            />
+            <Text
+              style={{
+                flex: 1,
+                fontSize: 12,
+                color: senderBudget.messagesRemaining <= 3 ? "#ef4444" : "#0284c7",
+                marginLeft: 5,
+              }}
+            >
+              {senderBudget.messagesRemaining} message
+              {senderBudget.messagesRemaining !== 1 ? "s" : ""} remaining
+              {" "}(${senderBudget.pricePerMsg?.toFixed(2) ?? "?"}/msg)
+            </Text>
+            <TouchableOpacity onPress={() => setBudgetSetupVisible(true)}>
+              <Text style={{ fontSize: 12, color: "#0284c7", fontWeight: "700" }}>
+                Top up
+              </Text>
+            </TouchableOpacity>
+          </View>
+        ) : (
+          <TouchableOpacity
+            onPress={() => setBudgetSetupVisible(true)}
+            style={{
+              flexDirection: "row",
+              alignItems: "center",
+              justifyContent: "center",
+              paddingVertical: 8,
+              backgroundColor: "#fffbeb",
+              borderTopWidth: 1,
+              borderTopColor: "#fde68a",
+              gap: 6,
+            }}
+          >
+            <Ionicons name="cash-outline" size={13} color="#d97706" />
+            <Text style={{ fontSize: 12, color: "#d97706", fontWeight: "600" }}>
+              Tap to set up your message budget (${recipientPricing!.messagePrice.toFixed(2)}/msg)
+            </Text>
+          </TouchableOpacity>
+        )
+      )}
+
       {/* Input bar */}
       <View
         style={{
@@ -1174,6 +1534,26 @@ export default function ChatScreen() {
       {expandedImage && (
         <ImageViewer uri={expandedImage} onClose={() => setExpandedImage(null)} />
       )}
+
+      {/* Budget setup / top-up sheet */}
+      {isPricedChat && (
+        <BudgetSetupSheet
+          visible={budgetSetupVisible}
+          onClose={() => setBudgetSetupVisible(false)}
+          onTopUp={handleBudgetTopUp}
+          recipientName={headerTitle}
+          recipientPricing={recipientPricing as { messagePrice: number; walletAddress: string }}
+          currentBudget={senderBudget}
+          usdcTransfer={usdcTransfer}
+        />
+      )}
+
+      {/* Wallet picker (triggered by BudgetSetupSheet when no wallet connected) */}
+      <WalletPickerModal
+        visible={usdcTransfer.showWalletPicker}
+        onClose={() => usdcTransfer.setShowWalletPicker(false)}
+        onConnect={usdcTransfer.connectWallet}
+      />
     </KeyboardAvoidingView>
   );
 }

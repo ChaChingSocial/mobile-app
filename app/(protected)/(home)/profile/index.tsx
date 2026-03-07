@@ -18,6 +18,8 @@ import {
   isFollowing,
   followUser,
   unfollowUser,
+  getUserMessagePricing,
+  setMessagePricing,
 } from "@/lib/api/user";
 import { useSession } from "@/lib/providers/AuthContext";
 import { useScoreStore } from "@/lib/store/score";
@@ -42,7 +44,9 @@ import {
   NativeSyntheticEvent,
   RefreshControl,
   ScrollView,
+  Switch,
   Text,
+  TextInput,
   TouchableOpacity,
   View,
 } from "react-native";
@@ -137,6 +141,11 @@ export default function Profile() {
       useState(false);
   const [walletNfts, setWalletNfts] = useState<WalletNftPreview[]>([]);
   const [walletNftsLoading, setWalletNftsLoading] = useState(false);
+
+  // ── Message Pricing state ──────────────────────────────────────────────────
+  const [messagePriceEnabled, setMessagePriceEnabled] = useState(false);
+  const [messagePriceInput, setMessagePriceInput] = useState("0.10");
+  const [savingMsgPrice, setSavingMsgPrice] = useState(false);
     const [bannerOverride, setBannerOverride] = useState<string | undefined>();
     const walletConnectorAppUrl =
         process.env.EXPO_PUBLIC_PRIVY_CONNECT_APP_URL || "https://chachingsocial.io";
@@ -421,6 +430,48 @@ export default function Profile() {
         },
       ]
     );
+  };
+
+  // ── Message Pricing ───────────────────────────────────────────────────────
+  // Load the user's existing pricing settings when viewing own profile
+  useEffect(() => {
+    if (!session?.uid || currentUserId !== session.uid) return;
+    getUserMessagePricing(session.uid).then((pricing) => {
+      if (pricing && pricing.messagePrice > 0) {
+        setMessagePriceEnabled(true);
+        setMessagePriceInput(String(pricing.messagePrice));
+      }
+    });
+  }, [session?.uid, currentUserId]);
+
+  const handleSaveMessagePricing = async () => {
+    if (!session?.uid) return;
+    if (!connectedWallet?.address) {
+      Alert.alert(
+        "Wallet required",
+        "Connect a wallet first so people know where to send USDC payments."
+      );
+      return;
+    }
+    const price = messagePriceEnabled ? parseFloat(messagePriceInput) : 0;
+    if (messagePriceEnabled && (isNaN(price) || price <= 0)) {
+      Alert.alert("Invalid price", "Enter a valid USDC amount (e.g. 0.10).");
+      return;
+    }
+    setSavingMsgPrice(true);
+    try {
+      await setMessagePricing(session.uid, price, connectedWallet.address);
+      Alert.alert(
+        "Saved",
+        messagePriceEnabled
+          ? `Message pricing set to $${price.toFixed(2)} USDC per message. Your connected wallet will receive payments.`
+          : "Message pricing disabled. Anyone can message you for free."
+      );
+    } catch {
+      Alert.alert("Error", "Failed to save pricing. Please try again.");
+    } finally {
+      setSavingMsgPrice(false);
+    }
   };
 
   // ── Render ───────────────────────────────────────────────────────────────
@@ -847,6 +898,90 @@ export default function Profile() {
             </View>
           )}
         </CollapsibleSection>
+
+        {/* Message Pricing – own profile only */}
+        {currentUserId === session?.uid && (
+          <CollapsibleSection title="Message Pricing">
+            {!isWalletConnected ? (
+              <Text className="px-4 pb-4 text-gray-400 text-sm">
+                Connect your wallet above to enable message pricing.
+              </Text>
+            ) : (
+              <View style={{ paddingHorizontal: 16, paddingBottom: 20, gap: 16 }}>
+                {/* Toggle row */}
+                <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
+                  <View style={{ flex: 1 }}>
+                    <Text style={{ fontSize: 14, fontWeight: "600", color: "#374151" }}>
+                      Charge per message
+                    </Text>
+                    <Text style={{ fontSize: 12, color: "#9ca3af", marginTop: 2 }}>
+                      People pay USDC to send you messages
+                    </Text>
+                  </View>
+                  <Switch
+                    value={messagePriceEnabled}
+                    onValueChange={setMessagePriceEnabled}
+                    trackColor={{ false: "#e5e7eb", true: "#1e3a6e" }}
+                    thumbColor="white"
+                  />
+                </View>
+
+                {/* Price input */}
+                {messagePriceEnabled && (
+                  <View style={{ gap: 6 }}>
+                    <Text style={{ fontSize: 13, fontWeight: "600", color: "#374151" }}>
+                      Price per message (USDC)
+                    </Text>
+                    <TextInput
+                      value={messagePriceInput}
+                      onChangeText={setMessagePriceInput}
+                      keyboardType="decimal-pad"
+                      placeholder="0.10"
+                      placeholderTextColor="#9ca3af"
+                      style={{
+                        borderWidth: 1,
+                        borderColor: "#e5e7eb",
+                        borderRadius: 10,
+                        paddingHorizontal: 14,
+                        paddingVertical: 11,
+                        fontSize: 15,
+                        color: "#1f2937",
+                        backgroundColor: "#f9fafb",
+                      }}
+                    />
+                    <Text style={{ fontSize: 11, color: "#9ca3af" }}>
+                      Payments go to your connected wallet:{" "}
+                      {connectedWallet?.address.slice(0, 4)}…
+                      {connectedWallet?.address.slice(-4)}
+                    </Text>
+                  </View>
+                )}
+
+                {/* Save button */}
+                <TouchableOpacity
+                  onPress={handleSaveMessagePricing}
+                  disabled={savingMsgPrice}
+                  style={{
+                    backgroundColor: savingMsgPrice ? "#9ca3af" : "#1e3a6e",
+                    borderRadius: 12,
+                    paddingVertical: 13,
+                    alignItems: "center",
+                  }}
+                >
+                  <Text style={{ color: "white", fontWeight: "700", fontSize: 14 }}>
+                    {savingMsgPrice ? "Saving…" : "Save Pricing"}
+                  </Text>
+                </TouchableOpacity>
+
+                {messagePriceEnabled && (
+                  <Text style={{ fontSize: 11, color: "#9ca3af", textAlign: "center" }}>
+                    Replies you send are always free for others.
+                  </Text>
+                )}
+              </View>
+            )}
+          </CollapsibleSection>
+        )}
       </View>
 
       {/* ── Tab bar ── */}

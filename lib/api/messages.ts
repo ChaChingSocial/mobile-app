@@ -34,6 +34,15 @@ export interface Message {
   mediaType?: "image" | "video";
 }
 
+/** Per-sender budget stored on the conversation document. */
+export interface MessageBudget {
+  messagesRemaining: number;
+  pricePerMsg: number;      // USDC per message (e.g. 0.10)
+  totalPaid: number;        // cumulative USDC paid across all top-ups
+  txSignature: string;      // signature of the most recent top-up tx
+  lastTopUpAt: Timestamp | null;
+}
+
 export interface Conversation {
   id: string;
   participants: string[];
@@ -42,6 +51,7 @@ export interface Conversation {
   lastMessageBy: string;
   unreadCounts?: Record<string, number>; // { userId: unreadCount }
   title?: string; // Custom title for the conversation
+  budgets?: Record<string, MessageBudget>; // senderId → remaining budget
 }
 
 /**
@@ -364,5 +374,55 @@ export function subscribeToTotalUnreadCount(
     }, 0);
     callback(total);
   });
+}
+
+/**
+ * Add (or initially create) a message budget for a sender in a conversation.
+ * Uses Firestore increment so it safely handles both first-time setup and top-ups.
+ */
+export async function topUpMessageBudget(
+  conversationId: string,
+  senderId: string,
+  addMessages: number,
+  pricePerMsg: number,
+  addTotalPaid: number,
+  txSignature: string
+): Promise<void> {
+  const conversationRef = doc(db, "conversations", conversationId);
+  await updateDoc(conversationRef, {
+    [`budgets.${senderId}.messagesRemaining`]: increment(addMessages),
+    [`budgets.${senderId}.totalPaid`]: increment(addTotalPaid),
+    [`budgets.${senderId}.pricePerMsg`]: pricePerMsg,
+    [`budgets.${senderId}.txSignature`]: txSignature,
+    [`budgets.${senderId}.lastTopUpAt`]: serverTimestamp(),
+  });
+}
+
+/**
+ * Decrement a sender's remaining message count by 1.
+ * Call this after every successfully sent message in a priced conversation.
+ */
+export async function decrementMessageBudget(
+  conversationId: string,
+  senderId: string
+): Promise<void> {
+  const conversationRef = doc(db, "conversations", conversationId);
+  await updateDoc(conversationRef, {
+    [`budgets.${senderId}.messagesRemaining`]: increment(-1),
+  });
+}
+
+/**
+ * Read the current budget for a sender in a conversation (one-time fetch).
+ */
+export async function getMessageBudget(
+  conversationId: string,
+  senderId: string
+): Promise<MessageBudget | null> {
+  const conversationRef = doc(db, "conversations", conversationId);
+  const snap = await getDoc(conversationRef);
+  if (!snap.exists()) return null;
+  const data = snap.data();
+  return (data.budgets?.[senderId] as MessageBudget) ?? null;
 }
 
