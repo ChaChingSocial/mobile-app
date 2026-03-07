@@ -18,7 +18,11 @@ import {
 import { useRouter } from "expo-router";
 import { Timestamp } from "firebase/firestore";
 import { useEffect, useState } from "react";
-import { TouchableOpacity } from "react-native";
+import { TouchableOpacity, Alert, Modal as RNModal, Linking } from "react-native";
+import * as Haptics from "expo-haptics";
+import { PublicKey } from "@solana/web3.js";
+import { useUsdcTransfer } from "@/lib/wallet/useUsdcTransfer";
+import { getSingleCommunityById, addCommunityPaidContribution } from "@/lib/api/communities";
 import { PostInfo } from "./PostInfo";
 import { Icon } from "@/components/ui/icon";
 import { Image } from "react-native";
@@ -69,6 +73,15 @@ export function PostWrapper({
   const [communityTitle, setCommunityTitle] = useState("");
   const [shareTitle, setShareTitle] = useState("");
 
+  // Wallet + payments
+  const usdc = useUsdcTransfer();
+  const [communityWallet, setCommunityWallet] = useState<string | null>(null);
+  const [showTxModal, setShowTxModal] = useState(false);
+  const [txSignature, setTxSignature] = useState<string | null>(null);
+  const [isOinking, setIsOinking] = useState(false);
+  const USE_DEVNET_DEFAULT = true; // align with other in-app payments default
+  const FALLBACK_COMMUNITY_FUND_WALLET = "Dn5eBy45nbnV6LndYbn3ZXXE34UGAu2ZJAP4yF61XD7x";
+
   const router = useRouter();
 
   useEffect(() => {
@@ -116,6 +129,32 @@ export function PostWrapper({
     }
   }, []);
 
+  // Resolve community fund wallet for this post's community
+  useEffect(() => {
+    const fetchWallet = async () => {
+      try {
+        if (!post.newsfeedId) {
+          setCommunityWallet(FALLBACK_COMMUNITY_FUND_WALLET);
+          return;
+        }
+        const res = await getSingleCommunityById(post.newsfeedId);
+        const dest = (res as any)?.communityFundingDestination as string | undefined;
+        if (dest) {
+          try {
+            // Validate address
+            new PublicKey(dest);
+            setCommunityWallet(dest);
+            return;
+          } catch {}
+        }
+        setCommunityWallet(FALLBACK_COMMUNITY_FUND_WALLET);
+      } catch {
+        setCommunityWallet(FALLBACK_COMMUNITY_FUND_WALLET);
+      }
+    };
+    fetchWallet();
+  }, [post.newsfeedId]);
+
   // Only for posts do we define delete/edit handlers inside the container.
   const handleDelete = () => {
     deletePost(post.id);
@@ -162,6 +201,96 @@ export function PostWrapper({
   const baseLikes = post.likes ? post.likes.length : 0;
   const displayedLikes = baseLikes + (userLikedPost && !serverLiked ? 1 : 0) - (!userLikedPost && serverLiked ? 1 : 0);
 
+  const handleLikePress = () => {
+    if (!userLikedPost) {
+      // Medium impact when liking a post
+      void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    }
+    onLike();
+  };
+
+  const promptWalletConnect = () => {
+    Alert.alert(
+      "Connect a wallet",
+      "To oink, connect a Solana wallet to send $0.10 USDC to this community.",
+      [
+        { text: "Phantom", onPress: () => usdc.connectWallet("phantom") },
+        { text: "Backpack", onPress: () => usdc.connectWallet("backpack") },
+        { text: "Solflare", onPress: () => usdc.connectWallet("solflare") },
+        { text: "Cancel", style: "cancel" },
+      ]
+    );
+  };
+
+  const handleOinkPress = async () => {
+    if (!usdc.isConnected) {
+      promptWalletConnect();
+      return;
+    }
+
+    const destination = communityWallet || FALLBACK_COMMUNITY_FUND_WALLET;
+
+    const doSend = async () => {
+      setIsOinking(true);
+      try {
+        const sig = await usdc.transferUsdc(destination, 0.10, USE_DEVNET_DEFAULT);
+        setTxSignature(sig);
+        setShowTxModal(true);
+        // Best-effort persistence of the contribution
+        try {
+          if (post.newsfeedId) {
+            await addCommunityPaidContribution(post.newsfeedId, {
+              userId: currentUserId ?? "",
+              displayName: (session?.displayName as string) || "Anonymous",
+              profilePic: (session?.profilePic as string) || null,
+              amount: 0.10,
+              asset: "USDC",
+              transactionId: sig,
+              network: USE_DEVNET_DEFAULT ? "devnet" : "mainnet-beta",
+              status: "COMPLETED",
+              date: new Date().toISOString(),
+            });
+          }
+        } catch {}
+        // Toggle local UI state (pigs animation/flag)
+        onOink();
+      } catch (error) {
+        const msg = (error instanceof Error ? error.message : String(error)).toLowerCase();
+        if (msg.includes("usdc account not found")) {
+          Alert.alert(
+            "No USDC on this network",
+            "Your connected wallet doesn't have USDC on this network. Top up your wallet first."
+          );
+        } else if (
+          msg.includes("timed out") ||
+          msg.includes("not been authorized") ||
+          msg.includes("not authorized") ||
+          msg.includes("method is not supported") ||
+          msg.includes("wallet not connected")
+        ) {
+          Alert.alert(
+            "Wallet approval needed",
+            "Wallet approval timed out or session expired. Reconnect your wallet and try again."
+          );
+        } else {
+          Alert.alert("Oink failed", "Could not process the USDC contribution. Please try again.");
+        }
+      } finally {
+        setIsOinking(false);
+      }
+    };
+
+    const communityName = (communityTitle && communityTitle.length > 0) ? communityTitle : "this community";
+    Alert.alert(
+      "Confirm oink",
+      `Send $0.10 USDC to ${communityName}?`,
+      [
+        { text: "Cancel", style: "cancel" },
+        { text: "Confirm", onPress: () => void doSend() },
+      ]
+    );
+  };
+
   return (
     <Box
       className="relative align-middle rounded-lg bg-white">
@@ -182,7 +311,7 @@ export function PostWrapper({
         <Box className="mt-4 flex flex-row gap-5 mx-2 mb-2">
           <Box className="flex flex-row items-center gap-2">
             <TouchableOpacity
-              onPress={onLike}
+              onPress={handleLikePress}
               className="flex flex-row items-center"
             >
               <FontAwesome
@@ -199,7 +328,8 @@ export function PostWrapper({
               trigger={(triggerProps) => {
                 return (
                   <TouchableOpacity
-                    onPress={onOink}
+                    onPress={handleOinkPress}
+                    disabled={isOinking}
                     className="flex flex-row items-center"
                   >
                       <Image
@@ -290,6 +420,46 @@ export function PostWrapper({
           purchases made through this link.
         </Text>
       )}
+      {/* Post-oink transaction modal */}
+      <RNModal
+        animationType="fade"
+        transparent
+        visible={showTxModal}
+        onRequestClose={() => setShowTxModal(false)}
+      >
+        <Box className="flex-1 bg-black/40 px-6 items-center justify-center">
+          <Box className="w-full bg-white rounded-2xl p-5">
+            <Text className="text-[#1e3a6e] text-lg font-bold mb-2">
+              Contribution sent
+            </Text>
+            {txSignature && (
+              <Text className="text-gray-700 text-sm mb-4">
+                Transaction: {txSignature}
+              </Text>
+            )}
+            <TouchableOpacity
+              className="bg-[#1e3a6e] rounded-xl py-3 mb-2"
+              activeOpacity={0.85}
+              onPress={() => {
+                if (!txSignature) return;
+                const url = `https://solscan.io/tx/${txSignature}${
+                  USE_DEVNET_DEFAULT ? "?cluster=devnet" : ""
+                }`;
+                Linking.openURL(url).catch(() => {});
+              }}
+            >
+              <Text className="text-white text-center font-semibold">View on Solscan</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              className="bg-gray-100 rounded-xl py-3"
+              activeOpacity={0.85}
+              onPress={() => setShowTxModal(false)}
+            >
+              <Text className="text-gray-700 text-center font-semibold">Close</Text>
+            </TouchableOpacity>
+          </Box>
+        </Box>
+      </RNModal>
     </Box>
   );
 }
