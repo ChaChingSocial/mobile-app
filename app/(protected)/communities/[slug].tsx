@@ -990,7 +990,13 @@ export default function SingleCommunity() {
                 contentContainerStyle={{ gap: 10 }}
               >
                 {contributors.map((c) => (
-                  <View key={c.userId} className="items-center" style={{ width: 52 }}>
+                  <TouchableOpacity
+                    key={c.userId}
+                    className="items-center"
+                    style={{ width: 52 }}
+                    activeOpacity={0.75}
+                    onPress={() => router.push(`/(protected)/user-profile?id=${c.userId}`)}
+                  >
                     {c.profilePic ? (
                       <Image
                         source={{ uri: c.profilePic }}
@@ -1032,7 +1038,16 @@ export default function SingleCommunity() {
                         ? `${c.displayName.slice(0, 7)}…`
                         : c.displayName}
                     </Text>
-                  </View>
+                    <Text
+                      className="text-xs text-center"
+                      numberOfLines={1}
+                      style={{ width: 52, color: "rgba(255,255,255,0.7)" }}
+                    >
+                      {c.totalAmount % 1 === 0
+                        ? `${c.totalAmount} ${c.asset}`
+                        : `${c.totalAmount.toFixed(c.asset === "USDC" ? 2 : 4)} ${c.asset}`}
+                    </Text>
+                  </TouchableOpacity>
                 ))}
               </ScrollView>
             </View>
