@@ -15,6 +15,7 @@ import {
   topUpMessageBudget,
   decrementMessageBudget,
   getMessageBudget,
+  updateConversationGradient,
 } from "@/lib/api/messages";
 import { getAllUsers, getUserProfile, getUserMessagePricing } from "@/lib/api/user";
 import { useUsdcTransfer, UsdcTransferHook } from "@/lib/wallet/useUsdcTransfer";
@@ -48,6 +49,8 @@ import {
   AvatarImage,
 } from "@/components/ui/avatar";
 import { VideoView, useVideoPlayer } from "expo-video";
+import LinearGradient from "react-native-linear-gradient";
+import { gradients, getGradientByName, getGradientForKey } from "@/lib/constants/gradients";
 
 const EMOJIS = ["❤️", "😂", "😮", "😢", "👍", "🔥"];
 
@@ -135,6 +138,133 @@ function MediaPickerSheet({
             </TouchableOpacity>
           ))}
         </View>
+      </Pressable>
+    </Modal>
+  );
+}
+
+// ── Message action sheet ──────────────────────────────────────────────────────
+function MessageActionSheet({
+  visible,
+  isOwn,
+  onReply,
+  onDelete,
+  onClose,
+}: {
+  visible: boolean;
+  isOwn: boolean;
+  onReply: () => void;
+  onDelete: () => void;
+  onClose: () => void;
+}) {
+  if (!visible) return null;
+  return (
+    <Modal
+      transparent
+      animationType="slide"
+      visible={visible}
+      onRequestClose={onClose}
+    >
+      <Pressable
+        style={{ flex: 1, backgroundColor: "rgba(0,0,0,0.4)", justifyContent: "flex-end" }}
+        onPress={onClose}
+      >
+        <Pressable onPress={() => {}}>
+          <View
+            style={{
+              backgroundColor: "white",
+              borderTopLeftRadius: 24,
+              borderTopRightRadius: 24,
+              paddingBottom: 36,
+              overflow: "hidden",
+            }}
+          >
+            {/* Drag handle */}
+            <View
+              style={{
+                width: 40,
+                height: 4,
+                backgroundColor: "#e5e7eb",
+                borderRadius: 2,
+                alignSelf: "center",
+                marginTop: 12,
+                marginBottom: 8,
+              }}
+            />
+
+            {/* Reply */}
+            <TouchableOpacity
+              onPress={() => { onClose(); onReply(); }}
+              style={{
+                flexDirection: "row",
+                alignItems: "center",
+                paddingHorizontal: 24,
+                paddingVertical: 16,
+                gap: 16,
+              }}
+            >
+              <View
+                style={{
+                  width: 40,
+                  height: 40,
+                  borderRadius: 20,
+                  backgroundColor: "#eff6ff",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                <Ionicons name="arrow-undo-outline" size={20} color="#1e3a6e" />
+              </View>
+              <Text style={{ fontSize: 16, fontWeight: "500", color: "#1f2937" }}>
+                Reply
+              </Text>
+            </TouchableOpacity>
+
+            <View style={{ height: 1, backgroundColor: "#f3f4f6", marginHorizontal: 24 }} />
+
+            {/* Delete — own messages only */}
+            {isOwn && (
+              <TouchableOpacity
+                onPress={() => { onClose(); onDelete(); }}
+                style={{
+                  flexDirection: "row",
+                  alignItems: "center",
+                  paddingHorizontal: 24,
+                  paddingVertical: 16,
+                  gap: 16,
+                }}
+              >
+                <View
+                  style={{
+                    width: 40,
+                    height: 40,
+                    borderRadius: 20,
+                    backgroundColor: "#fef2f2",
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
+                >
+                  <Ionicons name="trash-outline" size={20} color="#ef4444" />
+                </View>
+                <Text style={{ fontSize: 16, fontWeight: "500", color: "#ef4444" }}>
+                  Delete
+                </Text>
+              </TouchableOpacity>
+            )}
+
+            <View style={{ height: 1, backgroundColor: "#f3f4f6", marginHorizontal: 24, marginTop: isOwn ? 0 : 4 }} />
+
+            {/* Cancel */}
+            <TouchableOpacity
+              onPress={onClose}
+              style={{ alignItems: "center", paddingVertical: 16 }}
+            >
+              <Text style={{ fontSize: 16, fontWeight: "600", color: "#9ca3af" }}>
+                Cancel
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </Pressable>
       </Pressable>
     </Modal>
   );
@@ -622,8 +752,11 @@ export default function ChatScreen() {
   const [otherProfile, setOtherProfile] = useState<any>(null);
   const [allParticipants, setAllParticipants] = useState<any[]>([]);
   const [customTitle, setCustomTitle] = useState<string | null>(null);
+  const [conversationGradient, setConversationGradient] = useState<string | null>(null);
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [editingTitle, setEditingTitle] = useState("");
+  const [editModalVisible, setEditModalVisible] = useState(false);
+  const [selectedGradientName, setSelectedGradientName] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
   const [addingUserId, setAddingUserId] = useState<string | null>(null);
 
@@ -649,6 +782,21 @@ export default function ChatScreen() {
   const [pickerVisible, setPickerVisible] = useState(false);
   const [selectedMessageId, setSelectedMessageId] = useState<string | null>(null);
   const [expandedImage, setExpandedImage] = useState<string | null>(null);
+
+  // Message action sheet state
+  const [messageAction, setMessageAction] = useState<{
+    messageId: string;
+    isOwn: boolean;
+    messageText: string;
+    senderName: string;
+  } | null>(null);
+
+  // Reply state — tracks the message being replied to
+  const [replyTo, setReplyTo] = useState<{
+    id: string;
+    text: string;
+    senderName: string;
+  } | null>(null);
 
   const flatListRef = useRef<FlatList>(null);
 
@@ -709,6 +857,7 @@ export default function ChatScreen() {
         if (conversationSnap.exists()) {
           const convData = conversationSnap.data() as Conversation;
           setCustomTitle(convData.title ?? null);
+          setConversationGradient((convData as any).gradient ?? null);
 
           // Fetch profiles for all participants
           const participantProfiles = await Promise.all(
@@ -732,10 +881,12 @@ export default function ChatScreen() {
         setLoading(false);
       }
     })();
-  }, [session?.uid, otherUserId, paramConversationId]);
+    }, [session?.uid, otherUserId, paramConversationId]);
 
-  // ── Pricing + budget loader (fires when participants list is ready) ──────────
-  useEffect(() => {
+    // Title management: handleSaveTitle is declared later (keeps gradient-persisting logic)
+
+    // ── Pricing + budget loader (fires when participants list is ready) ──────────
+    useEffect(() => {
     if (!session?.uid || !conversationId || allParticipants.length === 0) return;
     // Only apply pricing for 1-on-1 conversations
     if (allParticipants.length !== 2) return;
@@ -766,15 +917,14 @@ export default function ChatScreen() {
     })();
   }, [allParticipants, conversationId, session?.uid]);
 
-  // Real-time messages
-  useEffect(() => {
+    // Real-time messages
+    useEffect(() => {
     if (!conversationId || !session?.uid) return;
-    const unsubscribe = subscribeToMessages(conversationId, (msgs) => {
+    return subscribeToMessages(conversationId, (msgs) => {
       setMessages(msgs);
       markMessagesAsRead(conversationId, session.uid!);
     });
-    return unsubscribe;
-  }, [conversationId, session?.uid]);
+    }, [conversationId, session?.uid]);
 
   // Auto-scroll
   useEffect(() => {
@@ -813,6 +963,15 @@ export default function ChatScreen() {
     (recipientPricing?.messagePrice ?? 0) > 0 &&
     !!recipientPricing?.walletAddress;
 
+  // ── Helpers ───────────────────────────────────────────────────────────────
+  const getSenderName = (senderId: string): string => {
+    if (senderId === session?.uid) return "You";
+    const participant = allParticipants.find(
+      (p) => (p.userId || p.id) === senderId
+    );
+    return participant?.displayName || resolvedName;
+  };
+
   // ── Send ──────────────────────────────────────────────────────────────────
   const handleSend = async () => {
     if ((!inputText.trim() && !pendingMedia) || !conversationId || !session?.uid) return;
@@ -828,8 +987,10 @@ export default function ChatScreen() {
     setSending(true);
     const text = inputText;
     const media = pendingMedia;
+    const replySnapshot = replyTo;
     setInputText("");
     setPendingMedia(null);
+    setReplyTo(null);
 
     try {
       let uploadedMedia: { mediaUrl: string; mediaType: "image" | "video" } | undefined;
@@ -852,7 +1013,19 @@ export default function ChatScreen() {
         }
       }
 
-      await sendMessage(conversationId, session.uid, text, uploadedMedia);
+      await sendMessage(
+        conversationId,
+        session.uid,
+        text,
+        uploadedMedia,
+        replySnapshot
+          ? {
+              replyToId: replySnapshot.id,
+              replyToText: replySnapshot.text,
+              replyToSenderName: replySnapshot.senderName,
+            }
+          : undefined
+      );
 
       // Decrement budget optimistically after successful send
       if (isPricedChat && senderBudget && senderBudget.messagesRemaining > 0) {
@@ -865,6 +1038,7 @@ export default function ChatScreen() {
       console.error("Error sending message:", e);
       setInputText(text);
       setPendingMedia(media);
+      setReplyTo(replySnapshot);
     } finally {
       setSending(false);
     }
@@ -898,20 +1072,13 @@ export default function ChatScreen() {
     }
   };
 
-  const handleMessageLongPress = (messageId: string, isOwn: boolean) => {
-    if (isOwn) {
-      Alert.alert("Message", undefined, [
-        { text: "React", onPress: () => openPicker(messageId) },
-        {
-          text: "Delete",
-          style: "destructive",
-          onPress: () => handleDeleteMessage(messageId),
-        },
-        { text: "Cancel", style: "cancel" },
-      ]);
-    } else {
-      openPicker(messageId);
-    }
+  const handleMessageLongPress = (
+    messageId: string,
+    isOwn: boolean,
+    messageText: string,
+    senderName: string
+  ) => {
+    setMessageAction({ messageId, isOwn, messageText, senderName });
   };
 
   // ── Title management ──────────────────────────────────────────────────────
@@ -919,9 +1086,15 @@ export default function ChatScreen() {
     if (!conversationId || !editingTitle.trim()) return;
     try {
       await updateConversationTitle(conversationId, editingTitle);
+      // Persist gradient if changed
+      if (selectedGradientName !== conversationGradient) {
+        await updateConversationGradient(conversationId, selectedGradientName ?? null);
+      }
       setCustomTitle(editingTitle);
-      setIsEditingTitle(false);
+      setConversationGradient(selectedGradientName ?? null);
+      setEditModalVisible(false);
       setEditingTitle("");
+      setSelectedGradientName(null);
     } catch (e) {
       console.error("Error updating title:", e);
     }
@@ -1034,7 +1207,15 @@ export default function ChatScreen() {
 
         <View style={{ maxWidth: "72%" }}>
           <Pressable
-            onLongPress={() => handleMessageLongPress(item.id, isMe)}
+            onPress={() => openPicker(item.id)}
+            onLongPress={() =>
+              handleMessageLongPress(
+                item.id,
+                isMe,
+                item.text,
+                getSenderName(item.senderId)
+              )
+            }
             delayLongPress={350}
             style={{
               backgroundColor: isMe ? "#1e3a6e" : "white",
@@ -1047,6 +1228,42 @@ export default function ChatScreen() {
               elevation: 1,
             }}
           >
+            {/* Reply quote */}
+            {item.replyToId && (
+              <View
+                style={{
+                  backgroundColor: isMe ? "rgba(255,255,255,0.15)" : "#f3f4f6",
+                  borderLeftWidth: 3,
+                  borderLeftColor: isMe ? "rgba(255,255,255,0.5)" : "#1e3a6e",
+                  borderRadius: 6,
+                  marginHorizontal: 8,
+                  marginTop: 8,
+                  paddingHorizontal: 8,
+                  paddingVertical: 5,
+                }}
+              >
+                <Text
+                  style={{
+                    fontSize: 10,
+                    fontWeight: "700",
+                    color: isMe ? "#93c5fd" : "#1e3a6e",
+                    marginBottom: 2,
+                  }}
+                >
+                  {item.replyToSenderName}
+                </Text>
+                <Text
+                  style={{
+                    fontSize: 12,
+                    color: isMe ? "rgba(255,255,255,0.75)" : "#6b7280",
+                  }}
+                  numberOfLines={2}
+                >
+                  {item.replyToText}
+                </Text>
+              </View>
+            )}
+
             {/* Media */}
             {hasMedia && item.mediaType === "image" && (
               <TouchableOpacity onPress={() => setExpandedImage(item.mediaUrl!)}>
@@ -1063,7 +1280,7 @@ export default function ChatScreen() {
 
             {/* Text */}
             {hasText && (
-              <View style={{ paddingHorizontal: 14, paddingTop: hasMedia ? 8 : 10, paddingBottom: 10 }}>
+              <View style={{ paddingHorizontal: 14, paddingTop: hasMedia || item.replyToId ? 8 : 10, paddingBottom: 10 }}>
                 <Text style={{ fontSize: 14, color: isMe ? "white" : "#1f2937" }}>
                   {item.text}
                 </Text>
@@ -1132,16 +1349,52 @@ export default function ChatScreen() {
     );
   }
 
-  return (
+    // Determine gradient colors to render
+    // small helper to darken a #rrggbb color by a factor (0-1)
+    const darkenHex = (hex: string, factor = 0.75) => {
+    try {
+      const h = hex.replace('#', '');
+      const r = parseInt(h.substring(0, 2), 16);
+      const g = parseInt(h.substring(2, 4), 16);
+      const b = parseInt(h.substring(4, 6), 16);
+      const nr = Math.max(0, Math.min(255, Math.round(r * factor)));
+      const ng = Math.max(0, Math.min(255, Math.round(g * factor)));
+      const nb = Math.max(0, Math.min(255, Math.round(b * factor)));
+      const toHex = (v: number) => v.toString(16).padStart(2, '0');
+      return `#${toHex(nr)}${toHex(ng)}${toHex(nb)}`;
+    } catch (e) {
+      return hex;
+    }
+    };
+
+    const bgGradientColors = () => {
+    if (conversationGradient) return getGradientByName(conversationGradient).colors;
+    // Fallback deterministic by conversation id or session uid
+    return getGradientForKey(conversationId ?? session?.uid ?? undefined).colors;
+    };
+
+    // Input bar gradient — darkened slice of the conversation colors
+    const inputBarColors = () => {
+    const g = bgGradientColors();
+    if (!g || g.length === 0) return [Colors.dark.tint];
+    // pick last two colors if available, otherwise map all
+    const pick = g.length >= 2 ? g.slice(-2) : g;
+    return pick.map((c) => darkenHex(c, 0.65));
+    };
+
+    const participantRowBg = darkenHex(bgGradientColors()?.[0] ?? Colors.dark.tint, 0.75);
+
+    return (
     <KeyboardAvoidingView
-      style={{ flex: 1, backgroundColor: Colors.light.tint }}
-      behavior={Platform.OS === "ios" ? "padding" : "height"}
+      style={{ flex: 1 }}
+      behavior="padding"
       keyboardVerticalOffset={Platform.OS === "ios" ? 90 : 0}
     >
+      <LinearGradient colors={bgGradientColors()} style={{ flex: 1 }}>
       {/* ── Custom header ── */}
       <View
         style={{
-          backgroundColor: Colors.dark.tint,
+          backgroundColor: 'black',
           paddingHorizontal: 16,
           paddingTop: 55,
           paddingBottom: 12,
@@ -1156,8 +1409,8 @@ export default function ChatScreen() {
           onPress={() => navigation.goBack()}
           style={{ flexDirection: "row", alignItems: "center", gap: 6 }}
         >
-          <Ionicons name="chevron-back" size={24} color={Colors.light.tint} />
-          <Text style={{ fontSize: 14, color: Colors.light.tint, fontWeight: "600" }}>
+          <Ionicons name="chevron-back" size={24} color="white" />
+          <Text style={{ fontSize: 14, color: "white", fontWeight: "600" }}>
             Inbox
           </Text>
         </TouchableOpacity>
@@ -1204,7 +1457,7 @@ export default function ChatScreen() {
               style={{
                 fontSize: 15,
                 fontWeight: "600",
-                color: Colors.light.tint,
+                color: "white",
                 textAlign: "center",
                 maxWidth: "40%",
               }}
@@ -1214,10 +1467,14 @@ export default function ChatScreen() {
             </Text>
 
             <TouchableOpacity
-              onPress={() => { setEditingTitle(customTitle || ""); setIsEditingTitle(true); }}
+              onPress={() => {
+                setEditingTitle(customTitle || "");
+                setSelectedGradientName(conversationGradient ?? null);
+                setEditModalVisible(true);
+              }}
               style={{ padding: 6 }}
             >
-              <Ionicons name="pencil" size={18} color={Colors.light.tint} />
+              <Ionicons name="pencil" size={18} color="white" />
             </TouchableOpacity>
 
             <TouchableOpacity
@@ -1234,7 +1491,7 @@ export default function ChatScreen() {
               disabled={deleting}
               style={{ padding: 6, opacity: deleting ? 0.5 : 1 }}
             >
-              <Ionicons name="trash" size={18} color={deleting ? "#9ca3af" : Colors.light.tint} />
+              <Ionicons name="trash" size={18} color={deleting ? "#9ca3af" : "white"} />
             </TouchableOpacity>
           </>
         )}
@@ -1244,7 +1501,7 @@ export default function ChatScreen() {
       {conversationId && (
         <View
           style={{
-            backgroundColor: Colors.dark.tint,
+            backgroundColor: participantRowBg,
             paddingHorizontal: 16,
             paddingVertical: 10,
             borderBottomWidth: 1,
@@ -1276,7 +1533,7 @@ export default function ChatScreen() {
                     <Text
                       style={{
                         fontSize: 11,
-                        color: Colors.light.tint,
+                        color: 'white',
                         fontWeight: "500",
                         maxWidth: 60,
                         textAlign: "center",
@@ -1328,7 +1585,7 @@ export default function ChatScreen() {
                     marginBottom: 4,
                   }}
                 >
-                  <Ionicons name="person-add-outline" size={18} color={Colors.light.tint} />
+                  <Ionicons name="person-add-outline" size={18} color="white" />
                 </TouchableOpacity>
                 <Text style={{ fontSize: 11, color: "rgba(255,255,255,0.6)" }}>Add</Text>
               </View>
@@ -1466,13 +1723,54 @@ export default function ChatScreen() {
         )
       )}
 
-      {/* Input bar */}
-      <View
+      {/* Reply preview bar */}
+      {replyTo && (
+        <View
+          style={{
+            flexDirection: "row",
+            alignItems: "center",
+            backgroundColor: "#f0f4ff",
+            paddingHorizontal: 16,
+            paddingVertical: 8,
+            borderTopWidth: 1,
+            borderTopColor: "#e5e7eb",
+            gap: 10,
+          }}
+        >
+          <View
+            style={{
+              width: 3,
+              alignSelf: "stretch",
+              backgroundColor: "#1e3a6e",
+              borderRadius: 2,
+            }}
+          />
+          <View style={{ flex: 1 }}>
+            <Text
+              style={{ fontSize: 11, fontWeight: "700", color: "#1e3a6e", marginBottom: 1 }}
+            >
+              {replyTo.senderName}
+            </Text>
+            <Text
+              style={{ fontSize: 12, color: "#6b7280" }}
+              numberOfLines={1}
+            >
+              {replyTo.text}
+            </Text>
+          </View>
+          <TouchableOpacity onPress={() => setReplyTo(null)} style={{ padding: 4 }}>
+            <Ionicons name="close" size={18} color="#9ca3af" />
+          </TouchableOpacity>
+        </View>
+      )}
+
+      {/* Input bar — use a darkened gradient derived from the conversation gradient */}
+      <LinearGradient
+        colors={inputBarColors()}
         style={{
           paddingHorizontal: 16,
           paddingBottom: Platform.OS === "ios" ? 20 : 15,
           paddingTop: 12,
-          backgroundColor: Colors.dark.tint,
           borderTopWidth: 1,
           borderTopColor: "rgba(255,255,255,0.1)",
         }}
@@ -1487,7 +1785,7 @@ export default function ChatScreen() {
               borderRadius: 19,
               alignItems: "center",
               justifyContent: "center",
-              backgroundColor: Colors.light.tint,
+              backgroundColor: "white",
             }}
           >
             <Ionicons name="add" size={22} color="black" />
@@ -1496,7 +1794,7 @@ export default function ChatScreen() {
           <TextInput
             style={{
               flex: 1,
-              backgroundColor: Colors.light.tint,
+              backgroundColor: "white",
               borderRadius: 22,
               paddingHorizontal: 16,
               paddingVertical: 10,
@@ -1520,7 +1818,7 @@ export default function ChatScreen() {
               width: 38,
               height: 38,
               borderRadius: 19,
-              backgroundColor: inputText.trim() || pendingMedia ? "white" : Colors.light.tint,
+              backgroundColor: inputText.trim() || pendingMedia ? "white" : "white",
               alignItems: "center",
               justifyContent: "center",
             }}
@@ -1532,9 +1830,28 @@ export default function ChatScreen() {
             )}
           </TouchableOpacity>
         </View>
-      </View>
+      </LinearGradient>
 
       {/* ── Modals ── */}
+      <MessageActionSheet
+        visible={!!messageAction}
+        isOwn={messageAction?.isOwn ?? false}
+        onReply={() => {
+          if (!messageAction) return;
+          setReplyTo({
+            id: messageAction.messageId,
+            text: messageAction.messageText,
+            senderName: messageAction.senderName,
+          });
+          setMessageAction(null);
+        }}
+        onDelete={() => {
+          if (!messageAction) return;
+          handleDeleteMessage(messageAction.messageId);
+          setMessageAction(null);
+        }}
+        onClose={() => setMessageAction(null)}
+      />
       <MediaPickerSheet
         visible={mediaSheetVisible}
         onClose={() => setMediaSheetVisible(false)}
@@ -1576,6 +1893,59 @@ export default function ChatScreen() {
         onClose={() => usdcTransfer.setShowWalletPicker(false)}
         onConnect={usdcTransfer.connectWallet}
       />
-    </KeyboardAvoidingView>
-  );
-}
+
+      {/* Edit Chat modal — allows changing title and background gradient */}
+      <Modal visible={editModalVisible} transparent animationType="slide" onRequestClose={() => setEditModalVisible(false)}>
+        <Pressable style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.45)', justifyContent: 'flex-end' }} onPress={() => setEditModalVisible(false)}>
+          <Pressable onPress={() => {}} style={{ backgroundColor: 'white', borderTopLeftRadius: 24, borderTopRightRadius: 24, paddingHorizontal: 20, paddingBottom: 36 }}>
+            <View style={{ width: 40, height: 4, backgroundColor: '#e5e7eb', borderRadius: 2, alignSelf: 'center', marginTop: 12, marginBottom: 14 }} />
+            <Text style={{ fontSize: 18, fontWeight: '700', color: '#1f2937', marginBottom: 6 }}>Edit Chat</Text>
+            <Text style={{ fontSize: 13, color: '#6b7280', marginBottom: 12 }}>Change the chat name and background style</Text>
+
+            <TextInput
+              value={editingTitle}
+              onChangeText={setEditingTitle}
+              placeholder="Chat name"
+              placeholderTextColor="#9ca3af"
+              maxLength={50}
+              style={{ backgroundColor: '#f3f4f6', paddingHorizontal: 12, paddingVertical: 10, borderRadius: 10, marginBottom: 12 }}
+            />
+
+            <Text style={{ fontSize: 13, fontWeight: '700', color: '#374151', marginBottom: 8 }}>Background</Text>
+            <FlatList
+              data={gradients}
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              keyExtractor={(g) => g.name}
+              renderItem={({ item }) => {
+                const isSelected = item.name === selectedGradientName;
+                return (
+                  <TouchableOpacity
+                    onPress={() => setSelectedGradientName(item.name)}
+                    style={{ marginRight: 12 }}
+                  >
+                    <LinearGradient colors={item.colors} style={{ width: 78, height: 50, borderRadius: 10, borderWidth: isSelected ? 3 : 0, borderColor: isSelected ? '#1e3a6e' : 'transparent', overflow: 'hidden', justifyContent: 'flex-end' }}>
+                      <Text style={{ fontSize: 11, color: 'white', backgroundColor: 'rgba(0,0,0,0.18)', paddingHorizontal: 6, paddingVertical: 4, borderBottomLeftRadius: 10, borderBottomRightRadius: 10 }}>{item.name}</Text>
+                    </LinearGradient>
+                  </TouchableOpacity>
+                );
+              }}
+            />
+
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 18 }}>
+              <TouchableOpacity onPress={() => { setEditModalVisible(false); setEditingTitle(''); setSelectedGradientName(null); }} style={{ paddingVertical: 12, paddingHorizontal: 18 }}>
+                <Text style={{ color: '#9ca3af', fontSize: 15 }}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity onPress={handleSaveTitle} style={{ backgroundColor: '#1e3a6e', paddingVertical: 12, paddingHorizontal: 18, borderRadius: 12 }}>
+                <Text style={{ color: 'white', fontWeight: '700' }}>Save</Text>
+              </TouchableOpacity>
+            </View>
+          </Pressable>
+        </Pressable>
+      </Modal>
+
+    </LinearGradient>
+     </KeyboardAvoidingView>
+   );
+ }
+

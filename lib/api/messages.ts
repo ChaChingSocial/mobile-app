@@ -32,6 +32,9 @@ export interface Message {
   reactions?: Record<string, string[]>; // emoji → [userId, ...]
   mediaUrl?: string;                    // Firebase Storage download URL
   mediaType?: "image" | "video";
+  replyToId?: string;                   // ID of the message being replied to
+  replyToText?: string;                 // Quoted text snippet
+  replyToSenderName?: string;           // Display name of quoted sender
 }
 
 /** Per-sender budget stored on the conversation document. */
@@ -52,6 +55,7 @@ export interface Conversation {
   unreadCounts?: Record<string, number>; // { userId: unreadCount }
   title?: string; // Custom title for the conversation
   budgets?: Record<string, MessageBudget>; // senderId → remaining budget
+  gradient?: string | null; // Optional gradient name for conversation background
 }
 
 /**
@@ -109,13 +113,14 @@ export async function createGroupConversation(
 }
 
 /**
- * Send a message in a conversation, optionally with media.
+ * Send a message in a conversation, optionally with media and/or a reply reference.
  */
 export async function sendMessage(
   conversationId: string,
   senderId: string,
   text: string,
-  media?: { mediaUrl: string; mediaType: "image" | "video" }
+  media?: { mediaUrl: string; mediaType: "image" | "video" },
+  reply?: { replyToId: string; replyToText: string; replyToSenderName: string }
 ): Promise<void> {
   const trimmed = text.trim();
   if (!trimmed && !media) return;
@@ -133,6 +138,7 @@ export async function sendMessage(
     createdAt: serverTimestamp(),
     read: false,
     ...(media ?? {}),
+    ...(reply ?? {}),
   });
 
   // Update conversation summary + increment unread counts for other participants
@@ -292,6 +298,17 @@ export async function updateConversationTitle(
 ): Promise<void> {
   const conversationRef = doc(db, "conversations", conversationId);
   await updateDoc(conversationRef, { title: title.trim() });
+}
+
+/**
+ * Update the gradient (appearance) of a conversation.
+ */
+export async function updateConversationGradient(
+  conversationId: string,
+  gradientName: string | null
+): Promise<void> {
+  const conversationRef = doc(db, "conversations", conversationId);
+  await updateDoc(conversationRef, { gradient: gradientName });
 }
 
 /**
