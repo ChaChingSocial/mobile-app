@@ -1,6 +1,7 @@
 import { app } from "@/config/firebase";
 import {
   collection,
+  collectionGroup,
   doc,
   getDoc,
   getDocs,
@@ -8,6 +9,7 @@ import {
   addDoc,
   query,
   orderBy,
+  where,
 } from "firebase/firestore";
 
 const db = getFirestore(app);
@@ -103,6 +105,36 @@ export async function addCommunityPaidContribution(
     "paidContributions"
   );
   await addDoc(colRef, contribution);
+}
+
+/**
+ * Fetch all of a user's contributions across every community in a single query.
+ * Returns a map of communityId → { totalAmount, asset }.
+ */
+// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
+export async function getUserAllCommunityContributions(
+  userId: string
+): Promise<Record<string, { totalAmount: number; asset: string }>> {
+  try {
+    const snapshot = await getDocs(
+      query(collectionGroup(db, "paidContributions"), where("userId", "==", userId))
+    );
+    const map: Record<string, { totalAmount: number; asset: string }> = {};
+    for (const d of snapshot.docs) {
+      const data = d.data() as CommunityContributionInput;
+      // path: communities/{communityId}/paidContributions/{docId}
+      const communityId = d.ref.parent.parent?.id;
+      if (!communityId) continue;
+      if (map[communityId]) {
+        map[communityId].totalAmount += data.amount ?? 0;
+      } else {
+        map[communityId] = { totalAmount: data.amount ?? 0, asset: data.asset ?? "SOL" };
+      }
+    }
+    return map;
+  } catch {
+    return {};
+  }
 }
 
 /**

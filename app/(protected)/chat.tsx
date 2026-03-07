@@ -415,9 +415,16 @@ function BudgetSetupSheet({
         msg.includes("timed out") ||
         msg.includes("not been authorized") ||
         msg.includes("not authorized") ||
-        msg.includes("method is not supported")
+        msg.includes("method is not supported") ||
+        msg.includes("unexpected error") ||
+        msg.includes("ping reached") ||
+        msg.includes("wallet not connected")
       ) {
-        // User cancelled wallet interaction — silent
+        // User cancelled or wallet session expired — prompt reconnect
+        Alert.alert(
+          "Wallet session issue",
+          "Your wallet session may have expired. Please reconnect your wallet in Profile and try again."
+        );
       } else {
         Alert.alert("Payment failed", "Could not process the USDC payment. Please try again.");
       }

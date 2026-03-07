@@ -101,51 +101,6 @@ const parseAmountToUnits = (
     return wholeUnits + fractionalUnits;
 };
 
-type FundingValidationResult = {
-  isValid: boolean;
-  message: string;
-};
-
-// USDC has 6 decimal places, SOL has 9
-const FUNDING_AMOUNT_PATTERNS: Record<"SOL" | "USDC", RegExp> = {
-  USDC: /^(\d+(\.\d{1,6})?|\.\d{1,6})$/,
-  SOL:  /^(\d+(\.\d{1,9})?|\.\d{1,9})$/,
-};
-const FUNDING_MAX_DECIMALS: Record<"SOL" | "USDC", number> = {
-  USDC: 6,
-  SOL: 9,
-};
-
-const validateFundingAmount = (
-  rawAmount: string,
-  asset: "SOL" | "USDC"
-): FundingValidationResult => {
-  const normalized = rawAmount.trim();
-  if (!normalized) {
-    return {
-      isValid: false,
-      message: `Enter an amount before funding ${asset}.`,
-    };
-  }
-
-  if (!FUNDING_AMOUNT_PATTERNS[asset].test(normalized)) {
-    return {
-      isValid: false,
-      message: `Invalid amount. Use up to ${FUNDING_MAX_DECIMALS[asset]} decimal places for ${asset} (e.g. 0.01 or 0.001).`,
-    };
-  }
-
-  const numericAmount = Number(normalized);
-  if (!Number.isFinite(numericAmount) || numericAmount <= 0) {
-    return {
-      isValid: false,
-      message: `Amount must be greater than 0 to fund with ${asset}.`,
-    };
-  }
-
-  return { isValid: true, message: "" };
-};
-
 const isWalletAuthorizationOrTimeoutError = (error: unknown) => {
     const message = (error instanceof Error ? error.message : String(error)).toLowerCase();
     return (
@@ -409,15 +364,9 @@ export default function SingleCommunity() {
   const [showFundModal, setShowFundModal] = useState(false);
   const [fundingAsset, setFundingAsset] = useState<"SOL" | "USDC">("SOL");
   const [fundAmount, setFundAmount] = useState("");
-  const [useDevnet, setUseDevnet] = useState(false);
+  const [useDevnet, setUseDevnet] = useState(true);
   const [isFunding, setIsFunding] = useState(false);
-  const [showFundingValidationPopup, setShowFundingValidationPopup] =
-    useState(false);
-  const [fundingValidationMessage, setFundingValidationMessage] = useState("");
-  const [showDevnetNoticePopup, setShowDevnetNoticePopup] = useState(false);
   const [contributors, setContributors] = useState<CommunityContributor[]>([]);
-  const fundingValidation = validateFundingAmount(fundAmount, fundingAsset);
-  const canSubmitFunding = fundingValidation.isValid && !isFunding;
 
   // Post store setters for preselecting/locking community and passing media
   const setCreatedPostImage = usePostStore((state) => state.setCreatedPostImage);
@@ -701,44 +650,17 @@ export default function SingleCommunity() {
     setShowFundModal(true);
   };
 
-  const openFundingValidationPopup = (message: string) => {
-    setFundingValidationMessage(message);
-    setShowFundingValidationPopup(true);
-  };
-
-  const handleFundAmountEndEditing = (e: { nativeEvent: { text: string } }) => {
-    const text = e.nativeEvent.text.trim();
-    if (!text) return;
-    const validation = validateFundingAmount(text, fundingAsset);
-    if (!validation.isValid) {
-      openFundingValidationPopup(validation.message);
-    }
-  };
-
-  const handleDevnetToggle = (nextValue: boolean) => {
-    setUseDevnet(nextValue);
-    if (nextValue) {
-      setShowDevnetNoticePopup(true);
-    }
-  };
-
   const submitFunding = async () => {
     if (!connectedWallet) {
       setShowFundModal(false);
       setShowConnectWalletPrompt(true);
       return;
     }
-    if (!fundingValidation.isValid) {
-      openFundingValidationPopup(fundingValidation.message);
-      return;
-    }
 
     const decimals = fundingAsset === "SOL" ? 9 : 6;
-    const amountInBaseUnits = parseAmountToUnits(fundAmount.trim(), decimals);
+    const amountInBaseUnits = parseAmountToUnits(fundAmount, decimals);
     if (!amountInBaseUnits || amountInBaseUnits <= 0n) {
-      openFundingValidationPopup(
-        `Could not parse this ${fundingAsset} amount. Use x.xx or .xx and try again.`
-      );
+      Alert.alert("Invalid amount", `Enter a valid ${fundingAsset} amount.`);
       return;
     }
 
@@ -990,13 +912,7 @@ export default function SingleCommunity() {
                 contentContainerStyle={{ gap: 10 }}
               >
                 {contributors.map((c) => (
-                  <TouchableOpacity
-                    key={c.userId}
-                    className="items-center"
-                    style={{ width: 52 }}
-                    activeOpacity={0.75}
-                    onPress={() => router.push(`/(protected)/user-profile?id=${c.userId}`)}
-                  >
+                  <View key={c.userId} className="items-center" style={{ width: 52 }}>
                     {c.profilePic ? (
                       <Image
                         source={{ uri: c.profilePic }}
@@ -1038,16 +954,7 @@ export default function SingleCommunity() {
                         ? `${c.displayName.slice(0, 7)}…`
                         : c.displayName}
                     </Text>
-                    <Text
-                      className="text-xs text-center"
-                      numberOfLines={1}
-                      style={{ width: 52, color: "rgba(255,255,255,0.7)" }}
-                    >
-                      {c.totalAmount % 1 === 0
-                        ? `${c.totalAmount} ${c.asset}`
-                        : `${c.totalAmount.toFixed(c.asset === "USDC" ? 2 : 4)} ${c.asset}`}
-                    </Text>
-                  </TouchableOpacity>
+                  </View>
                 ))}
               </ScrollView>
             </View>
@@ -1177,7 +1084,6 @@ export default function SingleCommunity() {
             <TextInput
               value={fundAmount}
               onChangeText={setFundAmount}
-              onEndEditing={handleFundAmountEndEditing}
               keyboardType="decimal-pad"
               placeholder={`Enter ${fundingAsset} amount`}
               placeholderTextColor="#9ca3af"
@@ -1194,7 +1100,7 @@ export default function SingleCommunity() {
               <Text className="text-gray-800 font-semibold">Use devnet</Text>
               <Switch
                 value={useDevnet}
-                onValueChange={handleDevnetToggle}
+                onValueChange={setUseDevnet}
                 disabled={isFunding}
               />
             </View>
@@ -1206,85 +1112,34 @@ export default function SingleCommunity() {
               Recipient: {resolveCommunityFundingDestination()}
             </Text>
 
-              <View className="flex-row gap-2">
-                <TouchableOpacity
-                  className="flex-1 rounded-xl py-3 bg-gray-100"
-                  activeOpacity={0.85}
-                  onPress={() => setShowFundModal(false)}
-                  disabled={isFunding}
-                >
-                  <Text className="text-center text-gray-700 font-semibold">
-                    Cancel
-                  </Text>
-                </TouchableOpacity>
+            <View className="flex-row gap-2">
+              <TouchableOpacity
+                className="flex-1 rounded-xl py-3 bg-gray-100"
+                activeOpacity={0.85}
+                onPress={() => setShowFundModal(false)}
+                disabled={isFunding}
+              >
+                <Text className="text-center text-gray-700 font-semibold">
+                  Cancel
+                </Text>
+              </TouchableOpacity>
 
-                <TouchableOpacity
-                  className={`flex-1 rounded-xl py-3 ${
-                    canSubmitFunding ? "bg-[#1e3a6e]" : "bg-[#9ca3af]"
-                  }`}
-                  activeOpacity={0.85}
-                  onPress={submitFunding}
-                  disabled={!canSubmitFunding}
-                >
-                  <Text className="text-center text-white font-semibold">
-                    {isFunding ? "Submitting..." : "Fund"}
-                  </Text>
-                </TouchableOpacity>
-              </View>
+              <TouchableOpacity
+                className={`flex-1 rounded-xl py-3 ${
+                  isFunding ? "bg-[#6b7280]" : "bg-[#1e3a6e]"
+                }`}
+                activeOpacity={0.85}
+                onPress={submitFunding}
+                disabled={isFunding}
+              >
+                <Text className="text-center text-white font-semibold">
+                  {isFunding ? "Submitting..." : "Fund"}
+                </Text>
+              </TouchableOpacity>
             </View>
           </View>
+        </View>
         </KeyboardAvoidingView>
-      </RNModal>
-
-      <RNModal
-        animationType="fade"
-        transparent
-        visible={showFundingValidationPopup}
-        onRequestClose={() => setShowFundingValidationPopup(false)}
-      >
-        <View className="flex-1 bg-black/40 px-6 items-center justify-center">
-          <View className="w-full bg-white rounded-2xl p-5">
-            <Text className="text-[#1e3a6e] text-lg font-bold mb-2">
-              Fix funding amount
-            </Text>
-            <Text className="text-gray-700 text-sm mb-5">
-              {fundingValidationMessage}
-            </Text>
-            <TouchableOpacity
-              className="bg-[#1e3a6e] rounded-xl py-3"
-              activeOpacity={0.85}
-              onPress={() => setShowFundingValidationPopup(false)}
-            >
-              <Text className="text-white text-center font-semibold">Close</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </RNModal>
-
-      <RNModal
-        animationType="fade"
-        transparent
-        visible={showDevnetNoticePopup}
-        onRequestClose={() => setShowDevnetNoticePopup(false)}
-      >
-        <View className="flex-1 bg-black/40 px-6 items-center justify-center">
-          <View className="w-full bg-white rounded-2xl p-5">
-            <Text className="text-[#1e3a6e] text-lg font-bold mb-2">
-              Devnet reminder
-            </Text>
-            <Text className="text-gray-700 text-sm mb-5">
-              Ensure your crypto wallet (for example Phantom) is set and connected
-              to Devnet before submitting to ensure a smooth transaction.
-            </Text>
-            <TouchableOpacity
-              className="bg-[#1e3a6e] rounded-xl py-3"
-              activeOpacity={0.85}
-              onPress={() => setShowDevnetNoticePopup(false)}
-            >
-              <Text className="text-white text-center font-semibold">Close</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
       </RNModal>
 
       {/* Floating Action Button (same as HomePage) */}
@@ -1305,6 +1160,7 @@ export default function SingleCommunity() {
           <AddIcon color="white" className="p-5 w-2 h-2" />
         </TouchableOpacity>
       </Animated.View>
+
 
       {/* Post Options Modal */}
       <Modal isOpen={showOptions} onClose={() => setShowOptions(false)}>

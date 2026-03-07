@@ -11,6 +11,7 @@ import {
 import { Badge, BadgeText } from "@/components/ui/badge";
 import { scoreApi, userApi, communityApi } from "@/config/backend";
 import { getPostsByUser } from "@/lib/api/newsfeed";
+import { getUserAllCommunityContributions } from "@/lib/api/communities";
 import {
   checkIfFinFluencer,
   fetchFollowers,
@@ -169,6 +170,7 @@ export default function Profile() {
 
   const communityMemberships = useUserStore((state) => state.userCommunities);
   const setCommunityMemberships = useUserStore((state) => state.setUserCommunities);
+  const [communityContributions, setCommunityContributions] = useState<Record<string, { totalAmount: number; asset: string }>>({});
 
   // Filter communities by meeting type
   const digitalCommunities = communityMemberships.filter((c: any) => {
@@ -199,11 +201,12 @@ export default function Profile() {
   const fetchCommunityMemberships = async () => {
     if (!currentUserId) return;
     try {
-      const response = await communityApi.getUserCommunityMembership({ userId: currentUserId });
-      if (response) {
-        console.log('Communities fetched:', response);
-        setCommunityMemberships(response);
-      }
+      const [response, contributions] = await Promise.all([
+        communityApi.getUserCommunityMembership({ userId: currentUserId }),
+        getUserAllCommunityContributions(currentUserId),
+      ]);
+      if (response) setCommunityMemberships(response);
+      setCommunityContributions(contributions);
     } catch (error) {
       console.error('Failed to fetch community memberships:', error);
     }
@@ -818,21 +821,34 @@ export default function Profile() {
         <CollapsibleSection title="Virtual Communities">
           {digitalCommunities.length > 0 ? (
             <View className="px-4 pb-4 flex-row flex-wrap gap-4">
-              {digitalCommunities.map((community: any, index: number) => (
-                <TouchableOpacity
-                  key={index}
-                  onPress={() => router.push(`/(protected)/communities/${community.communityId}`)}
-                  className="items-center"
-                >
-                  <Image
+              {digitalCommunities.map((community: any, index: number) => {
+                const contrib = communityContributions[community.communityId];
+                return (
+                  <TouchableOpacity
+                    key={index}
+                    onPress={() => router.push({
+                      pathname: `/(protected)/communities/${community.communityId}` as any,
+                      params: { communityId: community.communityId },
+                    })}
+                    className="items-center"
+                  >
+                    <Image
                       source={{ uri: community.image }}
                       className="w-20 h-20 rounded-full mb-1"
-                  />
-                  <Text className="text-gray-700 text-xs text-center max-w-[80px]">
-                    {community.name}
-                  </Text>
-                </TouchableOpacity>
-              ))}
+                    />
+                    <Text className="text-gray-700 text-xs text-center max-w-[80px]">
+                      {community.name}
+                    </Text>
+                    {contrib && (
+                      <Text style={{ color: "#16a34a", fontSize: 11, textAlign: "center", maxWidth: 80, fontWeight: "600" }}>
+                        {contrib.totalAmount % 1 === 0
+                          ? `${contrib.totalAmount} ${contrib.asset}`
+                          : `${contrib.totalAmount.toFixed(contrib.asset === "USDC" ? 2 : 4)} ${contrib.asset}`}
+                      </Text>
+                    )}
+                  </TouchableOpacity>
+                );
+              })}
             </View>
           ) : (
             <Text className="px-4 pb-4 text-gray-400 text-sm">
@@ -845,21 +861,34 @@ export default function Profile() {
         <CollapsibleSection title="IRL Communities">
           {irlCommunities.length > 0 ? (
             <View className="px-4 pb-4 flex-row flex-wrap gap-4">
-              {irlCommunities.map((community: any, index: number) => (
-                <TouchableOpacity
-                  key={index}
-                  onPress={() => router.push(`/(protected)/communities/${community.communityId}`)}
-                  className="items-center"
-                >
-                  <Image
+              {irlCommunities.map((community: any, index: number) => {
+                const contrib = communityContributions[community.communityId];
+                return (
+                  <TouchableOpacity
+                    key={index}
+                    onPress={() => router.push({
+                      pathname: `/(protected)/communities/${community.communityId}` as any,
+                      params: { communityId: community.communityId },
+                    })}
+                    className="items-center"
+                  >
+                    <Image
                       source={{ uri: community.image }}
                       className="w-20 h-20 rounded-full mb-1"
-                  />
-                  <Text className="text-gray-700 text-xs text-center max-w-[80px]">
-                    {community.name}
-                  </Text>
-                </TouchableOpacity>
-              ))}
+                    />
+                    <Text className="text-gray-700 text-xs text-center max-w-[80px]">
+                      {community.name}
+                    </Text>
+                    {contrib && (
+                      <Text style={{ color: "#16a34a", fontSize: 11, textAlign: "center", maxWidth: 80, fontWeight: "600" }}>
+                        {contrib.totalAmount % 1 === 0
+                          ? `${contrib.totalAmount} ${contrib.asset}`
+                          : `${contrib.totalAmount.toFixed(contrib.asset === "USDC" ? 2 : 4)} ${contrib.asset}`}
+                      </Text>
+                    )}
+                  </TouchableOpacity>
+                );
+              })}
             </View>
           ) : (
             <Text className="px-4 pb-4 text-gray-400 text-sm">

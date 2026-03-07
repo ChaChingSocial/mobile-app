@@ -739,7 +739,10 @@ export default function UserProfile({
               {digitalCommunities.map((community: any, index: number) => (
                 <TouchableOpacity
                   key={index}
-                  onPress={() => router.push(`/(protected)/communities/${community.communityId}`)}
+                  onPress={() => router.push({
+                    pathname: `/(protected)/communities/${community.communityId}` as any,
+                    params: { communityId: community.communityId },
+                  })}
                   className="items-center"
                 >
                   <Image
@@ -766,7 +769,10 @@ export default function UserProfile({
               {irlCommunities.map((community: any, index: number) => (
                 <TouchableOpacity
                   key={index}
-                  onPress={() => router.push(`/(protected)/communities/${community.communityId}`)}
+                  onPress={() => router.push({
+                    pathname: `/(protected)/communities/${community.communityId}` as any,
+                    params: { communityId: community.communityId },
+                  })}
                   className="items-center"
                 >
                   <Image
