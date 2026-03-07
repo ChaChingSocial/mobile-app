@@ -23,8 +23,12 @@ export default function CommunitiesLayout() {
   const { session } = useSession();
   const params = useLocalSearchParams();
   const router = useRouter();
-  const { slug, communityId } = params;
-  console.log("layout params", communityId);
+  const { title, slug, communityId, themeDarkColor, themeLightColor } = params;
+  const rawTitle = Array.isArray(title) ? title[0] : title;
+  const headerTitle =
+    typeof rawTitle === "string" && rawTitle.length > 35
+      ? `${rawTitle.slice(0, 35)}...`
+      : rawTitle ?? "";
 
   const [showDrawer, setShowDrawer] = useState(false);
   const [isMember, setIsMember] = useState(false);
@@ -40,7 +44,6 @@ export default function CommunitiesLayout() {
           userId: session?.uid ?? "",
         });
         if (res) {
-          console.log("Community data fetched:", res);
           setIsMember(Array.isArray(res) && res.length > 0);
         }
       } catch (error) {
@@ -48,7 +51,7 @@ export default function CommunitiesLayout() {
       }
     };
     fetchCommunityData();
-  }, [session]);
+  }, [session, communityId]);
 
   const copyToClipboard = async () => {
     setShowDrawer(false);
@@ -64,15 +67,16 @@ export default function CommunitiesLayout() {
         screenOptions={() => ({
           headerTitle: "",
           headerStyle: {
-            backgroundColor: Colors.light.tint
+            backgroundColor:  (Array.isArray(themeDarkColor) ? themeDarkColor[0] : themeDarkColor) || Colors.dark.tint
           },
+          headerTintColor: (Array.isArray(themeDarkColor) ? themeDarkColor[0] : themeDarkColor) || Colors.light.text,
           headerRight: () => (
-            <Box className="flex flex-row items-center">
+            <Box className="flex flex-row">
               <TouchableOpacity
                 onPressOut={() => setShowDrawer(true)}
-                className="mr-5"
+                className="mr-2"
               >
-                <Fontisto name="share-a" size={24} color="black" />
+                <Fontisto name="share" className="top-1" size={16} color="white" />
               </TouchableOpacity>
               <TouchableOpacity
                 onPressOut={async () => {
@@ -94,22 +98,28 @@ export default function CommunitiesLayout() {
                     setIsMember(false);
                   }
                 }}
-                className="mr-5 border border-gray-900 px-3 rounded-2xl"
+                className="mr-5 border border-white px-3 rounded-2xl"
               >
-                <Text className="text-gray-900">
+                <Text className="text-white">
                   {isMember ? "Joined" : "Join"}
                 </Text>
               </TouchableOpacity>
             </Box>
           ),
-          headerLeft: Platform.OS === "ios" ? () => (
-            <TouchableOpacity
-              onPressOut={() => router.back()}
-              className="mr-5 flex flex-row items-center gap-2"
-            >
-              <Fontisto name="arrow-left" size={16} color="black" />
-            </TouchableOpacity>
-          ) : undefined,
+          headerLeft:
+            Platform.OS === "ios"
+              ? () => (
+                  <Box className="flex flex-row items-center gap-2">
+                    <TouchableOpacity
+                      onPressOut={() => router.back()}
+                      className="mr-1"
+                    >
+                      <Fontisto name="arrow-left" size={16} color="white" />
+                    </TouchableOpacity>
+                    <Text className="text-white">{headerTitle}</Text>
+                  </Box>
+                )
+              : () => <Text className="text-white">{headerTitle}</Text>,
           headerBackVisible: true,
           headerBackTitle: "Back",
         })}

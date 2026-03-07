@@ -40,7 +40,7 @@ export default function AllCommunitiesPreview() {
         onPress={() => {
           router.push({
             pathname: "/(protected)/communities/[slug]",
-            params: { slug: data?.slug, communityId: data?.id },
+            params: { title: data?.title, slug: data?.slug, communityId: data?.id, themeLightColor: data?.themeLightColor, themeDarkColor: data?.themeDarkColor },
           });
         }}
         activeOpacity={0.7}

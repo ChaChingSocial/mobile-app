@@ -28,13 +28,9 @@ export default function LoginFormScreen() {
 
   const handleLogin = async () => {
     try {
-      console.log("email", email);
-      console.log("password", password);
 
       const user = await loginWithEmail(email, password);
       // const res = await signInWithEmailAndPassword(auth, email, password);
-      console.log("SeSSSIon INOF NEXT", session);
-      console.log("res Login", user);
 
       await userApi.getUserById({ userId: user.uid }).then((res) => {
         setUser(res);

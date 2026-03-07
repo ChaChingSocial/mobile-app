@@ -17,7 +17,7 @@ export default function CommunityCard({ community }: { community: Community }) {
         onPress={() => {
           router.push({
             pathname: "/(protected)/communities/[slug]",
-            params: { slug: community.slug, communityId: community.id },
+            params: { title: community.title, slug: community.slug, communityId: community.id, themeDarkColor: community.themeDarkColor, themeLightColor: community.themeLightColor },
           });
         }}
       >

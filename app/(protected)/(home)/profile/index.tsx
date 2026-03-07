@@ -1,40 +1,64 @@
 import { User } from "@/_sdk";
 import NewsfeedList from "@/components/home/NewsfeedList";
+import { LinkTree } from "@/components/profile/LinkTree";
+import FollowersModal from "@/components/profile/FollowersModal";
+import FriendMeModal from "@/components/profile/FriendMeModal";
 import {
   Avatar,
   AvatarFallbackText,
   AvatarImage,
 } from "@/components/ui/avatar";
 import { Badge, BadgeText } from "@/components/ui/badge";
-import { scoreApi, userApi } from "@/config/backend";
+import { scoreApi, userApi, communityApi } from "@/config/backend";
 import { getPostsByUser } from "@/lib/api/newsfeed";
+import { getUserAllCommunityContributions } from "@/lib/api/communities";
 import {
   checkIfFinFluencer,
   fetchFollowers,
   fetchFollowing,
+  isFollowing,
+  followUser,
+  unfollowUser,
+  getUserMessagePricing,
+  getUserProfile,
+  setMessagePricing,
 } from "@/lib/api/user";
 import { useSession } from "@/lib/providers/AuthContext";
 import { useScoreStore } from "@/lib/store/score";
+import { useUserStore } from "@/lib/store/user";
 import type { Post } from "@/types/post";
-import { AntDesign } from "@expo/vector-icons";
+import {
+    useBackpackDeeplinkWalletConnector,
+    useDeeplinkWalletConnector,
+} from "@privy-io/expo/connectors";
+import { usePhantomClusterConnector } from "@/lib/wallet/usePhantomClusterConnector";
+import { AntDesign, Ionicons } from "@expo/vector-icons";
 import * as Linking from "expo-linking";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useFocusEffect } from "@react-navigation/native";
 import { DocumentSnapshot } from "firebase/firestore";
+import { getDownloadURL, getStorage, ref as storageRef } from "firebase/storage";
+import { resolveLocalBgImage } from "@/lib/constants/bgImages";
+import { ImageSourcePropType } from "react-native";
 import React, { useEffect, useState, useCallback } from "react";
 import {
+  Alert,
   Image,
+  Modal,
   NativeScrollEvent,
   NativeSyntheticEvent,
   RefreshControl,
   ScrollView,
+  Switch,
   Text,
+  TextInput,
   TouchableOpacity,
   View,
 } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
 import {Colors} from "@/lib/constants/Colors";
 import BackgroundImageModal from "@/components/profile/BackgroundImageModal";
+import EarningsTab from "@/components/profile/EarningsTab";
+import { Connection, PublicKey, clusterApiUrl } from "@solana/web3.js";
 
 // ── Collapsible section row ──────────────────────────────────────────────────
 function CollapsibleSection({
@@ -65,6 +89,37 @@ function CollapsibleSection({
   );
 }
 
+type WalletNftPreview = {
+  mint: string;
+};
+
+const SOLANA_TOKEN_PROGRAM_ID = new PublicKey(
+  "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
+);
+const SOLANA_TOKEN_2022_PROGRAM_ID = new PublicKey(
+  "TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb"
+);
+
+const extractNftMints = (accounts: any[]) => {
+  const mints = new Set<string>();
+
+  for (const account of accounts) {
+    const info = account?.account?.data?.parsed?.info;
+    const tokenAmount = info?.tokenAmount;
+    const mint = info?.mint;
+
+    if (!mint || typeof mint !== "string") continue;
+
+    const decimals = Number(tokenAmount?.decimals ?? -1);
+    const rawAmount = String(tokenAmount?.amount ?? "0");
+    if (decimals === 0 && rawAmount === "1") {
+      mints.add(mint);
+    }
+  }
+
+  return mints;
+};
+
 // ── Main screen ───────────────────────────────────────────────────────────────
 export default function Profile() {
   const { id: UserId } = useLocalSearchParams();
@@ -75,7 +130,7 @@ export default function Profile() {
 
   const [isFinfluencer, setIsFinfluencer] = useState(false);
   const [followers, setFollowers] = useState(0);
-  const [following, setFollowing] = useState(0);
+  const [userFollowing, setUserFollowing] = useState(false);
   const [posts, setPosts] = useState<Post[]>([]);
   const [userInfo, setUserInfo] = useState<User | null>(null);
   const [lastDoc, setLastDoc] = useState<DocumentSnapshot | null>(null);
@@ -83,24 +138,108 @@ export default function Profile() {
   const [refreshing, setRefreshing] = useState(false);
   const [showAllInterests, setShowAllInterests] = useState(false);
   const [showBgModal, setShowBgModal] = useState(false);
-  const [bannerOverride, setBannerOverride] = useState<string | undefined>();
+  const [showFollowersModal, setShowFollowersModal] = useState(false);
+  const [showFriendMeModal, setShowFriendMeModal] = useState(false);
+  const [followLoading, setFollowLoading] = useState(false);
+  const [activeTab, setActiveTab] = useState<"posts" | "links" | "earnings">("posts");
+  const [showWalletPicker, setShowWalletPicker] = useState(false);
+  const [walletDisconnectedLocally, setWalletDisconnectedLocally] =
+      useState(false);
+  const [walletNfts, setWalletNfts] = useState<WalletNftPreview[]>([]);
+  const [walletNftsLoading, setWalletNftsLoading] = useState(false);
 
+  // ── Message Pricing state ──────────────────────────────────────────────────
+  const [messagePriceEnabled, setMessagePriceEnabled] = useState(false);
+  const [messagePriceInput, setMessagePriceInput] = useState("0.10");
+  const [savingMsgPrice, setSavingMsgPrice] = useState(false);
+    const [bannerOverride, setBannerOverride] = useState<ImageSourcePropType | undefined>();
+    const [firestoreBannerUri, setFirestoreBannerUri] = useState<ImageSourcePropType | undefined>();
+    const walletConnectorAppUrl =
+        process.env.EXPO_PUBLIC_PRIVY_CONNECT_APP_URL || "https://chachingsocial.io";
+    const phantomWalletConnector = usePhantomClusterConnector({
+        appUrl: walletConnectorAppUrl,
+        redirectUri: "/",
+    });
+    const backpackWalletConnector = useBackpackDeeplinkWalletConnector({
+        appUrl: walletConnectorAppUrl,
+        redirectUri: "/",
+    });
+    const solflareWalletConnector = useDeeplinkWalletConnector({
+        appUrl: walletConnectorAppUrl,
+        baseUrl: "https://solflare.com",
+        encryptionPublicKeyName: "solflare_encryption_public_key",
+        redirectUri: "/",
+    });
   const setCurrentUserScore = useScoreStore(
     (state) => state.setCurrentUserScore
   );
+
+  const communityMemberships = useUserStore((state) => state.userCommunities);
+  const setCommunityMemberships = useUserStore((state) => state.setUserCommunities);
+  const [communityContributions, setCommunityContributions] = useState<Record<string, { totalAmount: number; asset: string }>>({});
+
+  // Filter communities by meeting type
+  const digitalCommunities = communityMemberships.filter((c: any) => {
+    const meetingType = String(c.meetingType ?? '').trim().toUpperCase();
+    return meetingType === 'VIRTUAL';
+  });
+
+  const irlCommunities = communityMemberships.filter((c: any) => {
+    const meetingType = String(c.meetingType ?? '').trim().toUpperCase();
+    return meetingType === 'IRL';
+  });
 
   // ── Data fetching ────────────────────────────────────────────────────────
   const fetchUserInfo = async () => {
     try {
       if (!currentUserId) return;
-      const res = await userApi.getUserById({ userId: currentUserId });
+      // Fetch SDK user + Firestore profile in parallel so we get backgroundImage
+      const [res, profile] = await Promise.all([
+        userApi.getUserById({ userId: currentUserId }),
+        getUserProfile(currentUserId),
+      ]);
       setUserInfo(res);
+      if (profile?.backgroundImage) {
+        const raw = profile.backgroundImage as string;
+        if (raw.startsWith("http")) {
+          // Already a full Firebase Storage download URL
+          setFirestoreBannerUri({ uri: raw });
+        } else {
+          // Check the local bundle first (e.g. "/bg-images/bg3.jpg")
+          const local = resolveLocalBgImage(raw);
+          if (local !== null) {
+            setFirestoreBannerUri(local);
+          } else {
+            // Fall back to resolving via Firebase Storage
+            try {
+              const url = await getDownloadURL(storageRef(getStorage(), raw));
+              setFirestoreBannerUri({ uri: url });
+            } catch (e) {
+              console.warn("Could not resolve banner path:", raw, e);
+            }
+          }
+        }
+      }
       if (currentUserId === session?.uid) {
         const scoreRes = await scoreApi.getScore({ userId: currentUserId });
         setCurrentUserScore(scoreRes);
       }
     } catch (error) {
       console.error("Error fetching user info:", error);
+    }
+  };
+
+  const fetchCommunityMemberships = async () => {
+    if (!currentUserId) return;
+    try {
+      const [response, contributions] = await Promise.all([
+        communityApi.getUserCommunityMembership({ userId: currentUserId }),
+        getUserAllCommunityContributions(currentUserId),
+      ]);
+      if (response) setCommunityMemberships(response);
+      setCommunityContributions(contributions);
+    } catch (error) {
+      console.error('Failed to fetch community memberships:', error);
     }
   };
 
@@ -117,14 +256,50 @@ export default function Profile() {
         fetchFollowers(currentUserId),
         fetchFollowing(currentUserId),
       ]);
-      setFollowers(followersRes.size);
-      setFollowing(followingRes.size);
+
+      // Get the IDs of followers and following
+      const followerIds = followersRes.docs.map(doc => doc.id);
+      const followingIds = followingRes.docs.map(doc => doc.id);
+
+      // Calculate mutual follows (people who follow each other)
+      const mutualFollows = followerIds.filter(id => followingIds.includes(id));
+
+      setFollowers(mutualFollows.length); // This is mutual friends count
+    }
+  };
+
+  const fetchFollowStatus = async () => {
+    if (session?.uid && currentUserId) {
+      const following = await isFollowing(currentUserId, session.uid);
+      setUserFollowing(following);
+    }
+  };
+
+  // ── Follow / Unfollow ────────────────────────────────────────────────────
+  const handleFollowToggle = async () => {
+    if (!session?.uid || !currentUserId) return;
+    setFollowLoading(true);
+    try {
+      if (userFollowing) {
+        await unfollowUser(currentUserId, session.uid);
+        setUserFollowing(false);
+      } else {
+        await followUser(currentUserId, session.uid);
+        setUserFollowing(true);
+      }
+      // Recalculate mutual friends after the action
+      await fetchFollowersAndFollowing();
+    } catch (error) {
+      console.error("Error toggling follow:", error);
+    } finally {
+      setFollowLoading(false);
     }
   };
 
   useEffect(() => {
     if (currentUserId) {
       fetchUserInfo();
+      fetchCommunityMemberships();
       (async () => {
         setLoading(true);
         const { posts: initial, lastDoc: initialLastDoc } =
@@ -151,6 +326,7 @@ export default function Profile() {
   useEffect(() => {
     fetchFollowersAndFollowing();
     fetchFinfluencerStatus();
+    fetchFollowStatus();
   }, [currentUserId]);
 
   // ── Pagination / scroll ──────────────────────────────────────────────────
@@ -196,8 +372,144 @@ export default function Profile() {
     if (isNearBottom) fetchMorePosts();
   };
 
+  const connectWithWallet = async (
+    wallet: "phantom" | "backpack" | "solflare"
+  ) => {
+    const connector =
+      wallet === "phantom"
+        ? phantomWalletConnector
+        : wallet === "backpack"
+          ? backpackWalletConnector
+          : solflareWalletConnector;
+    const walletName =
+      wallet === "phantom"
+        ? "Phantom"
+        : wallet === "backpack"
+          ? "Backpack"
+          : "Solflare";
+
+    setShowWalletPicker(false);
+    try {
+      await connector.connect();
+      setWalletDisconnectedLocally(false);
+    } catch (error) {
+      console.error(`Error connecting ${walletName} wallet:`, error);
+      Alert.alert(
+        "Wallet connection failed",
+        `Could not connect ${walletName}. Make sure the wallet app is installed and try again.`
+      );
+    }
+  };
+
+  const handleConnectWallet = () => {
+    if (walletDisconnectedLocally) {
+      setShowWalletPicker(true);
+      return;
+    }
+    const activeWallet =
+      phantomWalletConnector.isConnected && phantomWalletConnector.address
+        ? {
+            name: "Phantom",
+            address: phantomWalletConnector.address,
+            connector: phantomWalletConnector,
+          }
+        : backpackWalletConnector.isConnected && backpackWalletConnector.address
+          ? {
+              name: "Backpack",
+              address: backpackWalletConnector.address,
+              connector: backpackWalletConnector,
+            }
+          : solflareWalletConnector.isConnected && solflareWalletConnector.address
+            ? {
+                name: "Solflare",
+                address: solflareWalletConnector.address,
+                connector: solflareWalletConnector,
+              }
+            : null;
+
+    if (!activeWallet) {
+      setShowWalletPicker(true);
+      return;
+    }
+
+    Alert.alert(
+      "Disconnect wallet?",
+      `Disconnect ${activeWallet.name} (${activeWallet.address.slice(0, 4)}...${activeWallet.address.slice(-4)}) from your profile?`,
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Disconnect",
+          style: "destructive",
+          onPress: async () => {
+            setWalletDisconnectedLocally(true);
+            try {
+              await activeWallet.connector.disconnect();
+            } catch (error) {
+              const errorMessage =
+                error instanceof Error ? error.message : String(error);
+              const normalized = errorMessage.toLowerCase();
+              if (
+                normalized.includes("not been authorized") ||
+                normalized.includes("timed out")
+              ) {
+                return;
+              }
+              console.error("Error disconnecting wallet:", error);
+              Alert.alert(
+                "Disconnect failed",
+                "Could not disconnect wallet. Please try again."
+              );
+            }
+          },
+        },
+      ]
+    );
+  };
+
+  // ── Message Pricing ───────────────────────────────────────────────────────
+  // Load the user's existing pricing settings when viewing own profile
+  useEffect(() => {
+    if (!session?.uid || currentUserId !== session.uid) return;
+    getUserMessagePricing(session.uid).then((pricing) => {
+      if (pricing && pricing.messagePrice > 0) {
+        setMessagePriceEnabled(true);
+        setMessagePriceInput(String(pricing.messagePrice));
+      }
+    });
+  }, [session?.uid, currentUserId]);
+
+  const handleSaveMessagePricing = async () => {
+    if (!session?.uid) return;
+    if (!connectedWallet?.address) {
+      Alert.alert(
+        "Wallet required",
+        "Connect a wallet first so people know where to send USDC payments."
+      );
+      return;
+    }
+    const price = messagePriceEnabled ? parseFloat(messagePriceInput) : 0;
+    if (messagePriceEnabled && (isNaN(price) || price <= 0)) {
+      Alert.alert("Invalid price", "Enter a valid USDC amount (e.g. 0.10).");
+      return;
+    }
+    setSavingMsgPrice(true);
+    try {
+      await setMessagePricing(session.uid, price, connectedWallet.address);
+      Alert.alert(
+        "Saved",
+        messagePriceEnabled
+          ? `Message pricing set to $${price.toFixed(2)} USDC per message. Your connected wallet will receive payments.`
+          : "Message pricing disabled. Anyone can message you for free."
+      );
+    } catch {
+      Alert.alert("Error", "Failed to save pricing. Please try again.");
+    } finally {
+      setSavingMsgPrice(false);
+    }
+  };
+
   // ── Render ───────────────────────────────────────────────────────────────
-  const bannerUri = bannerOverride ?? (userInfo as any)?.backgroundPic ?? (userInfo as any)?.backgroundImage;
+  const bannerSource: ImageSourcePropType | undefined = bannerOverride ?? firestoreBannerUri;
   const displayName =
     currentUserId === session?.uid
       ? session?.displayName || userInfo?.username
@@ -210,6 +522,94 @@ export default function Profile() {
     currentUserId === session?.uid && session?.profilePic
       ? session.profilePic
       : userInfo?.profilePic;
+  const connectedWalletRaw =
+    phantomWalletConnector.isConnected && phantomWalletConnector.address
+      ? {
+          name: "Phantom",
+          address: phantomWalletConnector.address,
+          connector: phantomWalletConnector,
+        }
+      : backpackWalletConnector.isConnected && backpackWalletConnector.address
+        ? {
+            name: "Backpack",
+            address: backpackWalletConnector.address,
+            connector: backpackWalletConnector,
+          }
+        : solflareWalletConnector.isConnected && solflareWalletConnector.address
+          ? {
+              name: "Solflare",
+              address: solflareWalletConnector.address,
+              connector: solflareWalletConnector,
+            }
+          : null;
+  const connectedWallet = walletDisconnectedLocally ? null : connectedWalletRaw;
+  const isWalletConnected = !!connectedWallet;
+  const walletButtonLabel = connectedWallet
+    ? `${connectedWallet.address.slice(0, 4)}...${connectedWallet.address.slice(-4)}`
+    : "Connect Wallet";
+
+  useEffect(() => {
+    let isCancelled = false;
+
+    const fetchWalletNfts = async () => {
+      if (!connectedWallet?.address) {
+        setWalletNfts([]);
+        setWalletNftsLoading(false);
+        return;
+      }
+
+      setWalletNftsLoading(true);
+      try {
+        const ownerPublicKey = new PublicKey(connectedWallet.address);
+        const clusters: Array<"mainnet-beta" | "devnet"> = [
+          "mainnet-beta",
+          "devnet",
+        ];
+        const nftMints = new Set<string>();
+
+        for (const cluster of clusters) {
+          const connection = new Connection(clusterApiUrl(cluster), "confirmed");
+          const [tokenAccounts, token2022Accounts] = await Promise.all([
+            connection.getParsedTokenAccountsByOwner(ownerPublicKey, {
+              programId: SOLANA_TOKEN_PROGRAM_ID,
+            }),
+            connection.getParsedTokenAccountsByOwner(ownerPublicKey, {
+              programId: SOLANA_TOKEN_2022_PROGRAM_ID,
+            }),
+          ]);
+
+          const clusterNfts = extractNftMints([
+            ...tokenAccounts.value,
+            ...token2022Accounts.value,
+          ]);
+          clusterNfts.forEach((mint) => nftMints.add(mint));
+        }
+
+        if (!isCancelled) {
+          setWalletNfts(
+            Array.from(nftMints)
+              .slice(0, 24)
+              .map((mint) => ({ mint }))
+          );
+        }
+      } catch (error) {
+        console.error("Error fetching connected wallet NFTs:", error);
+        if (!isCancelled) {
+          setWalletNfts([]);
+        }
+      } finally {
+        if (!isCancelled) {
+          setWalletNftsLoading(false);
+        }
+      }
+    };
+
+    fetchWalletNfts();
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [connectedWallet?.address]);
 
   return (
     <ScrollView
@@ -226,9 +626,9 @@ export default function Profile() {
 
         {/* Banner */}
         <View className="w-full h-44 relative">
-          {bannerUri ? (
+          {bannerSource ? (
             <Image
-              source={{ uri: bannerUri }}
+              source={bannerSource}
               className="w-full h-full"
               resizeMode="cover"
             />
@@ -275,7 +675,7 @@ export default function Profile() {
                 <AvatarFallbackText>{displayName}</AvatarFallbackText>
                 <AvatarImage source={{ uri: displayPic }} />
               </Avatar>
-              <View className="bg-[#1e3a6e] rounded-lg px-3 py-1 mt-2">
+              <View className="bg-[#1e3a6e] rounded-lg px-3 py-1">
                 <Text
                   className="text-white font-bold text-sm"
                   numberOfLines={1}
@@ -295,26 +695,81 @@ export default function Profile() {
             ) : null}
           </View>
 
-          {/* Followers + Following row */}
-          <View className="flex-row gap-3 mt-5 flex-wrap">
-            <View className="bg-[#1e3a6e] rounded-full px-4 py-2.5 flex-row items-center gap-2">
-              <View className="bg-white rounded-full w-7 h-7 items-center justify-center">
-                <Text className="text-[#1e3a6e] font-bold text-xs">
-                  {followers}
-                </Text>
-              </View>
-              <Text className="text-white font-semibold">Friends</Text>
-            </View>
+            {/* Followers + Following + Follow button row */}
+            <View className="flex-row gap-3 mt-4 flex-wrap items-center">
+                <TouchableOpacity
+                    onPress={() => setShowFollowersModal(true)}
+                    className="bg-[#1e3a6e] rounded-full px-4 py-3 flex-row items-center gap-2"
+                >
+                    <View className="bg-white rounded-full w-7 h-7 items-center justify-center">
+                        <Text className="text-[#1e3a6e] font-bold text-xs">
+                            {followers}
+                        </Text>
+                    </View>
+                    <Text className="text-white font-semibold">Friends</Text>
+                </TouchableOpacity>
 
-            <View className="bg-white border border-[#1e3a6e] rounded-full px-4 py-2.5 flex-row items-center gap-2">
-              <View className="bg-[#1e3a6e] rounded-full w-7 h-7 items-center justify-center">
-                <Text className="text-white font-bold text-xs">
-                  {following}
-                </Text>
-              </View>
-              <Text className="text-[#1e3a6e] font-semibold">Following</Text>
+                {/* Friend Me QR Code button - show if viewing own profile */}
+                {session?.uid && currentUserId && session.uid === currentUserId && (
+                    <TouchableOpacity
+                        onPress={() => setShowFriendMeModal(true)}
+                        className="bg-[#1e3a6e] rounded-full px-4 py-3 flex-row items-center gap-2"
+                    >
+                        <Ionicons name="qr-code" size={20} color="white" />
+                        <Text className="text-white font-semibold">Friend Me</Text>
+                    </TouchableOpacity>
+                )}
+
+                {/* Inbox / Messages button - own profile */}
+                {session?.uid && currentUserId && session.uid === currentUserId && (
+                    <TouchableOpacity
+                        onPress={() => router.push("/(protected)/inbox")}
+                        className="bg-[#1e3a6e] rounded-full px-4 py-3 flex-row items-center gap-2"
+                    >
+                        <Ionicons name="chatbubbles-outline" size={18} color="white" />
+                        <Text className="text-white font-semibold">Messages</Text>
+                    </TouchableOpacity>
+                )}
+
+                {/* Follow / Unfollow button */}
+                {session?.uid && currentUserId && session.uid !== currentUserId && (
+                    <TouchableOpacity
+                        disabled={followLoading}
+                        onPress={handleFollowToggle}
+                        className="bg-[#1e3a6e] rounded-full px-4 py-3.5 flex-row items-center gap-2"
+                    >
+                        <Text className="text-white font-semibold">
+                            {followLoading
+                                ? "..."
+                                : userFollowing
+                                    ? "Pending"
+                                    : "Friend Me"}
+                        </Text>
+                    </TouchableOpacity>
+                )}
+                {currentUserId === session?.uid && (
+                    <TouchableOpacity
+                        className="bg-white border border-[#1e3a6e] rounded-full px-4 py-2.5 flex-row items-center gap-2"
+                        onPress={handleConnectWallet}
+                        activeOpacity={0.8}
+                        style={
+                            isWalletConnected
+                                ? {
+                                    backgroundColor: "#1e3a6e",
+                                    borderColor: "#1e3a6e",
+                                }
+                                : undefined
+                        }
+                    >
+                        <Text
+                            className="font-semibold"
+                            style={{ color: isWalletConnected ? "#ffffff" : "#1e3a6e" }}
+                        >
+                            {walletButtonLabel}
+                        </Text>
+                    </TouchableOpacity>
+                )}
             </View>
-          </View>
 
           {/* Social links */}
           {userInfo?.socials && (
@@ -395,48 +850,348 @@ export default function Profile() {
 
         {/* Virtual Communities */}
         <CollapsibleSection title="Virtual Communities">
-          <Text className="px-4 pb-4 text-gray-400 text-sm">
-            No virtual communities yet.
-          </Text>
+          {digitalCommunities.length > 0 ? (
+            <View className="px-4 pb-4 flex-row flex-wrap gap-4">
+              {digitalCommunities.map((community: any, index: number) => {
+                const contrib = communityContributions[community.communityId];
+                return (
+                  <TouchableOpacity
+                    key={index}
+                    onPress={() => router.push({
+                      pathname: `/(protected)/communities/${community.slug}` as any,
+                      params: { title: community.title, slug: community.slug, communityId: community.id, themeLightColor: community.themeLightColor, themeDarkColor: community.themeDarkColor }
+                    })}
+                    className="items-center"
+                  >
+                    <Image
+                      source={{ uri: community.image }}
+                      className="w-20 h-20 rounded-full mb-1"
+                    />
+                    <Text className="text-gray-700 text-xs text-center max-w-[80px]">
+                      {community.name}
+                    </Text>
+                    {contrib && (
+                      <Text style={{ color: "#16a34a", fontSize: 11, textAlign: "center", maxWidth: 80, fontWeight: "600" }}>
+                        {contrib.totalAmount % 1 === 0
+                          ? `${contrib.totalAmount} ${contrib.asset}`
+                          : `${contrib.totalAmount.toFixed(contrib.asset === "USDC" ? 2 : 4)} ${contrib.asset}`}
+                      </Text>
+                    )}
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+          ) : (
+            <Text className="px-4 pb-4 text-gray-400 text-sm">
+              No virtual communities yet.
+            </Text>
+          )}
         </CollapsibleSection>
 
         {/* IRL Communities */}
         <CollapsibleSection title="IRL Communities">
-          <Text className="px-4 pb-4 text-gray-400 text-sm">
-            No IRL communities yet.
-          </Text>
+          {irlCommunities.length > 0 ? (
+            <View className="px-4 pb-4 flex-row flex-wrap gap-4">
+              {irlCommunities.map((community: any, index: number) => {
+                const contrib = communityContributions[community.communityId];
+                return (
+                  <TouchableOpacity
+                    key={index}
+                    onPress={() => router.push({
+                      pathname: `/(protected)/communities/${community.slug}` as any,
+                      params: { title: community.title, slug: community.slug, communityId: community.id, themeLightColor: community.themeLightColor, themeDarkColor: community.themeDarkColor }
+                    })}
+                    className="items-center"
+                  >
+                    <Image
+                      source={{ uri: community.image }}
+                      className="w-20 h-20 rounded-full mb-1"
+                    />
+                    <Text className="text-gray-700 text-xs text-center max-w-[80px]">
+                      {community.name}
+                    </Text>
+                    {contrib && (
+                      <Text style={{ color: "#16a34a", fontSize: 11, textAlign: "center", maxWidth: 80, fontWeight: "600" }}>
+                        {contrib.totalAmount % 1 === 0
+                          ? `${contrib.totalAmount} ${contrib.asset}`
+                          : `${contrib.totalAmount.toFixed(contrib.asset === "USDC" ? 2 : 4)} ${contrib.asset}`}
+                      </Text>
+                    )}
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+          ) : (
+            <Text className="px-4 pb-4 text-gray-400 text-sm">
+              No IRL communities yet.
+            </Text>
+          )}
         </CollapsibleSection>
 
         {/* Badges */}
-        <CollapsibleSection title="Badges">
-          <Text className="px-4 pb-4 text-gray-400 text-sm">
-            No badges earned yet.
-          </Text>
+        <CollapsibleSection title="NFTs">
+          {!isWalletConnected ? (
+            <Text className="px-4 pb-4 text-gray-400 text-sm">
+              Please connect your wallet to showcase your NFTs.
+            </Text>
+          ) : walletNftsLoading ? (
+            <Text className="px-4 pb-4 text-gray-400 text-sm">
+              Loading connected wallet NFTs...
+            </Text>
+          ) : walletNfts.length === 0 ? (
+            <Text className="px-4 pb-4 text-gray-400 text-sm">
+              No NFTs are owned or connected with this wallet.
+            </Text>
+          ) : (
+            <View className="px-4 pb-4 gap-2">
+              {walletNfts.map((nft, index) => (
+                <View
+                  key={`${nft.mint}-${index}`}
+                  className="bg-[#f3f4f6] rounded-lg px-3 py-2"
+                >
+                  <Text className="text-gray-700 text-xs">
+                    NFT {index + 1}: {nft.mint.slice(0, 6)}...
+                    {nft.mint.slice(-6)}
+                  </Text>
+                </View>
+              ))}
+            </View>
+          )}
         </CollapsibleSection>
+
+        {/* Message Pricing – own profile only */}
+        {currentUserId === session?.uid && (
+          <CollapsibleSection title="Message Pricing">
+            {!isWalletConnected ? (
+              <Text className="px-4 pb-4 text-gray-400 text-sm">
+                Connect your wallet above to enable message pricing.
+              </Text>
+            ) : (
+              <View style={{ paddingHorizontal: 16, paddingBottom: 20, gap: 16 }}>
+                {/* Toggle row */}
+                <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
+                  <View style={{ flex: 1 }}>
+                    <Text style={{ fontSize: 14, fontWeight: "600", color: "#374151" }}>
+                      Charge per message
+                    </Text>
+                    <Text style={{ fontSize: 12, color: "#9ca3af", marginTop: 2 }}>
+                      People pay USDC to send you messages
+                    </Text>
+                  </View>
+                  <Switch
+                    value={messagePriceEnabled}
+                    onValueChange={setMessagePriceEnabled}
+                    trackColor={{ false: "#e5e7eb", true: "#1e3a6e" }}
+                    thumbColor="white"
+                  />
+                </View>
+
+                {/* Price input */}
+                {messagePriceEnabled && (
+                  <View style={{ gap: 6 }}>
+                    <Text style={{ fontSize: 13, fontWeight: "600", color: "#374151" }}>
+                      Price per message (USDC)
+                    </Text>
+                    <TextInput
+                      value={messagePriceInput}
+                      onChangeText={setMessagePriceInput}
+                      keyboardType="decimal-pad"
+                      placeholder="0.10"
+                      placeholderTextColor="#9ca3af"
+                      style={{
+                        borderWidth: 1,
+                        borderColor: "#e5e7eb",
+                        borderRadius: 10,
+                        paddingHorizontal: 14,
+                        paddingVertical: 11,
+                        fontSize: 15,
+                        color: "#1f2937",
+                        backgroundColor: "#f9fafb",
+                      }}
+                    />
+                    <Text style={{ fontSize: 11, color: "#9ca3af" }}>
+                      Payments go to your connected wallet:{" "}
+                      {connectedWallet?.address.slice(0, 4)}…
+                      {connectedWallet?.address.slice(-4)}
+                    </Text>
+                  </View>
+                )}
+
+                {/* Save button */}
+                <TouchableOpacity
+                  onPress={handleSaveMessagePricing}
+                  disabled={savingMsgPrice}
+                  style={{
+                    backgroundColor: savingMsgPrice ? "#9ca3af" : "#1e3a6e",
+                    borderRadius: 12,
+                    paddingVertical: 13,
+                    alignItems: "center",
+                  }}
+                >
+                  <Text style={{ color: "white", fontWeight: "700", fontSize: 14 }}>
+                    {savingMsgPrice ? "Saving…" : "Save Pricing"}
+                  </Text>
+                </TouchableOpacity>
+
+                {messagePriceEnabled && (
+                  <Text style={{ fontSize: 11, color: "#9ca3af", textAlign: "center" }}>
+                    Replies you send are always free for others.
+                  </Text>
+                )}
+              </View>
+            )}
+          </CollapsibleSection>
+        )}
       </View>
 
-      {/* ── Posts ── */}
-      <NewsfeedList posts={posts} communityPage={false} />
+      {/* ── Tab bar ── */}
+      <View
+        style={{
+          flexDirection: "row",
+          backgroundColor: "white",
+          borderBottomWidth: 1,
+          borderBottomColor: "#e5e7eb",
+        }}
+      >
+        {(
+          [
+            { key: "posts", label: "Posts" },
+            { key: "links", label: "Links" },
+            ...(currentUserId === session?.uid
+              ? [{ key: "earnings", label: "Earnings" }]
+              : []),
+          ] as { key: "posts" | "links" | "earnings"; label: string }[]
+        ).map(({ key, label }) => (
+          <TouchableOpacity
+            key={key}
+            onPress={() => setActiveTab(key)}
+            style={{
+              flex: 1,
+              paddingVertical: 14,
+              alignItems: "center",
+              borderBottomWidth: 2,
+              borderBottomColor: activeTab === key ? "#1e3a6e" : "transparent",
+            }}
+          >
+            <Text
+              style={{
+                color: activeTab === key ? "#1e3a6e" : "#9ca3af",
+                fontWeight: "600",
+                fontSize: 14,
+              }}
+            >
+              {label}
+            </Text>
+          </TouchableOpacity>
+        ))}
+      </View>
 
-      {loading && (
-        <Image
-          source={require("@/assets/images/logo-inverted.png")}
-          alt="Loading..."
-          resizeMode="contain"
-          className="w-full"
+      {activeTab === "posts" ? (
+        <>
+          <NewsfeedList posts={posts} communityPage={false} />
+          {loading && (
+            <Image
+              source={require("@/assets/images/logo-inverted.png")}
+              alt="Loading..."
+              resizeMode="contain"
+              className="w-full"
+            />
+          )}
+        </>
+      ) : activeTab === "links" && currentUserId ? (
+        <LinkTree
+          userId={currentUserId}
+          isOwnProfile={session?.uid === currentUserId}
         />
-      )}
+      ) : activeTab === "earnings" && currentUserId ? (
+        <EarningsTab userId={currentUserId} />
+      ) : null}
+      <Modal
+        animationType="slide"
+        transparent
+        visible={showWalletPicker}
+        onRequestClose={() => setShowWalletPicker(false)}
+      >
+        <View className="flex-1 justify-end bg-black/40">
+          <TouchableOpacity
+            className="flex-1"
+            activeOpacity={1}
+            onPress={() => setShowWalletPicker(false)}
+          />
+          <View className="bg-white rounded-t-3xl px-4 pt-4 pb-6">
+            <Text className="text-[#1e3a6e] font-bold text-lg">
+              Connect Wallet
+            </Text>
+            <Text className="text-gray-600 text-sm mt-1 mb-4">
+              Choose a wallet to connect to your profile.
+            </Text>
+
+            <TouchableOpacity
+              className="border border-[#1e3a6e] rounded-xl px-4 py-3 mb-2"
+              activeOpacity={0.8}
+              onPress={() => connectWithWallet("phantom")}
+            >
+              <Text className="text-[#1e3a6e] font-semibold">Phantom</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              className="border border-[#1e3a6e] rounded-xl px-4 py-3 mb-2"
+              activeOpacity={0.8}
+              onPress={() => connectWithWallet("backpack")}
+            >
+              <Text className="text-[#1e3a6e] font-semibold">Backpack</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              className="border border-[#1e3a6e] rounded-xl px-4 py-3"
+              activeOpacity={0.8}
+              onPress={() => connectWithWallet("solflare")}
+            >
+              <Text className="text-[#1e3a6e] font-semibold">Solflare</Text>
+            </TouchableOpacity>
+
+            <Text className="text-gray-500 text-xs mt-4">
+              Existing wallets require approving the connection in the wallet
+              app.
+            </Text>
+
+            <TouchableOpacity
+              className="mt-4 rounded-xl px-4 py-3 bg-gray-100"
+              activeOpacity={0.8}
+              onPress={() => setShowWalletPicker(false)}
+            >
+              <Text className="text-center text-gray-700 font-semibold">
+                Cancel
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
 
       {/* Background image picker modal */}
       <BackgroundImageModal
         visible={showBgModal}
         userId={currentUserId}
-        currentBanner={bannerUri}
+        currentBanner={bannerSource}
         onClose={() => setShowBgModal(false)}
         onSaved={(url) => {
-          setBannerOverride(url);
+          setBannerOverride({ uri: url });
           setShowBgModal(false);
         }}
+      />
+
+      <FollowersModal
+        isOpen={showFollowersModal}
+        onClose={() => setShowFollowersModal(false)}
+        userId={currentUserId || ""}
+        initialTab="friends"
+      />
+
+      <FriendMeModal
+        isOpen={showFriendMeModal}
+        onClose={() => setShowFriendMeModal(false)}
+        userId={currentUserId || ""}
+        username={displayName}
       />
     </ScrollView>
   );

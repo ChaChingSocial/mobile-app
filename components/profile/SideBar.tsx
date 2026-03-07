@@ -68,7 +68,7 @@ export default function SideBar({
         onClose={() => {
           onOpenChange(false);
         }}
-        size="lg"
+        size="md"
         anchor="left"
       >
         <DrawerBackdrop />
