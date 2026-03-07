@@ -31,6 +31,7 @@ import {
   Modal as RNModal,
   Switch,
   TextInput,
+  KeyboardAvoidingView,
 } from "react-native";
 import { Center } from "@/components/ui/center";
 import { Spinner } from "@/components/ui/spinner";
@@ -99,7 +100,15 @@ type FundingValidationResult = {
   message: string;
 };
 
-const FUNDING_AMOUNT_PATTERN = /^(\d+(\.\d{1,2})?|\.\d{1,2})$/;
+// USDC has 6 decimal places, SOL has 9
+const FUNDING_AMOUNT_PATTERNS: Record<"SOL" | "USDC", RegExp> = {
+  USDC: /^(\d+(\.\d{1,6})?|\.\d{1,6})$/,
+  SOL:  /^(\d+(\.\d{1,9})?|\.\d{1,9})$/,
+};
+const FUNDING_MAX_DECIMALS: Record<"SOL" | "USDC", number> = {
+  USDC: 6,
+  SOL: 9,
+};
 
 const validateFundingAmount = (
   rawAmount: string,
@@ -109,15 +118,14 @@ const validateFundingAmount = (
   if (!normalized) {
     return {
       isValid: false,
-      message: `Enter an amount using format x.xx or .xx (max two decimals) before funding ${asset}.`,
+      message: `Enter an amount before funding ${asset}.`,
     };
   }
 
-  if (!FUNDING_AMOUNT_PATTERN.test(normalized)) {
+  if (!FUNDING_AMOUNT_PATTERNS[asset].test(normalized)) {
     return {
       isValid: false,
-      message:
-        "Invalid amount format. Use x.xx or .xx with no more than 2 decimal places.",
+      message: `Invalid amount. Use up to ${FUNDING_MAX_DECIMALS[asset]} decimal places for ${asset} (e.g. 0.01 or 0.001).`,
     };
   }
 
@@ -687,10 +695,12 @@ export default function SingleCommunity() {
     setShowFundingValidationPopup(true);
   };
 
-  const handleFundAmountEndEditing = () => {
-    if (!fundAmount.trim()) return;
-    if (!fundingValidation.isValid) {
-      openFundingValidationPopup(fundingValidation.message);
+  const handleFundAmountEndEditing = (e: { nativeEvent: { text: string } }) => {
+    const text = e.nativeEvent.text.trim();
+    if (!text) return;
+    const validation = validateFundingAmount(text, fundingAsset);
+    if (!validation.isValid) {
+      openFundingValidationPopup(validation.message);
     }
   };
 
@@ -920,11 +930,13 @@ export default function SingleCommunity() {
 
           <View className="mb-2">
             <TouchableOpacity
-              className="w-full bg-white rounded-xl py-3 px-4"
+              className="w-full rounded-xl py-3 px-4"
+              style={{backgroundColor: communityData.themeLightColor || Colors.light.tint}}
               activeOpacity={0.85}
               onPress={handleFundCommunityPress}
             >
-              <Text className="text-[#077f5f] text-base font-semibold text-center">
+              <Text className="text-base font-semibold text-center"
+              style={{ color: communityData.themeDarkColor || Colors.dark.tint }}>
                 Fund Community
               </Text>
             </TouchableOpacity>
@@ -977,13 +989,17 @@ export default function SingleCommunity() {
         visible={showFundModal}
         onRequestClose={() => !isFunding && setShowFundModal(false)}
       >
-        <View className="flex-1 justify-end bg-black/40">
-          <TouchableOpacity
-            className="flex-1"
-            activeOpacity={1}
-            onPress={() => !isFunding && setShowFundModal(false)}
-          />
-          <View className="bg-white rounded-t-3xl px-4 pt-4 pb-6">
+        <KeyboardAvoidingView
+          behavior={Platform.OS === "ios" ? "padding" : "height"}
+          style={{ flex: 1 }}
+        >
+          <View className="flex-1 justify-end bg-black/40">
+            <TouchableOpacity
+              className="flex-1"
+              activeOpacity={1}
+              onPress={() => !isFunding && setShowFundModal(false)}
+            />
+            <View className="bg-white rounded-t-3xl px-4 pt-4 pb-6">
             <Text className="text-[#1e3a6e] text-xl font-bold">
               Fund Community
             </Text>
@@ -1044,7 +1060,9 @@ export default function SingleCommunity() {
               className="border border-[#d1d5db] rounded-xl px-3 py-3 text-gray-900 mb-4"
             />
             <Text className="text-gray-500 text-xs mb-4">
-              Amount format: x.xx or .xx (max 2 decimals).
+              {fundingAsset === "USDC"
+                ? "Up to 6 decimal places (e.g. 0.01, 0.001)."
+                : "Up to 9 decimal places (e.g. 0.01, 0.001)."}
             </Text>
 
             <View className="flex-row items-center justify-between mb-2">
@@ -1063,33 +1081,34 @@ export default function SingleCommunity() {
               Recipient: {resolveCommunityFundingDestination()}
             </Text>
 
-            <View className="flex-row gap-2">
-              <TouchableOpacity
-                className="flex-1 rounded-xl py-3 bg-gray-100"
-                activeOpacity={0.85}
-                onPress={() => setShowFundModal(false)}
-                disabled={isFunding}
-              >
-                <Text className="text-center text-gray-700 font-semibold">
-                  Cancel
-                </Text>
-              </TouchableOpacity>
+              <View className="flex-row gap-2">
+                <TouchableOpacity
+                  className="flex-1 rounded-xl py-3 bg-gray-100"
+                  activeOpacity={0.85}
+                  onPress={() => setShowFundModal(false)}
+                  disabled={isFunding}
+                >
+                  <Text className="text-center text-gray-700 font-semibold">
+                    Cancel
+                  </Text>
+                </TouchableOpacity>
 
-              <TouchableOpacity
-                className={`flex-1 rounded-xl py-3 ${
-                  canSubmitFunding ? "bg-[#1e3a6e]" : "bg-[#9ca3af]"
-                }`}
-                activeOpacity={0.85}
-                onPress={submitFunding}
-                disabled={!canSubmitFunding}
-              >
-                <Text className="text-center text-white font-semibold">
-                  {isFunding ? "Submitting..." : "Fund"}
-                </Text>
-              </TouchableOpacity>
+                <TouchableOpacity
+                  className={`flex-1 rounded-xl py-3 ${
+                    canSubmitFunding ? "bg-[#1e3a6e]" : "bg-[#9ca3af]"
+                  }`}
+                  activeOpacity={0.85}
+                  onPress={submitFunding}
+                  disabled={!canSubmitFunding}
+                >
+                  <Text className="text-center text-white font-semibold">
+                    {isFunding ? "Submitting..." : "Fund"}
+                  </Text>
+                </TouchableOpacity>
+              </View>
             </View>
           </View>
-        </View>
+        </KeyboardAvoidingView>
       </RNModal>
 
       <RNModal
