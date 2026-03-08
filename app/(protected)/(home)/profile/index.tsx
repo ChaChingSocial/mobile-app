@@ -58,6 +58,7 @@ import {
 import {Colors} from "@/lib/constants/Colors";
 import BackgroundImageModal from "@/components/profile/BackgroundImageModal";
 import EarningsTab from "@/components/profile/EarningsTab";
+import NftDetailModal from "@/components/profile/NftDetailModal";
 import { Connection, PublicKey, clusterApiUrl } from "@solana/web3.js";
 import { fetchNftMetadata } from "@/lib/wallet/fetchNftMetadata";
 
@@ -151,6 +152,7 @@ export default function Profile() {
       useState(false);
   const [walletNfts, setWalletNfts] = useState<WalletNftPreview[]>([]);
   const [walletNftsLoading, setWalletNftsLoading] = useState(false);
+  const [selectedNft, setSelectedNft] = useState<WalletNftPreview | null>(null);
 
   // ── Message Pricing state ──────────────────────────────────────────────────
   const [messagePriceEnabled, setMessagePriceEnabled] = useState(false);
@@ -969,8 +971,10 @@ export default function Profile() {
           ) : (
             <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 6, paddingHorizontal: 16, paddingBottom: 16 }}>
               {walletNfts.map((nft, index) => (
-                <View
+                <TouchableOpacity
                   key={`${nft.mint}-${index}`}
+                  activeOpacity={0.85}
+                  onPress={() => setSelectedNft(nft)}
                   style={{
                     width: "31.5%",
                     aspectRatio: 1,
@@ -1012,7 +1016,7 @@ export default function Profile() {
                       </Text>
                     </View>
                   ) : null}
-                </View>
+                </TouchableOpacity>
               ))}
             </View>
           )}
@@ -1251,6 +1255,12 @@ export default function Profile() {
         onClose={() => setShowFriendMeModal(false)}
         userId={currentUserId || ""}
         username={displayName}
+      />
+
+      <NftDetailModal
+        nft={selectedNft}
+        visible={!!selectedNft}
+        onClose={() => setSelectedNft(null)}
       />
     </ScrollView>
   );

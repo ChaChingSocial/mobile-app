@@ -1686,8 +1686,8 @@ const handlePayNow = async (
     return (
         <KeyboardAvoidingView
             style={{ flex: 1 }}
-            behavior={Platform.OS === "ios" ? "height" : undefined}
-            keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 0}
+            behavior="padding"
+            keyboardVerticalOffset={Platform.OS === "ios" ? 90 : 0}
         >
             <LinearGradient colors={bgGradientColors()} style={{ flex: 1 }}>
                 {/* ── Custom header ── */}

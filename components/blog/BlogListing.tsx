@@ -5,7 +5,7 @@ import { checkIfFinFluencer } from "@/lib/api/user";
 import { useSession } from "@/lib/providers/AuthContext";
 import { Blog } from "@/types/blog";
 import { useEffect, useState } from "react";
-import { Linking, TouchableOpacity } from "react-native";
+import { TouchableOpacity } from "react-native";
 import { BlogArticleCard } from "./BlogCard";
 import { Input, InputField, InputIcon, InputSlot } from "@/components/ui/input";
 import { SearchIcon } from "@/components/ui/icon";
@@ -14,7 +14,7 @@ import { Box } from "@/components/ui/box";
 import ParallaxScrollView from "@/components/ParallaxScrollView";
 import { Center } from "@/components/ui/center";
 import { Spinner } from "@/components/ui/spinner";
-import { Fab, FabIcon, FabLabel } from "@/components/ui/fab";
+import { Fab, FabIcon } from "@/components/ui/fab";
 import { BlogDetailModal } from "./BlogDetailModal";
 
 export default function BlogListing() {
@@ -22,7 +22,7 @@ export default function BlogListing() {
 
   const [allPublishedBlogs, setAllPublishedBlogs] = useState<Blog[]>([]);
   const [filteredBlogs, setFilteredBlogs] = useState<Blog[]>([]);
-  const [isFinfluencer, setIsFinfluencer] = useState(false);
+  const [, setIsFinfluencer] = useState(false);
   const [showSearchBox, setShowSearchBox] = useState(false);
   const [searchText, setSearchText] = useState("");
   const [timeoutToClear, setTimeoutToClear] = useState<ReturnType<typeof setTimeout>>();
@@ -49,14 +49,16 @@ export default function BlogListing() {
   }, [user?.uid]);
 
   const fetchBlogs = async () => {
-    const blogs = await blogApi.getPublishedBlogs();
     setLoading(true);
-
-    if (blogs) {
-      setAllPublishedBlogs(blogs as any);
-      setFilteredBlogs(blogs as any);
+    try {
+      const blogs = await blogApi.getPublishedBlogs();
+      if (blogs) {
+        setAllPublishedBlogs(blogs as any);
+        setFilteredBlogs(blogs as any);
+      }
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   const debounce = (
@@ -159,33 +161,34 @@ export default function BlogListing() {
           onPress={() => setShowSearchBox(true)}
           className="bg-white shadow-lg"
         >
-          <FabIcon as={Ionicons} name="search-outline" size={24} className="text-black" />
+          <FabIcon as={Ionicons} name="search-outline" size="md" className="text-black" />
         </Fab>
       )}
 
       <ParallaxScrollView classNames="flex-1">
         <Box className="bg-[#077f5f] flex-1">
-          {loading && (
+          {loading ? (
             <Center className="flex-1">
               <Spinner color="green" size="large" />
               <Text size="md">Please Wait...</Text>
             </Center>
+          ) : (
+            <Box className="gap-5 flex p-4 mt-16 mb-24">
+              {filteredBlogs.length === 0 && allPublishedBlogs.length === 0 ? (
+                <Text>No blogs available right now.</Text>
+              ) : filteredBlogs.length === 0 ? (
+                <Text>No blogs found matching your search.</Text>
+              ) : (
+                filteredBlogs.map((blog, idx) => (
+                  <BlogArticleCard
+                    key={idx}
+                    blog={blog}
+                    onPress={() => handleBlogSelect(blog)}
+                  />
+                ))
+              )}
+            </Box>
           )}
-          <Box className="gap-5 flex p-4 mt-16 mb-24">
-            {filteredBlogs.length === 0 && allPublishedBlogs.length === 0 ? (
-              <Text>Loading Posts...</Text>
-            ) : filteredBlogs.length === 0 ? (
-              <Text>No blogs found matching your search.</Text>
-            ) : (
-              filteredBlogs.map((blog, idx) => (
-                <BlogArticleCard
-                  key={idx}
-                  blog={blog}
-                  onPress={() => handleBlogSelect(blog)}
-                />
-              ))
-            )}
-          </Box>
         </Box>
       </ParallaxScrollView>
 
