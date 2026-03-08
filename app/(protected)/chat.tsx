@@ -6,6 +6,8 @@ import {
     MessageBudget,
     removeParticipantFromConversation,
     sendMessage,
+    sendPaymentRequest,
+    recordPayment,
     subscribeToMessages,
     toggleReaction,
     Conversation,
@@ -77,10 +79,12 @@ function MediaPickerSheet({
                               visible,
                               onClose,
                               onPick,
+                              onPaymentRequest,
                           }: {
     visible: boolean;
     onClose: () => void;
     onPick: (uri: string, type: "image" | "video") => void;
+    onPaymentRequest: () => void;
 }) {
     const requestAndPick = async (
         source: "library" | "camera",
@@ -127,6 +131,11 @@ function MediaPickerSheet({
                         { label: "Video from Library", icon: "videocam-outline" as const, action: () => requestAndPick("library", "videos") },
                         { label: "Take Photo", icon: "camera-outline" as const, action: () => requestAndPick("camera", "images") },
                         { label: "Record Video", icon: "radio-button-on-outline" as const, action: () => requestAndPick("camera", "videos") },
+                        {
+                            label: "Request Payment",
+                            icon: "cash-outline" as const,
+                            action: () => { onClose(); onPaymentRequest(); },
+                        },
                     ].map((item) => (
                         <TouchableOpacity
                             key={item.label}
@@ -138,6 +147,119 @@ function MediaPickerSheet({
                         </TouchableOpacity>
                     ))}
                 </View>
+            </Pressable>
+        </Modal>
+    );
+}
+
+// ── Payment request sheet ─────────────────────────────────────────────────────
+function PaymentRequestSheet({
+    visible,
+    onClose,
+    onSend,
+}: {
+    visible: boolean;
+    onClose: () => void;
+    onSend: (amountUsdc: number, description: string, useDevnet: boolean) => Promise<void>;
+}) {
+    const [amount, setAmount] = React.useState("");
+    const [description, setDescription] = React.useState("");
+    const [useDevnet, setUseDevnet] = React.useState(false);
+    const [sending, setSending] = React.useState(false);
+
+    const handleSend = async () => {
+        const parsed = parseFloat(amount);
+        if (!parsed || parsed <= 0 || !description.trim()) return;
+        setSending(true);
+        try {
+            await onSend(parsed, description.trim(), useDevnet);
+            setAmount("");
+            setDescription("");
+            onClose();
+        } catch (e) {
+            console.error("Payment request error", e);
+        } finally {
+            setSending(false);
+        }
+    };
+
+    if (!visible) return null;
+    return (
+        <Modal transparent animationType="slide" visible={visible} onRequestClose={onClose}>
+            <Pressable
+                style={{ flex: 1, backgroundColor: "rgba(0,0,0,0.4)", justifyContent: "flex-end" }}
+                onPress={onClose}
+            >
+                <Pressable onPress={() => {}}>
+                    <View style={{ backgroundColor: "white", borderTopLeftRadius: 24, borderTopRightRadius: 24, paddingHorizontal: 20, paddingBottom: 40 }}>
+                        <View style={{ width: 40, height: 4, backgroundColor: "#e5e7eb", borderRadius: 2, alignSelf: "center", marginTop: 12, marginBottom: 20 }} />
+                        <Text style={{ fontSize: 18, fontWeight: "700", color: "#1f2937", marginBottom: 4 }}>Request Payment</Text>
+                        <Text style={{ fontSize: 13, color: "#6b7280", marginBottom: 20 }}>
+                            Anyone in this chat can pay. Their avatar will appear on the message.
+                        </Text>
+
+                        {/* Amount */}
+                        <Text style={{ fontSize: 13, fontWeight: "600", color: "#374151", marginBottom: 6 }}>Amount (USDC)</Text>
+                        <View style={{ flexDirection: "row", alignItems: "center", backgroundColor: "#f9fafb", borderWidth: 1, borderColor: "#e5e7eb", borderRadius: 12, paddingHorizontal: 14, marginBottom: 16 }}>
+                            <Text style={{ fontSize: 18, color: "#9ca3af", marginRight: 4 }}>$</Text>
+                            <TextInput
+                                value={amount}
+                                onChangeText={setAmount}
+                                keyboardType="decimal-pad"
+                                placeholder="0.00"
+                                placeholderTextColor="#9ca3af"
+                                style={{ flex: 1, fontSize: 20, fontWeight: "600", color: "#1f2937", paddingVertical: 14 }}
+                            />
+                            <Text style={{ fontSize: 14, color: "#6b7280" }}>USDC</Text>
+                        </View>
+
+                        {/* Description */}
+                        <Text style={{ fontSize: 13, fontWeight: "600", color: "#374151", marginBottom: 6 }}>What's it for?</Text>
+                        <TextInput
+                            value={description}
+                            onChangeText={setDescription}
+                            placeholder="e.g. Dinner split, event tickets…"
+                            placeholderTextColor="#9ca3af"
+                            maxLength={80}
+                            style={{ backgroundColor: "#f9fafb", borderWidth: 1, borderColor: "#e5e7eb", borderRadius: 12, paddingHorizontal: 14, paddingVertical: 14, fontSize: 15, color: "#1f2937", marginBottom: 16 }}
+                        />
+
+                        {/* Network toggle */}
+                        <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 24 }}>
+                            <View>
+                                <Text style={{ fontSize: 13, fontWeight: "600", color: "#374151" }}>Use Devnet</Text>
+                                <Text style={{ fontSize: 11, color: "#9ca3af", marginTop: 1 }}>
+                                    {useDevnet ? "Devnet USDC (testing)" : "Mainnet USDC (real)"}
+                                </Text>
+                            </View>
+                            <Switch
+                                value={useDevnet}
+                                onValueChange={setUseDevnet}
+                                trackColor={{ false: "#e5e7eb", true: "#93c5fd" }}
+                                thumbColor={useDevnet ? "#1e3a6e" : "#9ca3af"}
+                            />
+                        </View>
+
+                        <TouchableOpacity
+                            onPress={handleSend}
+                            disabled={sending || !amount || !description.trim()}
+                            style={{
+                                backgroundColor: sending || !amount || !description.trim() ? "#93c5fd" : "#1e3a6e",
+                                borderRadius: 14,
+                                paddingVertical: 15,
+                                alignItems: "center",
+                            }}
+                        >
+                            {sending ? (
+                                <ActivityIndicator color="white" />
+                            ) : (
+                                <Text style={{ color: "white", fontWeight: "700", fontSize: 16 }}>
+                                    Send Request
+                                </Text>
+                            )}
+                        </TouchableOpacity>
+                    </View>
+                </Pressable>
             </Pressable>
         </Modal>
     );
@@ -776,6 +898,9 @@ export default function ChatScreen() {
         type: "image" | "video";
     } | null>(null);
 
+    // Payment request sheet
+    const [paymentRequestSheetVisible, setPaymentRequestSheetVisible] = useState(false);
+
     // UI toggles
     const [mediaSheetVisible, setMediaSheetVisible] = useState(false);
     const [addUserSheetVisible, setAddUserSheetVisible] = useState(false);
@@ -970,6 +1095,45 @@ export default function ChatScreen() {
             (p) => (p.userId || p.id) === senderId
         );
         return participant?.displayName || resolvedName;
+    };
+
+    // ── Payment request ───────────────────────────────────────────────────────
+    const handleSendPaymentRequest = async (amountUsdc: number, description: string, useDevnet: boolean) => {
+        if (!conversationId || !session?.uid) return;
+        const walletAddress = usdcTransfer.connectedAddress;
+        if (!walletAddress) {
+            usdcTransfer.setShowWalletPicker(true);
+            throw new Error("No wallet connected");
+        }
+        await sendPaymentRequest(conversationId, session.uid, amountUsdc, description, walletAddress, useDevnet);
+    };
+
+    const handlePayNow = async (
+        messageId: string,
+        recipientAddress: string,
+        amountUsdc: number,
+        useDevnet: boolean
+    ) => {
+        if (!conversationId || !session?.uid) return;
+        if (!usdcTransfer.isConnected) {
+            usdcTransfer.setShowWalletPicker(true);
+            return;
+        }
+        try {
+            const txSignature = await usdcTransfer.transferUsdc(recipientAddress, amountUsdc, useDevnet);
+            const profile = await getUserProfile(session.uid);
+            await recordPayment(
+                conversationId,
+                messageId,
+                session.uid,
+                txSignature,
+                amountUsdc,
+                profile?.photoURL ?? undefined,
+                profile?.displayName ?? undefined
+            );
+        } catch (e: any) {
+            Alert.alert("Payment failed", e?.message ?? "Unknown error");
+        }
     };
 
     // ── Send ──────────────────────────────────────────────────────────────────
@@ -1194,6 +1358,115 @@ export default function ChatScreen() {
 
         const hasText = !!item.text;
         const hasMedia = !!item.mediaUrl;
+
+        // ── Payment request bubble ─────────────────────────────────────────
+        if (item.type === "paymentRequest" && item.paymentRequest) {
+            const pr = item.paymentRequest;
+            const payerEntries = Object.entries(pr.payers ?? {});
+            const iHavePaid = !!pr.payers?.[session?.uid ?? ""];
+            const iAmRequester = item.senderId === session?.uid;
+
+            return (
+                <View
+                    key={item.id}
+                    style={{ paddingHorizontal: 12, marginBottom: 12, alignItems: isMe ? "flex-end" : "flex-start" }}
+                >
+                    <View style={{
+                        width: 260,
+                        backgroundColor: "white",
+                        borderRadius: 18,
+                        borderWidth: 1.5,
+                        borderColor: "#e5e7eb",
+                        overflow: "hidden",
+                        shadowColor: "#000",
+                        shadowOpacity: 0.06,
+                        shadowRadius: 8,
+                        elevation: 2,
+                    }}>
+                        {/* Header */}
+                        <View style={{ backgroundColor: "#1e3a6e", paddingHorizontal: 14, paddingVertical: 10, flexDirection: "row", alignItems: "center", gap: 8 }}>
+                            <Ionicons name="cash" size={16} color="white" />
+                            <Text style={{ color: "white", fontWeight: "700", fontSize: 13 }}>Payment Request</Text>
+                        </View>
+
+                        <View style={{ padding: 14 }}>
+                            {/* Description */}
+                            <Text style={{ fontSize: 15, fontWeight: "600", color: "#1f2937", marginBottom: 4 }}>
+                                {pr.description}
+                            </Text>
+                            {/* Amount */}
+                            <Text style={{ fontSize: 22, fontWeight: "800", color: "#1e3a6e", marginBottom: 12 }}>
+                                {pr.amountUsdc.toFixed(2)} <Text style={{ fontSize: 14, fontWeight: "500", color: "#6b7280" }}>USDC each</Text>
+                            </Text>
+
+                            {/* Divider */}
+                            <View style={{ height: 1, backgroundColor: "#f3f4f6", marginBottom: 12 }} />
+
+                            {/* Payer avatars */}
+                            {payerEntries.length > 0 && (
+                                <View style={{ marginBottom: 10 }}>
+                                    <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 6 }}>
+                                        {payerEntries.slice(0, 6).map(([uid, entry], i) => (
+                                            <View
+                                                key={uid}
+                                                style={{
+                                                    width: 30, height: 30, borderRadius: 15,
+                                                    marginLeft: i === 0 ? 0 : -8,
+                                                    borderWidth: 2, borderColor: "white",
+                                                    overflow: "hidden",
+                                                    backgroundColor: "#dbeafe",
+                                                    zIndex: payerEntries.length - i,
+                                                }}
+                                            >
+                                                {entry.avatarUrl ? (
+                                                    <Image source={{ uri: entry.avatarUrl }} style={{ width: "100%", height: "100%" }} />
+                                                ) : (
+                                                    <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
+                                                        <Text style={{ fontSize: 11, fontWeight: "700", color: "#1e3a6e" }}>
+                                                            {(entry.displayName ?? uid).slice(0, 1).toUpperCase()}
+                                                        </Text>
+                                                    </View>
+                                                )}
+                                            </View>
+                                        ))}
+                                        {payerEntries.length > 6 && (
+                                            <Text style={{ fontSize: 11, color: "#6b7280", marginLeft: 6 }}>+{payerEntries.length - 6} more</Text>
+                                        )}
+                                    </View>
+                                    <Text style={{ fontSize: 12, color: "#6b7280" }}>
+                                        {payerEntries.length} paid · <Text style={{ fontWeight: "700", color: "#059669" }}>{pr.totalCollected.toFixed(2)} USDC collected</Text>
+                                    </Text>
+                                </View>
+                            )}
+
+                            {/* Action button */}
+                            {iHavePaid ? (
+                                <View style={{ backgroundColor: "#d1fae5", borderRadius: 10, paddingVertical: 10, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 6 }}>
+                                    <Ionicons name="checkmark-circle" size={16} color="#059669" />
+                                    <Text style={{ fontSize: 13, color: "#059669", fontWeight: "700" }}>You paid</Text>
+                                </View>
+                            ) : (
+                                <TouchableOpacity
+                                    onPress={() => handlePayNow(item.id, pr.recipientAddress, pr.amountUsdc, pr.useDevnet ?? false)}
+                                    style={{ backgroundColor: "#1e3a6e", borderRadius: 10, paddingVertical: 12, alignItems: "center" }}
+                                >
+                                    <Text style={{ color: "white", fontWeight: "700", fontSize: 14 }}>
+                                        Pay {pr.amountUsdc.toFixed(2)} USDC
+                                    </Text>
+                                </TouchableOpacity>
+                            )}
+                        </View>
+                    </View>
+
+                    {/* Timestamp */}
+                    {item.createdAt && (
+                        <Text style={{ fontSize: 10, color: "#9ca3af", marginTop: 4 }}>
+                            {item.createdAt.toDate().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                        </Text>
+                    )}
+                </View>
+            );
+        }
 
         return (
             <View
@@ -1880,6 +2153,12 @@ export default function ChatScreen() {
                     visible={mediaSheetVisible}
                     onClose={() => setMediaSheetVisible(false)}
                     onPick={(uri, type) => setPendingMedia({ uri, type })}
+                    onPaymentRequest={() => setPaymentRequestSheetVisible(true)}
+                />
+                <PaymentRequestSheet
+                    visible={paymentRequestSheetVisible}
+                    onClose={() => setPaymentRequestSheetVisible(false)}
+                    onSend={handleSendPaymentRequest}
                 />
                 <EmojiPicker
                     visible={pickerVisible}

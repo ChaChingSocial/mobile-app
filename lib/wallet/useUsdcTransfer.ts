@@ -274,15 +274,22 @@ export function useUsdcTransfer(): UsdcTransferHook {
         await phantomConnector.connect(cluster);
       }
 
-      const senderAta = findAssociatedTokenAddress(senderPk, usdcMint);
-      const recipientAta = findAssociatedTokenAddress(recipientPk, usdcMint);
-
-      const senderAtaInfo = await connection.getAccountInfo(senderAta);
-      if (!senderAtaInfo) {
+      // Find the sender's USDC token account directly — more reliable than
+      // computing the ATA and calling getAccountInfo (which can return null
+      // on the public RPC due to rate-limiting even when the account exists).
+      const senderTokenAccounts = await connection.getParsedTokenAccountsByOwner(
+        senderPk,
+        { mint: usdcMint }
+      );
+      if (senderTokenAccounts.value.length === 0) {
+          console.log("senderTokenAccounts", senderTokenAccounts);
         throw new Error(
           "USDC account not found — your wallet has no USDC on this network."
         );
       }
+      const senderAta = senderTokenAccounts.value[0].pubkey;
+
+      const recipientAta = findAssociatedTokenAddress(recipientPk, usdcMint);
 
       const tx = new Transaction();
       const { blockhash } = await connection.getLatestBlockhash("confirmed");
@@ -300,6 +307,17 @@ export function useUsdcTransfer(): UsdcTransferHook {
       tx.feePayer = senderPk;
       tx.recentBlockhash = blockhash;
 
+      // Phantom's recommended deeplink flow is signAndSendTransaction (one
+      // round-trip: Phantom signs AND broadcasts, returning the signature).
+      // Using signTransaction + sendRawTransaction causes "Unexpected error"
+      // because Phantom re-simulates the tx on its end and the manual broadcast
+      // can race with its own broadcast attempt.
+      if (connectedWallet.name === "Phantom") {
+        const result = await phantomConnector.signAndSendTransaction(tx);
+        return result.signature;
+      }
+
+      // Backpack / Solflare: sign then broadcast manually
       const signResponse = await connectedWallet.connector.signTransaction(tx);
       const signedBytes = extractSignedTransactionBytes(signResponse);
       if (!signedBytes) {
