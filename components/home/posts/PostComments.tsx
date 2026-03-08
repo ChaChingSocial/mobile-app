@@ -63,28 +63,28 @@ export const PostComments = ({
     <Box>
       {sortedComments.length > 0 && (
         <Box className="mt-4 relative ">
-          {!canViewComments && (
-            <Pressable
-              className="absolute top-0 left-0 w-full h-full items-center justify-center rounded-xl overflow-hidden"
-              onPress={() => setIsAuthModalOpen(true)}
-              style={{ zIndex: 10 }}
-            >
-              <BlurView
-                intensity={30}
-                tint="dark"
-                className="absolute top-0 left-0 w-full h-full"
-              />
-              <Button
-                onPress={() => setIsAuthModalOpen(true)}
-                className="bg-purple-700 px-6 py-2 rounded-lg"
-              >
-                <Text className="text-white text-base font-semibold">
-                  Login to view more comments
-                </Text>
-              </Button>
-            </Pressable>
-          )}
-          {canViewComments && showComments ? (
+          {/*{!canViewComments && (*/}
+          {/*  <Pressable*/}
+          {/*    className="absolute top-0 left-0 w-full h-full items-center justify-center rounded-xl overflow-hidden"*/}
+          {/*    onPress={() => setIsAuthModalOpen(true)}*/}
+          {/*    style={{ zIndex: 10 }}*/}
+          {/*  >*/}
+          {/*    <BlurView*/}
+          {/*      intensity={30}*/}
+          {/*      tint="dark"*/}
+          {/*      className="absolute top-0 left-0 w-full h-full"*/}
+          {/*    />*/}
+          {/*    <Button*/}
+          {/*      onPress={() => setIsAuthModalOpen(true)}*/}
+          {/*      className="bg-purple-700 px-6 py-2 rounded-lg"*/}
+          {/*    >*/}
+          {/*      <Text className="text-white text-base font-semibold">*/}
+          {/*        Login to view more comments*/}
+          {/*      </Text>*/}
+          {/*    </Button>*/}
+          {/*  </Pressable>*/}
+          {/*)}*/}
+          {showComments ? (
             sortedComments.map((comment, index) => (
               <Box key={index} className="mt-3 mb-3">
                 <Comment comment={comment} post={post} />
