@@ -59,6 +59,7 @@ import {Colors} from "@/lib/constants/Colors";
 import BackgroundImageModal from "@/components/profile/BackgroundImageModal";
 import EarningsTab from "@/components/profile/EarningsTab";
 import { Connection, PublicKey, clusterApiUrl } from "@solana/web3.js";
+import { fetchNftMetadata } from "@/lib/wallet/fetchNftMetadata";
 
 // ── Collapsible section row ──────────────────────────────────────────────────
 function CollapsibleSection({
@@ -91,6 +92,9 @@ function CollapsibleSection({
 
 type WalletNftPreview = {
   mint: string;
+  name?: string;
+  imageUri?: string;
+  cluster?: "mainnet-beta" | "devnet";
 };
 
 const SOLANA_TOKEN_PROGRAM_ID = new PublicKey(
@@ -565,7 +569,10 @@ export default function Profile() {
           "mainnet-beta",
           "devnet",
         ];
-        const nftMints = new Set<string>();
+        const mintsByCluster: Record<"mainnet-beta" | "devnet", string[]> = {
+          "mainnet-beta": [],
+          devnet: [],
+        };
 
         for (const cluster of clusters) {
           const connection = new Connection(clusterApiUrl(cluster), "confirmed");
@@ -582,15 +589,32 @@ export default function Profile() {
             ...tokenAccounts.value,
             ...token2022Accounts.value,
           ]);
-          clusterNfts.forEach((mint) => nftMints.add(mint));
+          mintsByCluster[cluster] = Array.from(clusterNfts).slice(0, 24);
         }
 
+        const [mainnetMeta, devnetMeta] = await Promise.all([
+          fetchNftMetadata(mintsByCluster["mainnet-beta"], "mainnet-beta"),
+          fetchNftMetadata(mintsByCluster["devnet"], "devnet"),
+        ]);
+
+        // Mints that had no on-chain metadata — show as fallback entries
+        const enrichedMints = new Set([
+          ...mainnetMeta.map((n) => n.mint),
+          ...devnetMeta.map((n) => n.mint),
+        ]);
+        const fallbackMints: WalletNftPreview[] = [
+          ...mintsByCluster["mainnet-beta"],
+          ...mintsByCluster["devnet"],
+        ]
+          .filter((m) => !enrichedMints.has(m))
+          .map((mint) => ({ mint }));
+
         if (!isCancelled) {
-          setWalletNfts(
-            Array.from(nftMints)
-              .slice(0, 24)
-              .map((mint) => ({ mint }))
-          );
+          setWalletNfts([
+            ...mainnetMeta.map((n) => ({ ...n, cluster: "mainnet-beta" as const })),
+            ...devnetMeta.map((n) => ({ ...n, cluster: "devnet" as const })),
+            ...fallbackMints,
+          ]);
         }
       } catch (error) {
         console.error("Error fetching connected wallet NFTs:", error);
@@ -943,16 +967,51 @@ export default function Profile() {
               No NFTs are owned or connected with this wallet.
             </Text>
           ) : (
-            <View className="px-4 pb-4 gap-2">
+            <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 6, paddingHorizontal: 16, paddingBottom: 16 }}>
               {walletNfts.map((nft, index) => (
                 <View
                   key={`${nft.mint}-${index}`}
-                  className="bg-[#f3f4f6] rounded-lg px-3 py-2"
+                  style={{
+                    width: "31.5%",
+                    aspectRatio: 1,
+                    borderRadius: 10,
+                    overflow: "hidden",
+                    backgroundColor: "#f3f4f6",
+                  }}
                 >
-                  <Text className="text-gray-700 text-xs">
-                    NFT {index + 1}: {nft.mint.slice(0, 6)}...
-                    {nft.mint.slice(-6)}
-                  </Text>
+                  {nft.imageUri ? (
+                    <Image
+                      source={{ uri: nft.imageUri }}
+                      style={{ width: "100%", height: "100%" }}
+                      resizeMode="cover"
+                    />
+                  ) : (
+                    <View style={{ flex: 1, alignItems: "center", justifyContent: "center", padding: 4 }}>
+                      <Text style={{ fontSize: 9, color: "#9ca3af", textAlign: "center" }}>
+                        {nft.mint.slice(0, 6)}...{nft.mint.slice(-4)}
+                      </Text>
+                    </View>
+                  )}
+                  {nft.name ? (
+                    <View
+                      style={{
+                        position: "absolute",
+                        bottom: 0,
+                        left: 0,
+                        right: 0,
+                        backgroundColor: "rgba(0,0,0,0.55)",
+                        paddingVertical: 3,
+                        paddingHorizontal: 4,
+                      }}
+                    >
+                      <Text
+                        style={{ color: "white", fontSize: 9, fontWeight: "600" }}
+                        numberOfLines={1}
+                      >
+                        {nft.name}
+                      </Text>
+                    </View>
+                  ) : null}
                 </View>
               ))}
             </View>

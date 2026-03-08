@@ -23,6 +23,25 @@ import {
 
 const db = getFirestore(app);
 
+/** One entry per person who paid a payment request. */
+export interface PaymentEntry {
+  txSignature: string;
+  amountUsdc: number;
+  paidAt: Timestamp | null;
+  avatarUrl?: string;
+  displayName?: string;
+}
+
+/** Embedded payload on a payment-request message. */
+export interface PaymentRequestPayload {
+  amountUsdc: number;                      // amount each payer sends
+  description: string;                     // e.g. "Dinner split 🍕"
+  recipientAddress: string;               // wallet address that receives funds
+  payers: Record<string, PaymentEntry>;   // userId → payment details
+  totalCollected: number;                  // running sum of USDC received
+  useDevnet: boolean;                      // which Solana network to use
+}
+
 export interface Message {
   id: string;
   text: string;
@@ -35,6 +54,9 @@ export interface Message {
   replyToId?: string;                   // ID of the message being replied to
   replyToText?: string;                 // Quoted text snippet
   replyToSenderName?: string;           // Display name of quoted sender
+  // Payment request fields
+  type?: "paymentRequest";
+  paymentRequest?: PaymentRequestPayload;
 }
 
 /** Per-sender budget stored on the conversation document. */
@@ -481,5 +503,81 @@ export async function getMessageEarnings(
   }
 
   return earnings;
+}
+
+/**
+ * Creates a payment-request message in the conversation.
+ * Returns the new Firestore message ID.
+ */
+export async function sendPaymentRequest(
+  conversationId: string,
+  senderId: string,
+  amountUsdc: number,
+  description: string,
+  recipientAddress: string,
+  useDevnet: boolean = false
+): Promise<string> {
+  const messagesRef = collection(db, "conversations", conversationId, "messages");
+
+  const docRef = await addDoc(messagesRef, {
+    text: "",
+    senderId,
+    createdAt: serverTimestamp(),
+    read: false,
+    type: "paymentRequest",
+    paymentRequest: {
+      amountUsdc,
+      description,
+      recipientAddress,
+      payers: {},
+      totalCollected: 0,
+      useDevnet,
+    },
+  });
+
+  // Update conversation preview
+  const conversationRef = doc(db, "conversations", conversationId);
+  const convSnap = await getDoc(conversationRef);
+  const updateData: Record<string, any> = {
+lastMessage: `💰 Payment request: ${amountUsdc} SOL`,
+    lastMessageAt: serverTimestamp(),
+    lastMessageBy: senderId,
+  };
+  if (convSnap.exists()) {
+    const participants: string[] = convSnap.data().participants ?? [];
+    participants.forEach((pid) => {
+      if (pid !== senderId) {
+        updateData[`unreadCounts.${pid}`] = increment(1);
+      }
+    });
+  }
+  await updateDoc(conversationRef, updateData);
+
+  return docRef.id;
+}
+
+/**
+ * Records a payment on a payment-request message and updates the running total.
+ */
+export async function recordPayment(
+  conversationId: string,
+  messageId: string,
+  payerId: string,
+  txSignature: string,
+  amountUsdc: number,
+  avatarUrl?: string,
+  displayName?: string
+): Promise<void> {
+  const messageRef = doc(db, "conversations", conversationId, "messages", messageId);
+  await updateDoc(messageRef, {
+    [`paymentRequest.payers.${payerId}`]: {
+      txSignature,
+      amountUsdc,
+      paidAt: serverTimestamp(),
+      ...(avatarUrl ? { avatarUrl } : {}),
+      ...(displayName ? { displayName } : {}),
+    },
+    "paymentRequest.totalCollected": increment(amountUsdc),
+  });
 }
 
