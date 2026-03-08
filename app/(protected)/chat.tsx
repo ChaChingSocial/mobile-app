@@ -20,7 +20,6 @@ import {
     updateConversationGradient,
 } from "@/lib/api/messages";
 import { getAllUsers, getUserProfile, getUserMessagePricing } from "@/lib/api/user";
-import { useUsdcTransfer, UsdcTransferHook } from "@/lib/wallet/useUsdcTransfer";
 import { useSession } from "@/lib/providers/AuthContext";
 import { Colors } from "@/lib/constants/Colors";
 import { app } from "@/config/firebase";
@@ -44,6 +43,8 @@ import {
     TextInput,
     TouchableOpacity,
     View,
+    ScrollView,
+    Keyboard,
 } from "react-native";
 import {
     Avatar,
@@ -53,8 +54,206 @@ import {
 import { VideoView, useVideoPlayer } from "expo-video";
 import LinearGradient from "react-native-linear-gradient";
 import { gradients, getGradientByName, getGradientForKey } from "@/lib/constants/gradients";
+import { Buffer } from "buffer";
+import { Connection, PublicKey, SystemProgram, Transaction, TransactionInstruction, clusterApiUrl, SYSVAR_RENT_PUBKEY, LAMPORTS_PER_SOL } from "@solana/web3.js";
+import { useBackpackDeeplinkWalletConnector, useDeeplinkWalletConnector } from "@privy-io/expo/connectors";
+import { usePhantomClusterConnector } from "@/lib/wallet/usePhantomClusterConnector";
+import { submitFunding, SOL } from "@/lib/utils/funding";
+import PaymentRequestSheet from "@/components/PaymentRequestSheet";
+import AddUserSheet from "@/components/AddUserSheet";
 
 const EMOJIS = ["❤️", "😂", "😮", "😢", "👍", "🔥"];
+
+// ── USDC transfer helpers (mirrors communities funding flow) ───────────────────
+const USDC_MAINNET_MINT = new PublicKey("EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v");
+const USDC_DEVNET_MINT = new PublicKey("4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU");
+const TOKEN_PROGRAM_ID = new PublicKey("TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA");
+const ASSOCIATED_TOKEN_PROGRAM_ID = new PublicKey("ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL");
+
+const writeBigUInt64LE = (buffer: Buffer, value: bigint, offset: number) => {
+  let remaining = value;
+  for (let i = 0; i < 8; i++) {
+    buffer[offset + i] = Number(remaining & 0xffn);
+    remaining >>= 8n;
+  }
+};
+
+const findAssociatedTokenAddress = (owner: PublicKey, mint: PublicKey): PublicKey =>
+  PublicKey.findProgramAddressSync(
+    [owner.toBuffer(), TOKEN_PROGRAM_ID.toBuffer(), mint.toBuffer()],
+    ASSOCIATED_TOKEN_PROGRAM_ID
+  )[0];
+
+const buildCreateAtaInstruction = (
+  payer: PublicKey,
+  ata: PublicKey,
+  owner: PublicKey,
+  mint: PublicKey
+): TransactionInstruction =>
+  new TransactionInstruction({
+    programId: ASSOCIATED_TOKEN_PROGRAM_ID,
+    keys: [
+      { pubkey: payer, isSigner: true, isWritable: true },
+      { pubkey: ata, isSigner: false, isWritable: true },
+      { pubkey: owner, isSigner: false, isWritable: false },
+      { pubkey: mint, isSigner: false, isWritable: false },
+      { pubkey: SystemProgram.programId, isSigner: false, isWritable: false },
+      { pubkey: TOKEN_PROGRAM_ID, isSigner: false, isWritable: false },
+      { pubkey: SYSVAR_RENT_PUBKEY, isSigner: false, isWritable: false },
+    ],
+    data: Buffer.alloc(0),
+  });
+
+const buildTransferCheckedInstruction = (
+  source: PublicKey,
+  mint: PublicKey,
+  destination: PublicKey,
+  owner: PublicKey,
+  amount: bigint,
+  decimals: number
+): TransactionInstruction => {
+  const data = Buffer.alloc(10);
+  data[0] = 12; // TransferChecked instruction
+  writeBigUInt64LE(data, amount, 1);
+  data[9] = decimals;
+  return new TransactionInstruction({
+    programId: TOKEN_PROGRAM_ID,
+    keys: [
+      { pubkey: source, isSigner: false, isWritable: true },
+      { pubkey: mint, isSigner: false, isWritable: false },
+      { pubkey: destination, isSigner: false, isWritable: true },
+      { pubkey: owner, isSigner: true, isWritable: false },
+    ],
+    data,
+  });
+};
+
+const decodeBase58 = (input: string): Uint8Array => {
+  const alphabet = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
+  const map = new Map(alphabet.split("").map((c, i) => [c, i] as const));
+  const bytes = [0];
+  for (let i = 0; i < input.length; i++) {
+    const value = map.get(input[i]);
+    if (value === undefined) throw new Error("Invalid base58");
+    let carry = value;
+    for (let j = 0; j < bytes.length; j++) {
+      carry += bytes[j] * 58;
+      bytes[j] = carry & 0xff;
+      carry >>= 8;
+    }
+    while (carry > 0) {
+      bytes.push(carry & 0xff);
+      carry >>= 8;
+    }
+  }
+  let leadingZeroCount = 0;
+  while (leadingZeroCount < input.length && input[leadingZeroCount] === alphabet[0]) leadingZeroCount++;
+  const decoded = new Uint8Array(leadingZeroCount + bytes.length);
+  for (let i = 0; i < bytes.length; i++) decoded[decoded.length - 1 - i] = bytes[i];
+  return decoded;
+};
+
+const tryDecodeSignedTransaction = (encoded: string): Uint8Array | null => {
+  for (const decode of [() => decodeBase58(encoded), () => Uint8Array.from(Buffer.from(encoded, "base64"))]) {
+    try {
+      const decoded = decode();
+      Transaction.from(Buffer.from(decoded));
+      return decoded;
+    } catch {}
+  }
+  return null;
+};
+
+const extractSignedTransactionBytes = (response: unknown): Uint8Array | null => {
+  const candidateKeys = ["transaction", "signedTransaction", "signed_transaction", "serializedTransaction", "serialized_transaction", "signature"];
+  const obj = response && typeof response === "object" ? (response as Record<string, unknown>) : null;
+  if (!obj) return null;
+  for (const key of candidateKeys) {
+    const value: any = obj[key as keyof typeof obj];
+    if (typeof value === "string" && value.length > 0) {
+      const decoded = tryDecodeSignedTransaction(value);
+      if (decoded) return decoded;
+    }
+    if (Array.isArray(value) && value.every((x) => typeof x === "number")) {
+      try {
+        const bytes = Uint8Array.from(value as number[]);
+        Transaction.from(Buffer.from(bytes));
+        return bytes;
+      } catch {}
+    }
+  }
+  return null;
+};
+
+async function transferUsdcViaConnectedWallet(
+  connected: { name: "Phantom" | "Backpack" | "Solflare"; address: string; connector: any },
+  toAddress: string,
+  amountUsdc: number,
+  useDevnet: boolean
+): Promise<string> {
+  const cluster = useDevnet ? "devnet" : ("mainnet-beta" as const);
+  // Ensure Phantom cluster matches
+  if (connected.name === "Phantom" && connected.connector.sessionCluster !== cluster) {
+    await connected.connector.connect(cluster);
+  }
+  const connection = new Connection(clusterApiUrl(cluster), "confirmed");
+  const senderPk = new PublicKey(connected.address);
+  const recipientPk = new PublicKey(toAddress);
+  const mint = useDevnet ? USDC_DEVNET_MINT : USDC_MAINNET_MINT;
+  const senderAta = findAssociatedTokenAddress(senderPk, mint);
+  const recipientAta = findAssociatedTokenAddress(recipientPk, mint);
+
+  const senderAtaInfo = await connection.getAccountInfo(senderAta);
+  if (!senderAtaInfo) {
+    throw new Error("USDC account not found — your wallet has no USDC on this network.");
+  }
+
+  const tx = new Transaction();
+  const { blockhash } = await connection.getLatestBlockhash("confirmed");
+  const recipientAtaInfo = await connection.getAccountInfo(recipientAta);
+  if (!recipientAtaInfo) {
+    tx.add(buildCreateAtaInstruction(senderPk, recipientAta, recipientPk, mint));
+  }
+  const amountMicro = BigInt(Math.round(amountUsdc * 1_000_000));
+  tx.add(buildTransferCheckedInstruction(senderAta, mint, recipientAta, senderPk, amountMicro, 6));
+  tx.feePayer = senderPk;
+  tx.recentBlockhash = blockhash;
+
+  const signResponse = await connected.connector.signTransaction(tx);
+  const signedBytes = extractSignedTransactionBytes(signResponse) ?? new Uint8Array(tx.serialize({ requireAllSignatures: false }));
+  const signature = await connection.sendRawTransaction(signedBytes, { preflightCommitment: "confirmed", skipPreflight: false, maxRetries: 3 });
+  return signature;
+}
+
+async function transferSolViaConnectedWallet(
+  connected: { name: "Phantom" | "Backpack" | "Solflare"; address: string; connector: any },
+  toAddress: string,
+  amountSol: number,
+  useDevnet: boolean
+): Promise<string> {
+  const cluster = useDevnet ? "devnet" : ("mainnet-beta" as const);
+  if (connected.name === "Phantom" && connected.connector.sessionCluster !== cluster) {
+    await connected.connector.connect(cluster);
+  }
+  const connection = new Connection(clusterApiUrl(cluster), "confirmed");
+  const senderPk = new PublicKey(connected.address);
+  const recipientPk = new PublicKey(toAddress);
+  const tx = new Transaction();
+  const { blockhash } = await connection.getLatestBlockhash("confirmed");
+  tx.add(
+    SystemProgram.transfer({
+      fromPubkey: senderPk,
+      toPubkey: recipientPk,
+      lamports: Math.round(amountSol * LAMPORTS_PER_SOL),
+    })
+  );
+  tx.feePayer = senderPk;
+  tx.recentBlockhash = blockhash;
+  const signResponse = await connected.connector.signTransaction(tx);
+  const signedBytes = extractSignedTransactionBytes(signResponse) ?? new Uint8Array(tx.serialize({ requireAllSignatures: false }));
+  const signature = await connection.sendRawTransaction(signedBytes, { preflightCommitment: "confirmed", skipPreflight: false, maxRetries: 3 });
+  return signature;
+}
 
 // ── Upload helper ─────────────────────────────────────────────────────────────
 async function uploadChatMedia(
@@ -147,119 +346,6 @@ function MediaPickerSheet({
                         </TouchableOpacity>
                     ))}
                 </View>
-            </Pressable>
-        </Modal>
-    );
-}
-
-// ── Payment request sheet ─────────────────────────────────────────────────────
-function PaymentRequestSheet({
-    visible,
-    onClose,
-    onSend,
-}: {
-    visible: boolean;
-    onClose: () => void;
-    onSend: (amountUsdc: number, description: string, useDevnet: boolean) => Promise<void>;
-}) {
-    const [amount, setAmount] = React.useState("");
-    const [description, setDescription] = React.useState("");
-    const [useDevnet, setUseDevnet] = React.useState(false);
-    const [sending, setSending] = React.useState(false);
-
-    const handleSend = async () => {
-        const parsed = parseFloat(amount);
-        if (!parsed || parsed <= 0 || !description.trim()) return;
-        setSending(true);
-        try {
-            await onSend(parsed, description.trim(), useDevnet);
-            setAmount("");
-            setDescription("");
-            onClose();
-        } catch (e) {
-            console.error("Payment request error", e);
-        } finally {
-            setSending(false);
-        }
-    };
-
-    if (!visible) return null;
-    return (
-        <Modal transparent animationType="slide" visible={visible} onRequestClose={onClose}>
-            <Pressable
-                style={{ flex: 1, backgroundColor: "rgba(0,0,0,0.4)", justifyContent: "flex-end" }}
-                onPress={onClose}
-            >
-                <Pressable onPress={() => {}}>
-                    <View style={{ backgroundColor: "white", borderTopLeftRadius: 24, borderTopRightRadius: 24, paddingHorizontal: 20, paddingBottom: 40 }}>
-                        <View style={{ width: 40, height: 4, backgroundColor: "#e5e7eb", borderRadius: 2, alignSelf: "center", marginTop: 12, marginBottom: 20 }} />
-                        <Text style={{ fontSize: 18, fontWeight: "700", color: "#1f2937", marginBottom: 4 }}>Request Payment</Text>
-                        <Text style={{ fontSize: 13, color: "#6b7280", marginBottom: 20 }}>
-                            Anyone in this chat can pay. Their avatar will appear on the message.
-                        </Text>
-
-                        {/* Amount */}
-                        <Text style={{ fontSize: 13, fontWeight: "600", color: "#374151", marginBottom: 6 }}>Amount (USDC)</Text>
-                        <View style={{ flexDirection: "row", alignItems: "center", backgroundColor: "#f9fafb", borderWidth: 1, borderColor: "#e5e7eb", borderRadius: 12, paddingHorizontal: 14, marginBottom: 16 }}>
-                            <Text style={{ fontSize: 18, color: "#9ca3af", marginRight: 4 }}>$</Text>
-                            <TextInput
-                                value={amount}
-                                onChangeText={setAmount}
-                                keyboardType="decimal-pad"
-                                placeholder="0.00"
-                                placeholderTextColor="#9ca3af"
-                                style={{ flex: 1, fontSize: 20, fontWeight: "600", color: "#1f2937", paddingVertical: 14 }}
-                            />
-                            <Text style={{ fontSize: 14, color: "#6b7280" }}>USDC</Text>
-                        </View>
-
-                        {/* Description */}
-                        <Text style={{ fontSize: 13, fontWeight: "600", color: "#374151", marginBottom: 6 }}>What's it for?</Text>
-                        <TextInput
-                            value={description}
-                            onChangeText={setDescription}
-                            placeholder="e.g. Dinner split, event tickets…"
-                            placeholderTextColor="#9ca3af"
-                            maxLength={80}
-                            style={{ backgroundColor: "#f9fafb", borderWidth: 1, borderColor: "#e5e7eb", borderRadius: 12, paddingHorizontal: 14, paddingVertical: 14, fontSize: 15, color: "#1f2937", marginBottom: 16 }}
-                        />
-
-                        {/* Network toggle */}
-                        <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 24 }}>
-                            <View>
-                                <Text style={{ fontSize: 13, fontWeight: "600", color: "#374151" }}>Use Devnet</Text>
-                                <Text style={{ fontSize: 11, color: "#9ca3af", marginTop: 1 }}>
-                                    {useDevnet ? "Devnet USDC (testing)" : "Mainnet USDC (real)"}
-                                </Text>
-                            </View>
-                            <Switch
-                                value={useDevnet}
-                                onValueChange={setUseDevnet}
-                                trackColor={{ false: "#e5e7eb", true: "#93c5fd" }}
-                                thumbColor={useDevnet ? "#1e3a6e" : "#9ca3af"}
-                            />
-                        </View>
-
-                        <TouchableOpacity
-                            onPress={handleSend}
-                            disabled={sending || !amount || !description.trim()}
-                            style={{
-                                backgroundColor: sending || !amount || !description.trim() ? "#93c5fd" : "#1e3a6e",
-                                borderRadius: 14,
-                                paddingVertical: 15,
-                                alignItems: "center",
-                            }}
-                        >
-                            {sending ? (
-                                <ActivityIndicator color="white" />
-                            ) : (
-                                <Text style={{ color: "white", fontWeight: "700", fontSize: 16 }}>
-                                    Send Request
-                                </Text>
-                            )}
-                        </TouchableOpacity>
-                    </View>
-                </Pressable>
             </Pressable>
         </Modal>
     );
@@ -468,160 +554,6 @@ function VideoMessagePlayer({ uri }: { uri: string }) {
     );
 }
 
-// ── Add user bottom sheet ─────────────────────────────────────────────────────
-function AddUserSheet({
-                          visible,
-                          onClose,
-                          onAdd,
-                          existingParticipantIds,
-                          currentUserId,
-                          addingUserId,
-                      }: {
-    visible: boolean;
-    onClose: () => void;
-    onAdd: (user: any) => void;
-    existingParticipantIds: string[];
-    currentUserId: string;
-    addingUserId: string | null;
-}) {
-    const [query, setQuery] = useState("");
-    const [allUsers, setAllUsers] = useState<any[]>([]);
-    const [loadingUsers, setLoadingUsers] = useState(false);
-
-    useEffect(() => {
-        if (!visible) {
-            setQuery("");
-            return;
-        }
-        setLoadingUsers(true);
-        getAllUsers()
-            .then(setAllUsers)
-            .catch(console.error)
-            .finally(() => setLoadingUsers(false));
-    }, [visible]);
-
-    const filtered = allUsers.filter((u) => {
-        const id = u.userId || u.id;
-        if (!id || id === currentUserId) return false;
-        if (existingParticipantIds.includes(id)) return false;
-        const name = (u.displayName || "").toLowerCase();
-        return !query || name.includes(query.toLowerCase());
-    });
-
-    if (!visible) return null;
-
-    return (
-        <Modal transparent animationType="slide" visible={visible} onRequestClose={onClose}>
-            <Pressable
-                style={{ flex: 1, backgroundColor: "rgba(0,0,0,0.4)", justifyContent: "flex-end" }}
-                onPress={onClose}
-            >
-                {/* Inner container — Pressable with no-op to block backdrop close */}
-                <Pressable
-                    onPress={() => {}}
-                    style={{
-                        backgroundColor: "white",
-                        borderTopLeftRadius: 20,
-                        borderTopRightRadius: 20,
-                        paddingBottom: 36,
-                        maxHeight: "75%",
-                    }}
-                >
-                    {/* Drag handle */}
-                    <View style={{ width: 40, height: 4, backgroundColor: "#e5e7eb", borderRadius: 2, alignSelf: "center", marginVertical: 12 }} />
-
-                    <Text style={{ fontSize: 17, fontWeight: "700", color: "#1f2937", paddingHorizontal: 20, marginBottom: 12 }}>
-                        Add People
-                    </Text>
-
-                    {/* Search bar */}
-                    <View
-                        style={{
-                            flexDirection: "row",
-                            alignItems: "center",
-                            marginHorizontal: 16,
-                            backgroundColor: "#f3f4f6",
-                            borderRadius: 12,
-                            paddingHorizontal: 12,
-                            marginBottom: 8,
-                        }}
-                    >
-                        <Ionicons name="search-outline" size={18} color="#9ca3af" />
-                        <TextInput
-                            style={{ flex: 1, paddingVertical: 10, paddingHorizontal: 8, fontSize: 14, color: "#1f2937" }}
-                            placeholder="Search users..."
-                            placeholderTextColor="#9ca3af"
-                            value={query}
-                            onChangeText={setQuery}
-                            autoCapitalize="none"
-                        />
-                        {query.length > 0 && (
-                            <TouchableOpacity onPress={() => setQuery("")}>
-                                <Ionicons name="close-circle" size={18} color="#9ca3af" />
-                            </TouchableOpacity>
-                        )}
-                    </View>
-
-                    {/* User list */}
-                    {loadingUsers ? (
-                        <ActivityIndicator style={{ marginTop: 32, marginBottom: 32 }} color="#1e3a6e" />
-                    ) : (
-                        <FlatList
-                            data={filtered}
-                            keyExtractor={(item) => item.userId || item.id || Math.random().toString()}
-                            keyboardShouldPersistTaps="handled"
-                            renderItem={({ item }) => {
-                                const userId = item.userId || item.id;
-                                const isAdding = addingUserId === userId;
-                                return (
-                                    <TouchableOpacity
-                                        onPress={() => onAdd(item)}
-                                        disabled={!!addingUserId}
-                                        style={{
-                                            flexDirection: "row",
-                                            alignItems: "center",
-                                            paddingHorizontal: 20,
-                                            paddingVertical: 12,
-                                            gap: 12,
-                                            opacity: addingUserId && !isAdding ? 0.5 : 1,
-                                        }}
-                                    >
-                                        <Avatar size="sm">
-                                            <AvatarFallbackText>{item.displayName || "U"}</AvatarFallbackText>
-                                            <AvatarImage source={{ uri: item.photoURL || "" }} />
-                                        </Avatar>
-                                        <View style={{ flex: 1 }}>
-                                            <Text style={{ fontSize: 14, fontWeight: "600", color: "#1f2937" }}>
-                                                {item.displayName || "Unknown"}
-                                            </Text>
-                                            {item.bio ? (
-                                                <Text style={{ fontSize: 12, color: "#6b7280" }} numberOfLines={1}>
-                                                    {item.bio}
-                                                </Text>
-                                            ) : null}
-                                        </View>
-                                        {isAdding ? (
-                                            <ActivityIndicator size="small" color="#1e3a6e" />
-                                        ) : (
-                                            <Ionicons name="add-circle-outline" size={24} color="#1e3a6e" />
-                                        )}
-                                    </TouchableOpacity>
-                                );
-                            }}
-                            ListEmptyComponent={
-                                <View style={{ alignItems: "center", paddingTop: 32, paddingBottom: 16 }}>
-                                    <Text style={{ color: "#9ca3af", fontSize: 14 }}>
-                                        {query ? "No matching users" : "No users to add"}
-                                    </Text>
-                                </View>
-                            }
-                        />
-                    )}
-                </Pressable>
-            </Pressable>
-        </Modal>
-    );
-}
 
 // ── Budget setup / top-up bottom sheet ───────────────────────────────────────
 const MESSAGE_COUNT_PRESETS = [5, 10, 20, 50];
@@ -633,7 +565,6 @@ function BudgetSetupSheet({
                               recipientName,
                               recipientPricing,
                               currentBudget,
-                              usdcTransfer,
                           }: {
     visible: boolean;
     onClose: () => void;
@@ -641,11 +572,29 @@ function BudgetSetupSheet({
     recipientName: string;
     recipientPricing: { messagePrice: number; walletAddress: string };
     currentBudget: MessageBudget | null;
-    usdcTransfer: UsdcTransferHook;
 }) {
     const [selectedCount, setSelectedCount] = useState(10);
     const [paying, setPaying] = useState(false);
     const [useDevnet, setUseDevnet] = useState(true);
+    const [showWalletPicker, setShowWalletPicker] = useState(false);
+
+    // Wallet connectors (same pattern as communities funding)
+    const appUrl = (process.env.EXPO_PUBLIC_PRIVY_CONNECT_APP_URL as string | undefined) || "https://chachingsocial.io";
+    const phantom = usePhantomClusterConnector({ appUrl, redirectUri: "/" });
+    const backpack = useBackpackDeeplinkWalletConnector({ appUrl, redirectUri: "/" });
+    const solflare = useDeeplinkWalletConnector({ appUrl, baseUrl: "https://solflare.com", encryptionPublicKeyName: "solflare_encryption_public_key", redirectUri: "/" });
+
+    const connectedWallet =
+        phantom.isConnected && phantom.address
+            ? { name: "Phantom" as const, address: phantom.address, connector: phantom }
+            : backpack.isConnected && backpack.address
+                ? { name: "Backpack" as const, address: backpack.address, connector: backpack }
+                : solflare.isConnected && solflare.address
+                    ? { name: "Solflare" as const, address: solflare.address, connector: solflare }
+                    : null;
+
+    const isConnected = !!connectedWallet;
+
     const pricePerMsg = recipientPricing.messagePrice;
     const totalCost = parseFloat((selectedCount * pricePerMsg).toFixed(6));
 
@@ -653,13 +602,13 @@ function BudgetSetupSheet({
     const title = isTopUp ? "Top Up Messages" : `Message ${recipientName}`;
 
     const handlePay = async () => {
-        if (!usdcTransfer.isConnected) {
-            usdcTransfer.setShowWalletPicker(true);
+        if (!isConnected) {
+            setShowWalletPicker(true);
             return;
         }
         setPaying(true);
         try {
-            const sig = await usdcTransfer.transferUsdc(recipientPricing.walletAddress, totalCost, useDevnet);
+            const sig = await transferUsdcViaConnectedWallet(connectedWallet!, recipientPricing.walletAddress, totalCost, useDevnet);
             await onTopUp(selectedCount, sig, pricePerMsg, totalCost);
         } catch (error) {
             const msg = (error instanceof Error ? error.message : String(error)).toLowerCase();
@@ -670,15 +619,9 @@ function BudgetSetupSheet({
                 msg.includes("not been authorized") ||
                 msg.includes("not authorized") ||
                 msg.includes("method is not supported") ||
-                msg.includes("unexpected error") ||
-                msg.includes("ping reached") ||
                 msg.includes("wallet not connected")
             ) {
-                // User cancelled or wallet session expired — prompt reconnect
-                Alert.alert(
-                    "Wallet session issue",
-                    "Your wallet session may have expired. Please reconnect your wallet in Profile and try again."
-                );
+                Alert.alert("Wallet approval needed", "Wallet approval timed out or session expired. Reconnect and try again.");
             } else {
                 Alert.alert("Payment failed", "Could not process the USDC payment. Please try again.");
             }
@@ -771,14 +714,14 @@ function BudgetSetupSheet({
                             <Text style={{ fontSize: 12, color: "#6b7280" }}>
                                 {useDevnet ? "Devnet" : "Mainnet"}
                             </Text>
-                            <Switch value={useDevnet} onValueChange={setUseDevnet} disabled={paying || usdcTransfer.isTransferring} />
+                            <Switch value={useDevnet} onValueChange={setUseDevnet} disabled={paying} />
                         </View>
                     </View>
 
                     {/* Wallet status */}
-                    {usdcTransfer.isConnected ? (
+                    {isConnected ? (
                         <Text style={{ fontSize: 12, color: "#6b7280", marginBottom: 12, textAlign: "center" }}>
-                            Paying from {usdcTransfer.connectedAddress?.slice(0, 4)}…{usdcTransfer.connectedAddress?.slice(-4)}
+                            Paying from {connectedWallet?.address.slice(0, 4)}…{connectedWallet?.address.slice(-4)}
                         </Text>
                     ) : (
                         <Text style={{ fontSize: 12, color: "#d97706", marginBottom: 12, textAlign: "center" }}>
@@ -789,23 +732,34 @@ function BudgetSetupSheet({
                     {/* Pay button */}
                     <TouchableOpacity
                         onPress={handlePay}
-                        disabled={paying || usdcTransfer.isTransferring}
+                        disabled={paying}
                         style={{
-                            backgroundColor: paying || usdcTransfer.isTransferring ? "#9ca3af" : "#1e3a6e",
+                            backgroundColor: paying ? "#9ca3af" : "#1e3a6e",
                             borderRadius: 14,
                             paddingVertical: 16,
                             alignItems: "center",
                             marginBottom: 12,
                         }}
                     >
-                        {paying || usdcTransfer.isTransferring ? (
+                        {paying ? (
                             <ActivityIndicator color="white" />
                         ) : (
                             <Text style={{ color: "white", fontSize: 16, fontWeight: "700" }}>
-                                {usdcTransfer.isConnected ? `Pay $${totalCost.toFixed(2)} USDC` : "Connect Wallet & Pay"}
+                                {isConnected ? `Pay $${totalCost.toFixed(2)} USDC` : "Connect Wallet & Pay"}
                             </Text>
                         )}
                     </TouchableOpacity>
+
+                    {/* Wallet picker */}
+                    <WalletPickerModal
+                        visible={showWalletPicker}
+                        onClose={() => setShowWalletPicker(false)}
+                        onConnect={(w) => {
+                            if (w === "phantom") phantom.connect();
+                            else if (w === "backpack") backpack.connect();
+                            else solflare.connect();
+                        }}
+                    />
 
                     <TouchableOpacity onPress={onClose} style={{ alignItems: "center", paddingVertical: 8 }}>
                         <Text style={{ fontSize: 14, color: "#9ca3af" }}>Cancel</Text>
@@ -836,7 +790,7 @@ function WalletPickerModal({
                 <View style={{ backgroundColor: "white", borderTopLeftRadius: 24, borderTopRightRadius: 24, paddingHorizontal: 24, paddingBottom: 40 }}>
                     <View style={{ width: 40, height: 4, backgroundColor: "#e5e7eb", borderRadius: 2, alignSelf: "center", marginTop: 12, marginBottom: 20 }} />
                     <Text style={{ fontSize: 17, fontWeight: "700", color: "#1f2937", marginBottom: 6 }}>Connect Wallet</Text>
-                    <Text style={{ fontSize: 13, color: "#6b7280", marginBottom: 20 }}>Choose a wallet to send USDC</Text>
+<Text style={{ fontSize: 13, color: "#6b7280", marginBottom: 20 }}>Choose a wallet to pay</Text>
                     {(["phantom", "backpack", "solflare"] as const).map((w) => (
                         <TouchableOpacity
                             key={w}
@@ -883,7 +837,6 @@ export default function ChatScreen() {
     const [addingUserId, setAddingUserId] = useState<string | null>(null);
 
     // ── Per-message payment state ──────────────────────────────────────────────
-    const usdcTransfer = useUsdcTransfer();
     const [recipientPricing, setRecipientPricing] = useState<{
         messagePrice: number;
         walletAddress: string | null;
@@ -899,7 +852,8 @@ export default function ChatScreen() {
     } | null>(null);
 
     // Payment request sheet
-    const [paymentRequestSheetVisible, setPaymentRequestSheetVisible] = useState(false);
+    const [paymentRequestSheetVisible, setPaymentRequestSheetVisible] = useState<boolean>(false);
+
 
     // UI toggles
     const [mediaSheetVisible, setMediaSheetVisible] = useState(false);
@@ -1098,41 +1052,89 @@ export default function ChatScreen() {
     };
 
     // ── Payment request ───────────────────────────────────────────────────────
-    const handleSendPaymentRequest = async (amountUsdc: number, description: string, useDevnet: boolean) => {
+    const [showWalletPicker, setShowWalletPicker] = useState(false);
+
+    // Wallet connectors for request/pay-now flows
+    const appUrlForChat = (process.env.EXPO_PUBLIC_PRIVY_CONNECT_APP_URL as string | undefined) || "https://chachingsocial.io";
+    const phantomForChat = usePhantomClusterConnector({ appUrl: appUrlForChat, redirectUri: "/" });
+    const backpackForChat = useBackpackDeeplinkWalletConnector({ appUrl: appUrlForChat, redirectUri: "/" });
+    const solflareForChat = useDeeplinkWalletConnector({ appUrl: appUrlForChat, baseUrl: "https://solflare.com", encryptionPublicKeyName: "solflare_encryption_public_key", redirectUri: "/" });
+    const connectedWalletForChat =
+        phantomForChat.isConnected && phantomForChat.address
+            ? { name: "Phantom" as const, address: phantomForChat.address, connector: phantomForChat }
+            : backpackForChat.isConnected && backpackForChat.address
+                ? { name: "Backpack" as const, address: backpackForChat.address, connector: backpackForChat }
+                : solflareForChat.isConnected && solflareForChat.address
+                    ? { name: "Solflare" as const, address: solflareForChat.address, connector: solflareForChat }
+                    : null;
+
+const handleSendPaymentRequest = async (amountSol: number, description: string, useDevnet: boolean) => {
         if (!conversationId || !session?.uid) return;
-        const walletAddress = usdcTransfer.connectedAddress;
+        const walletAddress = connectedWalletForChat?.address;
         if (!walletAddress) {
-            usdcTransfer.setShowWalletPicker(true);
+            setShowWalletPicker(true);
             throw new Error("No wallet connected");
         }
-        await sendPaymentRequest(conversationId, session.uid, amountUsdc, description, walletAddress, useDevnet);
+await sendPaymentRequest(conversationId, session.uid, amountSol, description, walletAddress, useDevnet);
     };
 
-    const handlePayNow = async (
+const handlePayNow = async (
         messageId: string,
         recipientAddress: string,
-        amountUsdc: number,
-        useDevnet: boolean
+        amountSol: number,
+        useDevnet: boolean,
+        description?: string
     ) => {
         if (!conversationId || !session?.uid) return;
-        if (!usdcTransfer.isConnected) {
-            usdcTransfer.setShowWalletPicker(true);
+        if (!connectedWalletForChat) {
+            setShowWalletPicker(true);
             return;
         }
         try {
-            const txSignature = await usdcTransfer.transferUsdc(recipientAddress, amountUsdc, useDevnet);
+            // Use the shared funding helper which will prompt the wallet and return the signature
+            const result = await submitFunding(
+                amountSol,
+                SOL,
+                description ?? "Payment",
+                {
+                    connectedWallet: connectedWalletForChat,
+                    useDevnet,
+                    resolveCommunityFundingDestination: () => recipientAddress,
+                    onSetIsFunding: (v: boolean) => setSending(v),
+                    phantomWalletConnector: phantomForChat,
+                }
+            );
+
+            if (!result || !result.success) {
+                throw new Error("Payment failed");
+            }
+
+            const txSignature = result.signature as string;
             const profile = await getUserProfile(session.uid);
             await recordPayment(
                 conversationId,
                 messageId,
                 session.uid,
                 txSignature,
-                amountUsdc,
+                amountSol,
                 profile?.photoURL ?? undefined,
                 profile?.displayName ?? undefined
             );
         } catch (e: any) {
-            Alert.alert("Payment failed", e?.message ?? "Unknown error");
+            const msg = (e instanceof Error ? e.message : String(e ?? "")).toLowerCase();
+            if (msg.includes("usdc account not found")) {
+                Alert.alert("No USDC", "Your wallet doesn't have USDC on this network. Top up and try again.");
+            } else if (
+                msg.includes("timed out") ||
+                msg.includes("not been authorized") ||
+                msg.includes("not authorized") ||
+                msg.includes("unexpected error") ||
+                msg.includes("wallet not connected")
+            ) {
+                Alert.alert("Wallet approval needed", "Wallet approval timed out or session expired. Reconnect and try again.");
+            } else {
+                Alert.alert("Payment failed", e?.message ?? "Unknown error");
+            }
         }
     };
 
@@ -1395,8 +1397,8 @@ export default function ChatScreen() {
                                 {pr.description}
                             </Text>
                             {/* Amount */}
-                            <Text style={{ fontSize: 22, fontWeight: "800", color: "#1e3a6e", marginBottom: 12 }}>
-                                {pr.amountUsdc.toFixed(2)} <Text style={{ fontSize: 14, fontWeight: "500", color: "#6b7280" }}>USDC each</Text>
+                                <Text style={{ fontSize: 22, fontWeight: "800", color: "#1e3a6e", marginBottom: 12 }}>
+                                {pr.amountUsdc.toFixed(4)} <Text style={{ fontSize: 14, fontWeight: "500", color: "#6b7280" }}>SOL each</Text>
                             </Text>
 
                             {/* Divider */}
@@ -1434,7 +1436,7 @@ export default function ChatScreen() {
                                         )}
                                     </View>
                                     <Text style={{ fontSize: 12, color: "#6b7280" }}>
-                                        {payerEntries.length} paid · <Text style={{ fontWeight: "700", color: "#059669" }}>{pr.totalCollected.toFixed(2)} USDC collected</Text>
+                                        {payerEntries.length} paid · <Text style={{ fontWeight: "700", color: "#059669" }}>{pr.totalCollected.toFixed(4)} SOL collected</Text>
                                     </Text>
                                 </View>
                             )}
@@ -1447,11 +1449,11 @@ export default function ChatScreen() {
                                 </View>
                             ) : (
                                 <TouchableOpacity
-                                    onPress={() => handlePayNow(item.id, pr.recipientAddress, pr.amountUsdc, pr.useDevnet ?? false)}
+                                    onPress={() => handlePayNow(item.id, pr.recipientAddress, pr.amountUsdc, pr.useDevnet ?? false, pr.description)}
                                     style={{ backgroundColor: "#1e3a6e", borderRadius: 10, paddingVertical: 12, alignItems: "center" }}
                                 >
                                     <Text style={{ color: "white", fontWeight: "700", fontSize: 14 }}>
-                                        Pay {pr.amountUsdc.toFixed(2)} USDC
+                                            Pay {pr.amountUsdc.toFixed(4)} SOL
                                     </Text>
                                 </TouchableOpacity>
                             )}
@@ -1569,7 +1571,7 @@ export default function ChatScreen() {
                         {/* Timestamp */}
                         {item.createdAt && (
                             <View style={{ paddingHorizontal: 14, paddingBottom: 8, alignItems: isMe ? "flex-end" : "flex-start" }}>
-                                <Text style={{ fontSize: 10, color: isMe ? "#93c5fd" : "black" }}>
+                                <Text style={{ fontSize: 10, color: isMe ? "white" : "black" }}>
                                     {item.createdAt.toDate().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
                                 </Text>
                             </View>
@@ -1684,8 +1686,8 @@ export default function ChatScreen() {
     return (
         <KeyboardAvoidingView
             style={{ flex: 1 }}
-            behavior="padding"
-            keyboardVerticalOffset={Platform.OS === "ios" ? 90 : 0}
+            behavior={Platform.OS === "ios" ? "height" : undefined}
+            keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 0}
         >
             <LinearGradient colors={bgGradientColors()} style={{ flex: 1 }}>
                 {/* ── Custom header ── */}
@@ -1800,7 +1802,7 @@ export default function ChatScreen() {
                         style={{
                             backgroundColor: participantRowBg,
                             paddingHorizontal: 16,
-                            paddingVertical: 10,
+                            paddingVertical: 20,
                             borderBottomWidth: 1,
                             borderBottomColor: "rgba(255,255,255,0.12)",
                         }}
@@ -2186,15 +2188,18 @@ export default function ChatScreen() {
                         recipientName={headerTitle}
                         recipientPricing={recipientPricing as { messagePrice: number; walletAddress: string }}
                         currentBudget={senderBudget}
-                        usdcTransfer={usdcTransfer}
                     />
                 )}
 
-                {/* Wallet picker (triggered by BudgetSetupSheet when no wallet connected) */}
+                {/* Wallet picker for request/pay-now flows */}
                 <WalletPickerModal
-                    visible={usdcTransfer.showWalletPicker}
-                    onClose={() => usdcTransfer.setShowWalletPicker(false)}
-                    onConnect={usdcTransfer.connectWallet}
+                    visible={showWalletPicker}
+                    onClose={() => setShowWalletPicker(false)}
+                    onConnect={(w) => {
+                        if (w === "phantom") phantomForChat.connect();
+                        else if (w === "backpack") backpackForChat.connect();
+                        else solflareForChat.connect();
+                    }}
                 />
 
                 {/* Edit Chat modal — allows changing title and background gradient */}

@@ -20,7 +20,7 @@ import {
   useBackpackDeeplinkWalletConnector,
   useDeeplinkWalletConnector,
 } from "@privy-io/expo/connectors";
-import { usePhantomClusterConnector } from "./usePhantomClusterConnector";
+import { usePhantom } from "./PhantomContext";
 import { Buffer } from "buffer";
 
 // ── Constants ────────────────────────────────────────────────────────────────
@@ -190,11 +190,15 @@ export interface UsdcTransferHook {
   /** Transfer USDC from the connected wallet to `toAddress`. Returns the tx signature. */
   transferUsdc: (toAddress: string, amountUsdc: number, useDevnet?: boolean) => Promise<string>;
   connectedAddress: string | null;
+  /** Name of the currently connected wallet, or null if none. */
+  connectedWalletName: "Phantom" | "Backpack" | "Solflare" | null;
   isConnected: boolean;
   isTransferring: boolean;
   showWalletPicker: boolean;
   setShowWalletPicker: (v: boolean) => void;
   connectWallet: (wallet: "phantom" | "backpack" | "solflare") => Promise<void>;
+  /** Re-connects the wallet that is currently (or was last) connected. */
+  reconnectCurrentWallet: () => Promise<void>;
 }
 
 export function useUsdcTransfer(): UsdcTransferHook {
@@ -202,10 +206,10 @@ export function useUsdcTransfer(): UsdcTransferHook {
     (process.env.EXPO_PUBLIC_PRIVY_CONNECT_APP_URL as string | undefined) ||
     "https://chachingsocial.io";
 
-  const phantomConnector = usePhantomClusterConnector({
-    appUrl,
-    redirectUri: "/",
-  });
+  // Use the single shared Phantom instance from PhantomProvider (in the
+  // protected layout).  Creating a new hook here would register another
+  // Linking.addEventListener, causing competing handleRedirect calls.
+  const phantomConnector = usePhantom();
   const backpackConnector = useBackpackDeeplinkWalletConnector({
     appUrl,
     redirectUri: "/",
@@ -266,10 +270,16 @@ export function useUsdcTransfer(): UsdcTransferHook {
 
     setIsTransferring(true);
     try {
-      // Ensure Phantom is on the right cluster
+      // Only force a cluster switch when sessionCluster is a *known* value that
+      // differs from the target. If sessionCluster is undefined (Phantom's session
+      // token doesn't always embed the cluster), skip the reconnect — calling
+      // connect() with an undefined sessionCluster makes Phantom open the
+      // "connect" screen instead of the signing screen.
+      const phantomCluster = phantomConnector.sessionCluster;
       if (
         connectedWallet.name === "Phantom" &&
-        (phantomConnector as any).sessionCluster !== cluster
+        phantomCluster !== undefined &&
+        phantomCluster !== cluster
       ) {
         await phantomConnector.connect(cluster);
       }
@@ -336,13 +346,24 @@ export function useUsdcTransfer(): UsdcTransferHook {
     }
   };
 
+  const reconnectCurrentWallet = async () => {
+    const name = connectedWallet?.name;
+    if (name) {
+      await connectWallet(name.toLowerCase() as "phantom" | "backpack" | "solflare");
+    } else {
+      setShowWalletPicker(true);
+    }
+  };
+
   return {
     transferUsdc,
     connectedAddress: connectedWallet?.address ?? null,
+    connectedWalletName: connectedWallet?.name ?? null,
     isConnected: !!connectedWallet,
     isTransferring,
     showWalletPicker,
     setShowWalletPicker,
     connectWallet,
+    reconnectCurrentWallet,
   };
 }

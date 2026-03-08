@@ -539,7 +539,7 @@ export async function sendPaymentRequest(
   const conversationRef = doc(db, "conversations", conversationId);
   const convSnap = await getDoc(conversationRef);
   const updateData: Record<string, any> = {
-    lastMessage: `💰 Payment request: ${amountUsdc} USDC`,
+lastMessage: `💰 Payment request: ${amountUsdc} SOL`,
     lastMessageAt: serverTimestamp(),
     lastMessageBy: senderId,
   };

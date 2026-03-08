@@ -1,5 +1,6 @@
 import { DrawerProvider } from "@/lib/providers/DrawerContext";
 import { BlockedUsersProvider } from "@/lib/providers/BlockedUsersContext";
+import { PhantomProvider } from "@/lib/wallet/PhantomContext";
 import {
   getAuth,
   onAuthStateChanged,
@@ -27,6 +28,7 @@ export default function ProtectedLayout() {
   if (initializing) return null;
 
   return (
+    <PhantomProvider>
     <DrawerProvider>
       <BlockedUsersProvider>
         <Stack
@@ -116,5 +118,6 @@ export default function ProtectedLayout() {
         </Stack>
       </BlockedUsersProvider>
     </DrawerProvider>
+    </PhantomProvider>
   );
 }
