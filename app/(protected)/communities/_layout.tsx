@@ -69,7 +69,7 @@ export default function CommunitiesLayout() {
           headerStyle: {
             backgroundColor:  (Array.isArray(themeDarkColor) ? themeDarkColor[0] : themeDarkColor) || Colors.dark.tint
           },
-          headerTintColor: (Array.isArray(themeDarkColor) ? themeDarkColor[0] : themeDarkColor) || Colors.light.text,
+          headerTintColor: "white",
           headerRight: () => (
             <Box className="flex flex-row">
               <TouchableOpacity
