@@ -46,7 +46,7 @@ export default function TabLayout() {
         return {
           headerShadowVisible: true,
           headerStyle: {
-            backgroundColor: Colors.dark.tint,
+            backgroundColor: Colors.light.tint,
           },
           tabBarHideOnKeyboard: Platform.OS === "android" ? true : undefined,
           headerTitle: () => (
@@ -124,8 +124,12 @@ export default function TabLayout() {
         name="index"
         options={{
           title: "Discover",
-          tabBarIcon: ({ color }) => (
-            <FontAwesome size={28} name="hand-scissors-o" color={color} />
+          tabBarIcon: ({ color, focused }) => (
+            <FontAwesome
+              size={focused ? 30 : 28}
+              name="hand-scissors-o"
+              color={color}
+            />
           ),
         }}
       />
@@ -133,8 +137,12 @@ export default function TabLayout() {
         name="communities"
         options={{
           title: "Connect",
-          tabBarIcon: ({ color }) => (
-            <FontAwesome size={22} name="handshake-o" color={color} />
+          tabBarIcon: ({ color, focused }) => (
+            <FontAwesome
+              size={focused ? 24 : 22}
+              name="handshake-o"
+              color={color}
+            />
           ),
         }}
       />
@@ -142,9 +150,17 @@ export default function TabLayout() {
         name="inbox"
         options={{
           title: "Messages",
-          tabBarIcon: ({ color }) => (
+          tabBarIcon: ({ color, focused }) => (
             <View>
-              <Ionicons name="chatbubble-ellipses-outline" size={24} color={color} />
+              <Ionicons
+                name={
+                  focused
+                    ? "chatbubble-ellipses"
+                    : "chatbubble-ellipses-outline"
+                }
+                size={focused ? 26 : 24}
+                color={color}
+              />
               {totalUnreadMessages > 0 && (
                 <View
                   style={{
@@ -182,8 +198,8 @@ export default function TabLayout() {
         name="blog/index"
         options={{
           title: "Blog",
-          tabBarIcon: ({ color }) => (
-            <FontAwesome size={22} name="newspaper-o" color={color} />
+          tabBarIcon: ({ color, focused }) => (
+            <FontAwesome size={focused ? 24 : 22} name="newspaper-o" color={color} />
           ),
         }}
       />
@@ -197,8 +213,12 @@ export default function TabLayout() {
           name="profile/index"
           options={{
               title: "Profile",
-              tabBarIcon: ({ color }) => (
-                  <FontAwesome5 name="user-alt" size={22} color={color} />
+              tabBarIcon: ({ color, focused }) => (
+                  <FontAwesome5
+                    name="user-alt"
+                    size={focused ? 24 : 22}
+                    color={color}
+                  />
               ),
           }}
       />

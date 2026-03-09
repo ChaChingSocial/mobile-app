@@ -33,6 +33,7 @@ import {
   ScrollView,
 } from "react-native";
 import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
+import {Colors} from "@/lib/constants/Colors";
 
 type PostOption = {
   title: string;
@@ -339,7 +340,8 @@ export default function HomePage() {
     <Box className="flex-1 relative">
       <ScrollView
         contentInsetAdjustmentBehavior="automatic"
-        className="bg-[#077f5f] flex-1"
+        className="flex-1"
+        style={{backgroundColor: Colors.dark.tint}}
         onScroll={onScrollNearBottom}
         scrollEventThrottle={32}
         >

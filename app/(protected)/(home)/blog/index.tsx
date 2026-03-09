@@ -1,10 +1,11 @@
 import BlogListing from "@/components/blog/BlogListing";
 import ParallaxScrollView from "@/components/ParallaxScrollView";
 import { Box } from "@/components/ui/box";
+import {Colors} from "@/lib/constants/Colors";
 
 export default function BlogScreen() {
   return (
-      <Box className="bg-[#077f5f] flex-1">
+      <Box className="flex-1" style={{backgroundColor: Colors.dark.tint}}>
         <BlogListing />
       </Box>
   );

@@ -6,6 +6,7 @@ import { Box } from "../ui/box";
 import { HStack } from "../ui/hstack";
 import { ArrowRightIcon, Icon } from "../ui/icon";
 import { Text } from "../ui/text";
+import {Colors} from "@/lib/constants/Colors";
 
 type ThemedCommunity = Community & {
   themeDarkColor?: string;
@@ -86,9 +87,9 @@ export default function CommunityCard({ community }: { community: Community }) {
             </HStack>
 
             {(community.featured || community.requiresPaidSubscription) && (
-              <Box className="mt-2 self-start rounded-full bg-[#F2ED79] px-3 py-1">
-                <Text className="text-xs font-bold text-black">
-                  {community.featured ? "NEW" : "PAID"}
+              <Box className="mt-2 self-start rounded-full bg-green-700 px-3 py-1">
+                <Text className="text-xs font-bold text-white">
+                  {community.featured ? "⭐ FEATURED" : "PAID"}
                 </Text>
               </Box>
             )}
@@ -114,7 +115,7 @@ export default function CommunityCard({ community }: { community: Community }) {
             )}
           </HStack>
 
-          <Box className="h-14 w-14 items-center justify-center rounded-full bg-[#F2ED79]">
+          <Box className="h-14 w-14 items-center justify-center rounded-full" style={{backgroundColor: Colors.light.tint}}>
             <Icon as={ArrowRightIcon} size="xl" className="text-black" />
           </Box>
         </HStack>

@@ -10,6 +10,7 @@ import { useMemo, useState } from "react";
 import { Text } from "@/components/ui/text";
 import { FlatList, TouchableOpacity } from "react-native";
 import { useRouter } from "expo-router";
+import {Colors} from "@/lib/constants/Colors";
 
 export default function AllCommunitiesPreview() {
   const router = useRouter();
@@ -54,7 +55,7 @@ export default function AllCommunitiesPreview() {
               }}
             />
           </Avatar>
-          <Text size="sm" bold className="mt-2 color-[#a3e4d2]" numberOfLines={1}>
+          <Text size="sm" bold className="mt-2 color-white" numberOfLines={1}>
             {data?.title?.substring(0, 12)}...
           </Text>
         </Box>
@@ -65,7 +66,7 @@ export default function AllCommunitiesPreview() {
   const keyExtractor = (item: Community) => item.id || Math.random().toString();
 
   return (
-    <Box className="bg-[#077f5f]">
+    <Box style={{backgroundColor: Colors.dark.tint}}>
       {communityData.length > 0 && (
         <FlatList
           data={communityData}

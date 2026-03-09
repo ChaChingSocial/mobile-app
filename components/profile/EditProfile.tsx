@@ -319,230 +319,230 @@ export default function EditProfileComponent() {
           </FormControl>
         </VStack>
 
-<View className="mt-4 flex-row items-center justify-between">
-          <Heading size="md" className="text-white">Social Links</Heading>
-          <TouchableOpacity onPress={() => setShowSocialLinks((prev) => !prev)}>
-            <Ionicons
-              name={showSocialLinks ? "chevron-down" : "chevron-up"}
-              size={22}
-              color="white"
-            />
-          </TouchableOpacity>
-        </View>
+        {/*<View className="mt-4 flex-row items-center justify-between">*/}
+        {/*  <Heading size="md" className="text-white">Social Links</Heading>*/}
+        {/*  <TouchableOpacity onPress={() => setShowSocialLinks((prev) => !prev)}>*/}
+        {/*    <Ionicons*/}
+        {/*      name={showSocialLinks ? "chevron-down" : "chevron-up"}*/}
+        {/*      size={22}*/}
+        {/*      color="white"*/}
+        {/*    />*/}
+        {/*  </TouchableOpacity>*/}
+        {/*</View>*/}
 
-        {showSocialLinks && (
-          <>
-        <VStack space="xs">
-          <FormControl>
-            <FormControlLabel>
-<FormControlLabelText className="text-white">Facebook</FormControlLabelText>
-            </FormControlLabel>
-<Input className="my-1 w-full bg-white" size="sm">
-              <InputField
-                type="text"
-                placeholder="Facebook profile URL"
-                value={formData.facebook}
-                onChangeText={(text) => updateField("facebook", text)}
-              />
-            </Input>
-          </FormControl>
-        </VStack>
+{/*        {showSocialLinks && (*/}
+{/*          <>*/}
+{/*        <VStack space="xs">*/}
+{/*          <FormControl>*/}
+{/*            <FormControlLabel>*/}
+{/*            <FormControlLabelText className="text-white">Facebook</FormControlLabelText>*/}
+{/*            </FormControlLabel>*/}
+{/*<Input className="my-1 w-full bg-white" size="sm">*/}
+{/*              <InputField*/}
+{/*                type="text"*/}
+{/*                placeholder="Facebook profile URL"*/}
+{/*                value={formData.facebook}*/}
+{/*                onChangeText={(text) => updateField("facebook", text)}*/}
+{/*              />*/}
+{/*            </Input>*/}
+{/*          </FormControl>*/}
+{/*        </VStack>*/}
 
-        <VStack space="xs">
-          <FormControl>
-            <FormControlLabel>
-<FormControlLabelText className="text-white">Twitter</FormControlLabelText>
-            </FormControlLabel>
-<Input className="my-1 w-full bg-white" size="sm">
-              <InputField
-                type="text"
-                placeholder="Twitter profile URL"
-                value={formData.twitter}
-                onChangeText={(text) => updateField("twitter", text)}
-              />
-            </Input>
-          </FormControl>
-        </VStack>
+{/*        <VStack space="xs">*/}
+{/*          <FormControl>*/}
+{/*            <FormControlLabel>*/}
+{/*                <FormControlLabelText className="text-white">Twitter</FormControlLabelText>*/}
+{/*            </FormControlLabel>*/}
+{/*              <Input className="my-1 w-full bg-white" size="sm">*/}
+{/*              <InputField*/}
+{/*                type="text"*/}
+{/*                placeholder="Twitter profile URL"*/}
+{/*                value={formData.twitter}*/}
+{/*                onChangeText={(text) => updateField("twitter", text)}*/}
+{/*              />*/}
+{/*            </Input>*/}
+{/*          </FormControl>*/}
+{/*        </VStack>*/}
 
-        <VStack space="xs">
-          <FormControl>
-            <FormControlLabel>
-<FormControlLabelText className="text-white">Instagram</FormControlLabelText>
-            </FormControlLabel>
-<Input className="my-1 w-full bg-white" size="sm">
-              <InputField
-                type="text"
-                placeholder="Instagram profile URL"
-                value={formData.instagram}
-                onChangeText={(text) => updateField("instagram", text)}
-              />
-            </Input>
-          </FormControl>
-        </VStack>
+{/*        <VStack space="xs">*/}
+{/*          <FormControl>*/}
+{/*            <FormControlLabel>*/}
+{/*<FormControlLabelText className="text-white">Instagram</FormControlLabelText>*/}
+{/*            </FormControlLabel>*/}
+{/*<Input className="my-1 w-full bg-white" size="sm">*/}
+{/*              <InputField*/}
+{/*                type="text"*/}
+{/*                placeholder="Instagram profile URL"*/}
+{/*                value={formData.instagram}*/}
+{/*                onChangeText={(text) => updateField("instagram", text)}*/}
+{/*              />*/}
+{/*            </Input>*/}
+{/*          </FormControl>*/}
+{/*        </VStack>*/}
 
-        <VStack space="xs">
-          <FormControl>
-            <FormControlLabel>
-<FormControlLabelText className="text-white">LinkedIn</FormControlLabelText>
-            </FormControlLabel>
-<Input className="my-1 w-full bg-white" size="sm">
-              <InputField
-                type="text"
-                placeholder="LinkedIn profile URL"
-                value={formData.linkedin}
-                onChangeText={(text) => updateField("linkedin", text)}
-              />
-            </Input>
-          </FormControl>
-        </VStack>
+{/*        <VStack space="xs">*/}
+{/*          <FormControl>*/}
+{/*            <FormControlLabel>*/}
+{/*<FormControlLabelText className="text-white">LinkedIn</FormControlLabelText>*/}
+{/*            </FormControlLabel>*/}
+{/*<Input className="my-1 w-full bg-white" size="sm">*/}
+{/*              <InputField*/}
+{/*                type="text"*/}
+{/*                placeholder="LinkedIn profile URL"*/}
+{/*                value={formData.linkedin}*/}
+{/*                onChangeText={(text) => updateField("linkedin", text)}*/}
+{/*              />*/}
+{/*            </Input>*/}
+{/*          </FormControl>*/}
+{/*        </VStack>*/}
 
-        <VStack space="xs">
-          <FormControl>
-            <FormControlLabel>
-<FormControlLabelText className="text-white">TikTok</FormControlLabelText>
-            </FormControlLabel>
-<Input className="my-1 w-full bg-white" size="sm">
-              <InputField
-                type="text"
-                placeholder="TikTok profile URL"
-                value={formData.tiktok}
-                onChangeText={(text) => updateField("tiktok", text)}
-              />
-            </Input>
-          </FormControl>
-        </VStack>
+{/*        <VStack space="xs">*/}
+{/*          <FormControl>*/}
+{/*            <FormControlLabel>*/}
+{/*<FormControlLabelText className="text-white">TikTok</FormControlLabelText>*/}
+{/*            </FormControlLabel>*/}
+{/*<Input className="my-1 w-full bg-white" size="sm">*/}
+{/*              <InputField*/}
+{/*                type="text"*/}
+{/*                placeholder="TikTok profile URL"*/}
+{/*                value={formData.tiktok}*/}
+{/*                onChangeText={(text) => updateField("tiktok", text)}*/}
+{/*              />*/}
+{/*            </Input>*/}
+{/*          </FormControl>*/}
+{/*        </VStack>*/}
 
-        <VStack space="xs">
-          <FormControl>
-            <FormControlLabel>
-<FormControlLabelText className="text-white">YouTube</FormControlLabelText>
-            </FormControlLabel>
-<Input className="my-1 w-full bg-white" size="sm">
-              <InputField
-                type="text"
-                placeholder="YouTube channel URL"
-                value={formData.youtube}
-                onChangeText={(text) => updateField("youtube", text)}
-              />
-            </Input>
-          </FormControl>
-        </VStack>
+{/*        <VStack space="xs">*/}
+{/*          <FormControl>*/}
+{/*            <FormControlLabel>*/}
+{/*<FormControlLabelText className="text-white">YouTube</FormControlLabelText>*/}
+{/*            </FormControlLabel>*/}
+{/*<Input className="my-1 w-full bg-white" size="sm">*/}
+{/*              <InputField*/}
+{/*                type="text"*/}
+{/*                placeholder="YouTube channel URL"*/}
+{/*                value={formData.youtube}*/}
+{/*                onChangeText={(text) => updateField("youtube", text)}*/}
+{/*              />*/}
+{/*            </Input>*/}
+{/*          </FormControl>*/}
+{/*        </VStack>*/}
 
-        <VStack space="xs">
-          <FormControl>
-            <FormControlLabel>
-<FormControlLabelText className="text-white">Twitch</FormControlLabelText>
-            </FormControlLabel>
-<Input className="my-1 w-full bg-white" size="sm">
-              <InputField
-                type="text"
-                placeholder="Twitch profile URL"
-                value={formData.twitch}
-                onChangeText={(text) => updateField("twitch", text)}
-              />
-            </Input>
-          </FormControl>
-        </VStack>
+{/*        <VStack space="xs">*/}
+{/*          <FormControl>*/}
+{/*            <FormControlLabel>*/}
+{/*<FormControlLabelText className="text-white">Twitch</FormControlLabelText>*/}
+{/*            </FormControlLabel>*/}
+{/*<Input className="my-1 w-full bg-white" size="sm">*/}
+{/*              <InputField*/}
+{/*                type="text"*/}
+{/*                placeholder="Twitch profile URL"*/}
+{/*                value={formData.twitch}*/}
+{/*                onChangeText={(text) => updateField("twitch", text)}*/}
+{/*              />*/}
+{/*            </Input>*/}
+{/*          </FormControl>*/}
+{/*        </VStack>*/}
 
-        <VStack space="xs">
-          <FormControl>
-            <FormControlLabel>
-<FormControlLabelText className="text-white">Snapchat</FormControlLabelText>
-            </FormControlLabel>
-<Input className="my-1 w-full bg-white" size="sm">
-              <InputField
-                type="text"
-                placeholder="Snapchat profile URL"
-                value={formData.snapchat}
-                onChangeText={(text) => updateField("snapchat", text)}
-              />
-            </Input>
-          </FormControl>
-        </VStack>
+{/*        <VStack space="xs">*/}
+{/*          <FormControl>*/}
+{/*            <FormControlLabel>*/}
+{/*<FormControlLabelText className="text-white">Snapchat</FormControlLabelText>*/}
+{/*            </FormControlLabel>*/}
+{/*<Input className="my-1 w-full bg-white" size="sm">*/}
+{/*              <InputField*/}
+{/*                type="text"*/}
+{/*                placeholder="Snapchat profile URL"*/}
+{/*                value={formData.snapchat}*/}
+{/*                onChangeText={(text) => updateField("snapchat", text)}*/}
+{/*              />*/}
+{/*            </Input>*/}
+{/*          </FormControl>*/}
+{/*        </VStack>*/}
 
-        <VStack space="xs">
-          <FormControl>
-            <FormControlLabel>
-<FormControlLabelText className="text-white">Discord</FormControlLabelText>
-            </FormControlLabel>
-<Input className="my-1 w-full bg-white" size="sm">
-              <InputField
-                type="text"
-                placeholder="Discord profile URL"
-                value={formData.discord}
-                onChangeText={(text) => updateField("discord", text)}
-              />
-            </Input>
-          </FormControl>
-        </VStack>
+{/*        <VStack space="xs">*/}
+{/*          <FormControl>*/}
+{/*            <FormControlLabel>*/}
+{/*<FormControlLabelText className="text-white">Discord</FormControlLabelText>*/}
+{/*            </FormControlLabel>*/}
+{/*<Input className="my-1 w-full bg-white" size="sm">*/}
+{/*              <InputField*/}
+{/*                type="text"*/}
+{/*                placeholder="Discord profile URL"*/}
+{/*                value={formData.discord}*/}
+{/*                onChangeText={(text) => updateField("discord", text)}*/}
+{/*              />*/}
+{/*            </Input>*/}
+{/*          </FormControl>*/}
+{/*        </VStack>*/}
 
-        <VStack space="xs">
-          <FormControl>
-            <FormControlLabel>
-<FormControlLabelText className="text-white">Medium</FormControlLabelText>
-            </FormControlLabel>
-<Input className="my-1 w-full bg-white" size="sm">
-              <InputField
-                type="text"
-                placeholder="Medium profile URL"
-                value={formData.medium}
-                onChangeText={(text) => updateField("medium", text)}
-              />
-            </Input>
-          </FormControl>
-        </VStack>
+{/*        <VStack space="xs">*/}
+{/*          <FormControl>*/}
+{/*            <FormControlLabel>*/}
+{/*<FormControlLabelText className="text-white">Medium</FormControlLabelText>*/}
+{/*            </FormControlLabel>*/}
+{/*<Input className="my-1 w-full bg-white" size="sm">*/}
+{/*              <InputField*/}
+{/*                type="text"*/}
+{/*                placeholder="Medium profile URL"*/}
+{/*                value={formData.medium}*/}
+{/*                onChangeText={(text) => updateField("medium", text)}*/}
+{/*              />*/}
+{/*            </Input>*/}
+{/*          </FormControl>*/}
+{/*        </VStack>*/}
 
-        <VStack space="xs">
-          <FormControl>
-            <FormControlLabel>
-<FormControlLabelText className="text-white">Website</FormControlLabelText>
-            </FormControlLabel>
-<Input className="my-1 w-full bg-white" size="sm">
-              <InputField
-                type="text"
-                placeholder="Primary website URL"
-                value={formData.website}
-                onChangeText={(text) => updateField("website", text)}
-              />
-            </Input>
-          </FormControl>
-        </VStack>
+{/*        <VStack space="xs">*/}
+{/*          <FormControl>*/}
+{/*            <FormControlLabel>*/}
+{/*<FormControlLabelText className="text-white">Website</FormControlLabelText>*/}
+{/*            </FormControlLabel>*/}
+{/*<Input className="my-1 w-full bg-white" size="sm">*/}
+{/*              <InputField*/}
+{/*                type="text"*/}
+{/*                placeholder="Primary website URL"*/}
+{/*                value={formData.website}*/}
+{/*                onChangeText={(text) => updateField("website", text)}*/}
+{/*              />*/}
+{/*            </Input>*/}
+{/*          </FormControl>*/}
+{/*        </VStack>*/}
 
-        <VStack space="xs">
-          <FormControl>
-            <FormControlLabel>
-<FormControlLabelText className="text-white">Website 2</FormControlLabelText>
-            </FormControlLabel>
-<Input className="my-1 w-full bg-white" size="sm">
-              <InputField
-                type="text"
-                placeholder="Secondary website URL"
-                value={formData.website2}
-                onChangeText={(text) => updateField("website2", text)}
-              />
-            </Input>
-          </FormControl>
-        </VStack>
+{/*        <VStack space="xs">*/}
+{/*          <FormControl>*/}
+{/*            <FormControlLabel>*/}
+{/*<FormControlLabelText className="text-white">Website 2</FormControlLabelText>*/}
+{/*            </FormControlLabel>*/}
+{/*<Input className="my-1 w-full bg-white" size="sm">*/}
+{/*              <InputField*/}
+{/*                type="text"*/}
+{/*                placeholder="Secondary website URL"*/}
+{/*                value={formData.website2}*/}
+{/*                onChangeText={(text) => updateField("website2", text)}*/}
+{/*              />*/}
+{/*            </Input>*/}
+{/*          </FormControl>*/}
+{/*        </VStack>*/}
 
-        <VStack space="xs">
-          <FormControl>
-            <FormControlLabel>
-<FormControlLabelText className="text-white">Website 3</FormControlLabelText>
-            </FormControlLabel>
-<Input className="my-1 w-full bg-white" size="sm">
-              <InputField
-                type="text"
-                placeholder="Tertiary website URL"
-                value={formData.website3}
-                onChangeText={(text) => updateField("website3", text)}
-              />
-            </Input>
-          </FormControl>
-        </VStack>
+{/*        <VStack space="xs">*/}
+{/*          <FormControl>*/}
+{/*            <FormControlLabel>*/}
+{/*<FormControlLabelText className="text-white">Website 3</FormControlLabelText>*/}
+{/*            </FormControlLabel>*/}
+{/*<Input className="my-1 w-full bg-white" size="sm">*/}
+{/*              <InputField*/}
+{/*                type="text"*/}
+{/*                placeholder="Tertiary website URL"*/}
+{/*                value={formData.website3}*/}
+{/*                onChangeText={(text) => updateField("website3", text)}*/}
+{/*              />*/}
+{/*            </Input>*/}
+{/*          </FormControl>*/}
+{/*        </VStack>*/}
 
-        </>
-        )}
-        
+{/*        </>*/}
+{/*        )}*/}
+
         <Button
 className={`bg-white rounded-lg ${showSocialLinks ? "mt-4" : "mt-16"}`}
           onPress={async () => {
