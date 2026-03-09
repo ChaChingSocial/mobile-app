@@ -215,7 +215,7 @@ export default function TabLayout() {
               title: "Profile",
               tabBarIcon: ({ color, focused }) => (
                   <FontAwesome5
-                    name="user-alt"
+                    name="user"
                     size={focused ? 24 : 22}
                     color={color}
                   />
