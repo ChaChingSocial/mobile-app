@@ -7,6 +7,8 @@ Branch: `main-sol`
 - [Demo video]()
 - [GitHub repository](https://github.com/ChaChingSocial/mobile-app/tree/main-sol)
 
+> Tip: Cmd-click (Mac) or Ctrl-click (Windows/Linux) to open links in a new tab.
+
 ## Best Way to Evaluate This Project
 For the easiest and best testing experience, please use the signed APK link above and install it directly on an Android device.  
 This is the preferred path because it reflects app behavior closest to production usage and does not require local setup.
