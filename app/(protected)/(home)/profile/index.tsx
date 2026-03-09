@@ -22,6 +22,7 @@ import {
   getUserMessagePricing,
   getUserProfile,
   setMessagePricing,
+  saveWalletAddress,
 } from "@/lib/api/user";
 import { useSession } from "@/lib/providers/AuthContext";
 import { useScoreStore } from "@/lib/store/score";
@@ -60,7 +61,7 @@ import BackgroundImageModal from "@/components/profile/BackgroundImageModal";
 import EarningsTab from "@/components/profile/EarningsTab";
 import NftDetailModal from "@/components/profile/NftDetailModal";
 import { Connection, PublicKey, clusterApiUrl } from "@solana/web3.js";
-import { fetchNftMetadata } from "@/lib/wallet/fetchNftMetadata";
+import { fetchNftMetadata, NftMetadata } from "@/lib/wallet/fetchNftMetadata";
 
 // ── Collapsible section row ──────────────────────────────────────────────────
 function CollapsibleSection({
@@ -116,8 +117,19 @@ const extractNftMints = (accounts: any[]) => {
     if (!mint || typeof mint !== "string") continue;
 
     const decimals = Number(tokenAmount?.decimals ?? -1);
-    const rawAmount = String(tokenAmount?.amount ?? "0");
-    if (decimals === 0 && rawAmount === "1") {
+    if (decimals !== 0) continue;
+
+    // Primary check: raw amount string (standard SPL token accounts)
+    const rawAmount = String(tokenAmount?.amount ?? "");
+    if (rawAmount === "1") {
+      mints.add(mint);
+      continue;
+    }
+
+    // Fallback: uiAmount / uiAmountString (Token-2022 accounts with certain
+    // extensions may omit the raw `amount` field in the parsed response)
+    const uiAmount = tokenAmount?.uiAmount ?? Number(tokenAmount?.uiAmountString);
+    if (uiAmount === 1) {
       mints.add(mint);
     }
   }
@@ -153,6 +165,10 @@ export default function Profile() {
   const [walletNfts, setWalletNfts] = useState<WalletNftPreview[]>([]);
   const [walletNftsLoading, setWalletNftsLoading] = useState(false);
   const [selectedNft, setSelectedNft] = useState<WalletNftPreview | null>(null);
+  // The wallet address used for NFT display — own profile uses live connector,
+  // other profiles use the address stored in their Firestore profile.
+  const [profileWalletAddress, setProfileWalletAddress] = useState<string | null>(null);
+  const isOwnProfile = currentUserId === session?.uid;
 
   // ── Message Pricing state ──────────────────────────────────────────────────
   const [messagePriceEnabled, setMessagePriceEnabled] = useState(false);
@@ -225,6 +241,11 @@ export default function Profile() {
             }
           }
         }
+      }
+      // For other users' profiles, read their persisted wallet address so we
+      // can display their NFTs without them needing a live wallet connection.
+      if (currentUserId !== session?.uid && profile?.walletAddress) {
+        setProfileWalletAddress(profile.walletAddress as string);
       }
       if (currentUserId === session?.uid) {
         const scoreRes = await scoreApi.getScore({ userId: currentUserId });
@@ -554,11 +575,22 @@ export default function Profile() {
     ? `${connectedWallet.address.slice(0, 4)}...${connectedWallet.address.slice(-4)}`
     : "Connect Wallet";
 
+  // Keep profileWalletAddress in sync with the live wallet for own profile,
+  // and persist it to Firestore so other users can see this profile's NFTs.
+  useEffect(() => {
+    if (!isOwnProfile) return;
+    const addr = connectedWallet?.address ?? null;
+    setProfileWalletAddress(addr);
+    if (addr && session?.uid) {
+      saveWalletAddress(session.uid, addr).catch(console.error);
+    }
+  }, [connectedWallet?.address, isOwnProfile, session?.uid]);
+
   useEffect(() => {
     let isCancelled = false;
 
     const fetchWalletNfts = async () => {
-      if (!connectedWallet?.address) {
+      if (!profileWalletAddress) {
         setWalletNfts([]);
         setWalletNftsLoading(false);
         return;
@@ -566,7 +598,7 @@ export default function Profile() {
 
       setWalletNftsLoading(true);
       try {
-        const ownerPublicKey = new PublicKey(connectedWallet.address);
+        const ownerPublicKey = new PublicKey(profileWalletAddress);
         const clusters: Array<"mainnet-beta" | "devnet"> = [
           "mainnet-beta",
           "devnet",
@@ -577,26 +609,37 @@ export default function Profile() {
         };
 
         for (const cluster of clusters) {
-          const connection = new Connection(clusterApiUrl(cluster), "confirmed");
-          const [tokenAccounts, token2022Accounts] = await Promise.all([
-            connection.getParsedTokenAccountsByOwner(ownerPublicKey, {
-              programId: SOLANA_TOKEN_PROGRAM_ID,
-            }),
-            connection.getParsedTokenAccountsByOwner(ownerPublicKey, {
-              programId: SOLANA_TOKEN_2022_PROGRAM_ID,
-            }),
-          ]);
+          try {
+            const connection = new Connection(clusterApiUrl(cluster), "confirmed");
+            const [tokenAccounts, token2022Accounts] = await Promise.all([
+              connection.getParsedTokenAccountsByOwner(ownerPublicKey, {
+                programId: SOLANA_TOKEN_PROGRAM_ID,
+              }),
+              connection.getParsedTokenAccountsByOwner(ownerPublicKey, {
+                programId: SOLANA_TOKEN_2022_PROGRAM_ID,
+              }),
+            ]);
 
-          const clusterNfts = extractNftMints([
-            ...tokenAccounts.value,
-            ...token2022Accounts.value,
-          ]);
-          mintsByCluster[cluster] = Array.from(clusterNfts).slice(0, 24);
+            const clusterNfts = extractNftMints([
+              ...tokenAccounts.value,
+              ...token2022Accounts.value,
+            ]);
+            mintsByCluster[cluster] = Array.from(clusterNfts).slice(0, 24);
+          } catch (clusterError) {
+            console.warn(`[NFT] token account fetch failed for ${cluster}:`, clusterError);
+            // Leave mintsByCluster[cluster] as [] and continue with the other cluster
+          }
         }
 
         const [mainnetMeta, devnetMeta] = await Promise.all([
-          fetchNftMetadata(mintsByCluster["mainnet-beta"], "mainnet-beta"),
-          fetchNftMetadata(mintsByCluster["devnet"], "devnet"),
+          fetchNftMetadata(mintsByCluster["mainnet-beta"], "mainnet-beta").catch((e) => {
+            console.warn("[NFT] mainnet metadata fetch failed:", e);
+            return [] as NftMetadata[];
+          }),
+          fetchNftMetadata(mintsByCluster["devnet"], "devnet").catch((e) => {
+            console.warn("[NFT] devnet metadata fetch failed:", e);
+            return [] as NftMetadata[];
+          }),
         ]);
 
         // Mints that had no on-chain metadata — show as fallback entries
@@ -635,7 +678,7 @@ export default function Profile() {
     return () => {
       isCancelled = true;
     };
-  }, [connectedWallet?.address]);
+  }, [profileWalletAddress]);
 
   return (
     <ScrollView
@@ -956,9 +999,11 @@ export default function Profile() {
 
         {/* Badges */}
         <CollapsibleSection title="NFTs">
-          {!isWalletConnected ? (
+          {!profileWalletAddress ? (
             <Text className="px-4 pb-4 text-gray-400 text-sm">
-              Please connect your wallet to showcase your NFTs.
+              {isOwnProfile
+                ? "Connect your wallet above to showcase your NFTs."
+                : "This user hasn't connected a wallet yet."}
             </Text>
           ) : walletNftsLoading ? (
             <Text className="px-4 pb-4 text-gray-400 text-sm">

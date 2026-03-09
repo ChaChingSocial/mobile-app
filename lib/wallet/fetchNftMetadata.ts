@@ -81,10 +81,36 @@ async function fetchOffchainImage(uri: string): Promise<string | null> {
       return null;
     }
     const json = await res.json();
+
+    // 1. Standard Metaplex v1.1+ — top-level "image" field
     const image: unknown = json?.image;
     if (typeof image === "string" && image.length > 0) {
       return resolveUri(image);
     }
+
+    // 2. Metaplex v1.0 — image nested under properties.files[]
+    const files: unknown = json?.properties?.files;
+    if (Array.isArray(files)) {
+      for (const file of files) {
+        const fileUri: unknown = file?.uri ?? file?.url;
+        const fileType: unknown = file?.type ?? file?.mediaType ?? "";
+        // Prefer explicit image types; fall back to first entry if no type info
+        if (
+          typeof fileUri === "string" &&
+          fileUri.length > 0 &&
+          (String(fileType).startsWith("image") || fileType === "")
+        ) {
+          return resolveUri(fileUri);
+        }
+      }
+    }
+
+    // 3. Animated / video NFTs may only carry animation_url at the top level
+    const animationUrl: unknown = json?.animation_url;
+    if (typeof animationUrl === "string" && animationUrl.length > 0) {
+      return resolveUri(animationUrl);
+    }
+
     console.log("[NFT] no image field in off-chain JSON", resolved, json);
     return null;
   } catch (e) {
@@ -121,6 +147,20 @@ async function fetchMagicEdenMetadata(mint: string): Promise<NftMetadata | null>
   }
 }
 
+async function withRetry<T>(
+  fn: () => Promise<T>,
+  retries = 2,
+  delayMs = 800
+): Promise<T> {
+  try {
+    return await fn();
+  } catch (e) {
+    if (retries <= 0) throw e;
+    await new Promise((res) => setTimeout(res, delayMs));
+    return withRetry(fn, retries - 1, delayMs * 2);
+  }
+}
+
 export async function fetchNftMetadata(
   mints: string[],
   cluster: "mainnet-beta" | "devnet"
@@ -132,7 +172,13 @@ export async function fetchNftMetadata(
   const mintPubkeys = mints.map((m) => new PublicKey(m));
   const pdas = await Promise.all(mintPubkeys.map(getMetadataPDA));
 
-  const accountInfos = await connection.getMultipleAccountsInfo(pdas);
+  let accountInfos: Awaited<ReturnType<typeof connection.getMultipleAccountsInfo>>;
+  try {
+    accountInfos = await withRetry(() => connection.getMultipleAccountsInfo(pdas));
+  } catch (e) {
+    console.warn(`[NFT] getMultipleAccountsInfo failed for ${cluster}:`, e);
+    return [];
+  }
 
   const withAccount = accountInfos.filter(Boolean).length;
   console.log(`[NFT] ${cluster}: ${mints.length} mints, ${withAccount} metadata accounts found`);

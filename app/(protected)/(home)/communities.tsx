@@ -178,10 +178,49 @@ export default function CommunitiesScreen() {
 
   return (
     <Box className="flex-1" style={{ backgroundColor: Colors.dark.tint }}>
-      {/* Floating search + tabs */}
+      {/* Floating tabs + search */}
       <Box className="absolute top-0 left-0 right-0 z-50 pt-2 pb-2">
         <Box className="mx-4 bg-white rounded-lg shadow-lg p-2">
-          <HStack className="items-center gap-2">
+          {/* Tab switcher */}
+          <HStack className="bg-white rounded-lg overflow-hidden">
+            <TouchableOpacity
+              className="flex-1 py-2 items-center"
+              style={{
+                backgroundColor:
+                  activeTab === "communities" ? Colors.dark.tint : "white",
+              }}
+              onPress={() => switchTab("communities")}
+            >
+              <Text
+                className="font-semibold text-sm"
+                style={{
+                  color: activeTab === "communities" ? "white" : Colors.dark.tint,
+                }}
+              >
+                Communities
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              className="flex-1 py-2 items-center"
+              style={{
+                backgroundColor:
+                  activeTab === "users" ? Colors.dark.tint : "white",
+              }}
+              onPress={() => switchTab("users")}
+            >
+              <Text
+                className="font-semibold text-sm"
+                style={{
+                  color: activeTab === "users" ? "white" : Colors.dark.tint,
+                }}
+              >
+                Users
+              </Text>
+            </TouchableOpacity>
+          </HStack>
+
+          {/* Search input below tabs */}
+          <HStack className="items-center gap-2 mt-2">
             <Input size="md" className="flex-1">
               <InputSlot className="pl-3">
                 <InputIcon as={SearchIcon} />
@@ -200,44 +239,6 @@ export default function CommunitiesScreen() {
             </Input>
           </HStack>
         </Box>
-
-        {/* Tab switcher */}
-        <HStack className="mx-4 mt-2 bg-white rounded-lg overflow-hidden shadow">
-          <TouchableOpacity
-            className="flex-1 py-2 items-center"
-            style={{
-              backgroundColor:
-                activeTab === "communities" ? Colors.dark.tint : "white",
-            }}
-            onPress={() => switchTab("communities")}
-          >
-            <Text
-              className="font-semibold text-sm"
-              style={{
-                color: activeTab === "communities" ? "white" : Colors.dark.tint,
-              }}
-            >
-              Communities
-            </Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            className="flex-1 py-2 items-center"
-            style={{
-              backgroundColor:
-                activeTab === "users" ? Colors.dark.tint : "white",
-            }}
-            onPress={() => switchTab("users")}
-          >
-            <Text
-              className="font-semibold text-sm"
-              style={{
-                color: activeTab === "users" ? "white" : Colors.dark.tint,
-              }}
-            >
-              Users
-            </Text>
-          </TouchableOpacity>
-        </HStack>
       </Box>
 
       <Box

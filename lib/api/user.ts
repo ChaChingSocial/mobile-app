@@ -424,6 +424,18 @@ async function createAbuseReport(
 }
 
 /**
+ * Persist a wallet address on the user's profile so other users can view
+ * their on-chain assets (NFTs, etc.) without needing a live wallet connection.
+ */
+export async function saveWalletAddress(
+  userId: string,
+  walletAddress: string
+): Promise<void> {
+  const userDocRef = doc(db, "users", userId, "profile", userId);
+  await setDoc(userDocRef, { walletAddress }, { merge: true });
+}
+
+/**
  * Save this user's per-message price and receiving wallet address to their profile.
  * Pass priceUsdc = 0 to disable pricing.
  */
