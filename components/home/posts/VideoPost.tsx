@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useEffect } from "react";
 import { View, Text, ScrollView, LayoutChangeEvent } from "react-native";
 import YoutubePlayer from "react-native-youtube-iframe";
 import { VideoView, useVideoPlayer } from "expo-video";
@@ -6,6 +6,7 @@ import { Post as PostType } from "@/types/post";
 import HtmlRenderText from "@/components/common/HtmlRenderText";
 import { Button } from "@/components/ui/button";
 import PostTags from "../post-editor/PostTag";
+import { getDownloadURL, getStorage, ref } from "firebase/storage";
 
 // ── Firebase Storage / direct-URL video player ────────────────────────────────
 function FirebaseVideoPlayer({ uri }: { uri: string }) {
@@ -29,10 +30,62 @@ function FirebaseVideoPlayer({ uri }: { uri: string }) {
   );
 }
 
+const FIREBASE_STORAGE_HOST = "firebasestorage.googleapis.com";
+
+function isLikelyVideoUrl(url: string): boolean {
+  const lower = url.toLowerCase();
+  return (
+    lower.startsWith("file://") ||
+    lower.startsWith("content://") ||
+    lower.startsWith("blob:") ||
+    /\.(mp4|mov|m4v|webm|m3u8)(\?|$)/i.test(lower) ||
+    lower.includes(FIREBASE_STORAGE_HOST)
+  );
+}
+
+function ensureFirebaseMediaUrl(url: string): string {
+  if (!url.includes(FIREBASE_STORAGE_HOST)) return url;
+
+  try {
+    const parsed = new URL(url);
+    if (parsed.searchParams.get("alt") !== "media") {
+      parsed.searchParams.set("alt", "media");
+    }
+    return parsed.toString();
+  } catch {
+    return url;
+  }
+}
+
+async function resolveVideoUrl(rawUrl: string): Promise<string | null> {
+  if (!rawUrl) return null;
+
+  // Resolve Firebase gs:// paths to signed download URLs.
+  if (rawUrl.startsWith("gs://")) {
+    try {
+      return await getDownloadURL(ref(getStorage(), rawUrl));
+    } catch {
+      return null;
+    }
+  }
+
+  if (/^https?:\/\//i.test(rawUrl)) {
+    return ensureFirebaseMediaUrl(rawUrl);
+  }
+
+  if (rawUrl.startsWith("file://") || rawUrl.startsWith("content://") || rawUrl.startsWith("blob:")) {
+    return rawUrl;
+  }
+
+  return null;
+}
+
 export function VideoPost({ post }: { post: PostType }) {
   const [playing, setPlaying] = useState(false);
   const [readMore, setReadMore] = useState(false);
   const [showReadMoreButton, setShowReadMoreButton] = useState(false);
+  const [resolvedVideoUrl, setResolvedVideoUrl] = useState<string | null>(null);
+  const [videoUrlUnavailable, setVideoUrlUnavailable] = useState(false);
 
   const handleContentLayout = (event: LayoutChangeEvent) => {
     const { height } = event.nativeEvent.layout;
@@ -45,10 +98,10 @@ export function VideoPost({ post }: { post: PostType }) {
     if (!url) return null;
 
     const patterns = [
-      /(?:youtube\.com\/embed\/([^?&]+))/,
-      /(?:youtube\.com\/watch\?v=([^&]+))/,
-      /(?:youtu\.be\/([^?&]+))/,
-      /(?:youtube\.com\/v\/([^?&]+))/,
+      /youtube\.com\/embed\/([^?&]+)/,
+      /youtube\.com\/watch\?v=([^&]+)/,
+      /youtu\.be\/([^?&]+)/,
+      /youtube\.com\/v\/([^?&]+)/,
     ];
 
     for (const pattern of patterns) {
@@ -60,21 +113,19 @@ export function VideoPost({ post }: { post: PostType }) {
   };
 
   const getYouTubeVideoIdFromPost = (): string | null => {
-    let url: string | null = null;
-
-
-    if (post.category === "youtube" && post.linkPreview?.url) {
-      url = post.linkPreview.url;
+    // Always check linkPreview.url first — video posts created via the
+    // "video" category can still have a YouTube URL as their linkPreview.
+    if (post.linkPreview?.url) {
+      const id = getYouTubeVideoId(post.linkPreview.url);
+      if (id) return id;
     }
 
-    else if (post.post && post.post.includes("data-youtube-video")) {
+    if (post.post && post.post.includes("data-youtube-video")) {
       const srcMatch = post.post.match(/src="([^"]*youtube\.com\/embed[^"]*)"/);
-      if (srcMatch) {
-        url = srcMatch[1];
-      }
+      if (srcMatch) return getYouTubeVideoId(srcMatch[1]);
     }
 
-    return url ? getYouTubeVideoId(url) : null;
+    return null;
   };
 
   const onStateChange = useCallback((state: string) => {
@@ -103,13 +154,48 @@ export function VideoPost({ post }: { post: PostType }) {
     ? post.linkPreview.url
     : null;
 
+  useEffect(() => {
+    let isMounted = true;
+
+    async function resolveDirectVideo() {
+      setResolvedVideoUrl(null);
+      setVideoUrlUnavailable(false);
+
+      if (!directVideoUrl) return;
+
+      const resolved = await resolveVideoUrl(directVideoUrl);
+      if (!isMounted) return;
+
+      if (resolved && isLikelyVideoUrl(resolved)) {
+        setResolvedVideoUrl(resolved);
+        return;
+      }
+
+      setVideoUrlUnavailable(true);
+    }
+
+    resolveDirectVideo();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [directVideoUrl]);
+
   return (
     <ScrollView className="bg-white p-4 rounded-lg shadow-none">
       {post.title && (
         <Text className="text-xl font-semibold mb-3">{post.title}</Text>
       )}
 
-      {directVideoUrl && <FirebaseVideoPlayer uri={directVideoUrl} />}
+      {resolvedVideoUrl && <FirebaseVideoPlayer uri={resolvedVideoUrl} />}
+
+      {videoUrlUnavailable && (
+        <View className="w-full max-w-[550px] self-center rounded-lg bg-gray-100 p-3 mb-4">
+          <Text className="text-sm text-gray-600">
+            This video URL is not directly playable. Please use a Firebase download URL.
+          </Text>
+        </View>
+      )}
 
       {videoId && (
         <View className="w-full max-w-[550px] self-center aspect-video rounded-lg overflow-hidden bg-black min-h-[200px] mb-4">
