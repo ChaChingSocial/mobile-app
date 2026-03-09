@@ -133,6 +133,5 @@ npm run test
 
 ## Team
 - Team name: `ChaChing Social`
-- Members: ``
-- Roles: ``
-- Contact: ``
+- Members: `[Mabel Oza](), [Rushikesh Joshi](https://align.nexus/profile/0b3513e8-9e87-4786-8e2a-21bf5f494e9c), [Arushi Malhotra](https://align.nexus/profile/86cd89c3-d068-4893-b8dc-0d6ef1821af5)`
+- Contact: `mabel.oza@chachingsocial.io, rushikesh.joshi@chachingsocial.io, arushi.malhotra@chachingsocial.io`
