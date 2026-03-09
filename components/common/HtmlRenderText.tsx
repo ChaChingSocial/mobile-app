@@ -1,6 +1,7 @@
+import PagerView from "react-native-pager-view";
 import { useWindowDimensions, Image, TouchableOpacity, Modal, View, Text, Dimensions } from "react-native";
 import RenderHtml from "react-native-render-html";
-import React, { useState } from "react";
+import React, { useMemo, useRef, useState } from "react";
 import { useRouter } from "expo-router";
 
 const customStyles = {
@@ -182,26 +183,88 @@ const customRenderers = {
   },
 };
 
+const extractImageSources = (html: string): string[] => {
+  if (!html) return [];
+
+  // Ignore image tags inside code/pre blocks when building gallery order.
+  const withoutCodeBlocks = html
+    .replace(/<pre\b[^>]*>[\s\S]*?<\/pre>/gi, "")
+    .replace(/<code\b[^>]*>[\s\S]*?<\/code>/gi, "");
+
+  const imageSources: string[] = [];
+  const imageTagRegex = /<img\b[^>]*\bsrc=["']([^"']+)["'][^>]*>/gi;
+  let match: RegExpExecArray | null;
+
+  while ((match = imageTagRegex.exec(withoutCodeBlocks)) !== null) {
+    const src = (match[1] || "").trim();
+    if (!src || imageSources.includes(src)) continue;
+    imageSources.push(src);
+  }
+
+  return imageSources;
+};
+
+const hasCodeOrPreParent = (tnode: any): boolean => {
+  let current = tnode?.parent;
+  while (current) {
+    if (current?.tagName === "code" || current?.tagName === "pre") return true;
+    current = current?.parent;
+  }
+  return false;
+};
+
 export default function HtmlRenderText({ source, inset = 32 }: { source: string; inset?: number }) {
   const { width } = useWindowDimensions();
   const contentWidth = Math.max(100, width - inset);
   const router = useRouter();
 
-  // lightbox state
   const [open, setOpen] = useState(false);
-  const [imgUri, setImgUri] = useState<string | null>(null);
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [singleImageUri, setSingleImageUri] = useState<string | null>(null);
+  const pagerRef = useRef<PagerView>(null);
 
-  // wrap with TouchableOpacity and open modal
+  const imageSources = useMemo(() => extractImageSources(source), [source]);
+
+  const openGalleryAt = (index: number, fallbackSrc?: string) => {
+    const safeIndex = Number.isInteger(index) && index >= 0 ? index : 0;
+    setSingleImageUri(fallbackSrc || null);
+    setCurrentImageIndex(safeIndex);
+    setOpen(true);
+
+    requestAnimationFrame(() => {
+      pagerRef.current?.setPage(safeIndex);
+    });
+  };
+
   const imgRenderer = ({ tnode }: any) => {
     const src = tnode?.attributes?.src;
     if (!src) return null;
+
+    const insideCodeBlock = hasCodeOrPreParent(tnode);
+    const imageIndex = imageSources.indexOf(src);
+
+    const imageNode = (
+      <Image
+        source={{ uri: src }}
+        style={{ width: "100%", height: 220, borderRadius: 12 }}
+        resizeMode="contain"
+      />
+    );
+
+    if (insideCodeBlock) return imageNode;
+
     return (
-      <TouchableOpacity activeOpacity={0.9} onPress={() => { setImgUri(src); setOpen(true); }}>
-        <Image source={{ uri: src }} style={{ width: "100%", height: 200, borderRadius: 12 }} resizeMode="contain" />
+      <TouchableOpacity
+        activeOpacity={0.9}
+        onPress={() => openGalleryAt(imageIndex >= 0 ? imageIndex : 0, src)}
+      >
+        {imageNode}
       </TouchableOpacity>
     );
   };
+
   const mergedRenderers = { ...(customRenderers as any), img: imgRenderer } as any;
+  const galleryImages = imageSources.length > 0 ? imageSources : singleImageUri ? [singleImageUri] : [];
 
   return (
     <>
@@ -227,12 +290,68 @@ export default function HtmlRenderText({ source, inset = 32 }: { source: string;
         }}
       />
       <Modal visible={open} transparent animationType="fade" onRequestClose={() => setOpen(false)}>
-        <View style={{ flex: 1, backgroundColor: "rgba(0,0,0,0.9)", justifyContent: "center", alignItems: "center" }}>
-          {imgUri ? (
-            <Image source={{ uri: imgUri }} style={{ width: Dimensions.get("window").width, height: Dimensions.get("window").height }} resizeMode="contain" />
+        <View
+          style={{
+            flex: 1,
+            backgroundColor: "rgba(0,0,0,0.95)",
+            justifyContent: "center",
+            alignItems: "center",
+          }}
+        >
+          {galleryImages.length > 1 ? (
+            <>
+              <PagerView
+                key={`gallery-${galleryImages.length}`}
+                ref={pagerRef}
+                style={{ width: Dimensions.get("window").width, height: Dimensions.get("window").height }}
+                initialPage={currentImageIndex}
+                onPageSelected={(e) => setCurrentImageIndex(e.nativeEvent.position || 0)}
+              >
+                {galleryImages.map((uri, index) => (
+                  <View key={`${index}-${uri}`} style={{ flex: 1 }}>
+                    <Image source={{ uri }} style={{ width: "100%", height: "100%" }} resizeMode="contain" />
+                  </View>
+                ))}
+              </PagerView>
+              <View
+                style={{
+                  position: "absolute",
+                  top: 40,
+                  left: 20,
+                  backgroundColor: "rgba(0,0,0,0.5)",
+                  paddingHorizontal: 10,
+                  paddingVertical: 4,
+                  borderRadius: 12,
+                }}
+              >
+                <Text style={{ color: "white", fontSize: 12 }}>
+                  {currentImageIndex + 1}/{galleryImages.length}
+                </Text>
+              </View>
+            </>
+          ) : galleryImages[0] ? (
+            <Image
+              source={{ uri: galleryImages[0] }}
+              style={{ width: Dimensions.get("window").width, height: Dimensions.get("window").height }}
+              resizeMode="contain"
+            />
           ) : null}
-          <TouchableOpacity onPress={() => setOpen(false)} style={{ position: "absolute", top: 40, right: 20, backgroundColor: "rgba(0,0,0,0.4)", borderRadius: 20, width: 40, height: 40, alignItems: "center", justifyContent: "center" }}>
-            <Text style={{ color: "white", fontSize: 20, fontWeight: "bold" }}>✕</Text>
+
+          <TouchableOpacity
+            onPress={() => setOpen(false)}
+            style={{
+              position: "absolute",
+              top: 40,
+              right: 20,
+              backgroundColor: "rgba(0,0,0,0.5)",
+              borderRadius: 20,
+              width: 40,
+              height: 40,
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
+            <Text style={{ color: "white", fontSize: 20, fontWeight: "bold" }}>X</Text>
           </TouchableOpacity>
         </View>
       </Modal>

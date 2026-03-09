@@ -8,6 +8,7 @@ import { Box } from "../ui/box";
 import { HStack } from "../ui/hstack";
 import { ArrowRightIcon, Icon } from "../ui/icon";
 import { Text } from "../ui/text";
+import {Colors} from "@/lib/constants/Colors";
 
 interface UserProfile {
   bio: string;
@@ -139,7 +140,7 @@ export default function UserCard({ user }: { user: UserProfile }) {
             )}
           </HStack>
 
-          <Box className="h-14 w-14 items-center justify-center rounded-full bg-[#F2ED79]">
+            <Box className="h-14 w-14 items-center justify-center rounded-full" style={{backgroundColor: Colors.light.tint}}>
             <Icon as={ArrowRightIcon} size="xl" className="text-black" />
           </Box>
         </HStack>

@@ -528,7 +528,7 @@ export default function InboxTab() {
               style={{
                 fontSize: 15,
                 fontWeight: isUnread ? "700" : "600",
-                color: "#111827",
+                color: "black",
                 flex: 1,
                 marginRight: 8,
               }}
@@ -582,7 +582,7 @@ export default function InboxTab() {
   }
 
   return (
-    <View style={{ flex: 1, backgroundColor: "white" }}>
+    <View style={{ flex: 1, backgroundColor: Colors.dark.tint }}>
       <FlatList
         data={conversations}
         keyExtractor={(item) => item.id}
@@ -614,7 +614,7 @@ export default function InboxTab() {
           width: 56,
           height: 56,
           borderRadius: 28,
-          backgroundColor: Colors.dark.tint,
+          backgroundColor: Colors.light.tint,
           alignItems: "center",
           justifyContent: "center",
           shadowColor: "#000",
@@ -624,7 +624,7 @@ export default function InboxTab() {
           elevation: 8,
         }}
       >
-        <Ionicons name="create-outline" size={24} color="white" />
+        <Ionicons name="create-outline" size={24} color="black" />
       </TouchableOpacity>
 
       <NewChatModal

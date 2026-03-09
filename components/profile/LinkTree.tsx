@@ -250,19 +250,22 @@ function LinkFormModal({ visible, editingLink, onClose, onSave }: LinkFormProps)
               style={{ marginBottom: 4 }}
               keyboardShouldPersistTaps="handled"
             >
-              <View style={{ flexDirection: "row", gap: 8 }}>
-                <PillButton
-                  label="None"
-                  active={category === null}
-                  onPress={() => setCategory(null)}
-                />
-                {CATEGORIES.map((cat) => (
+              <View style={{ flexDirection: "row" }}>
+                <View style={{ marginRight: 8 }}>
                   <PillButton
-                    key={cat}
-                    label={`${CATEGORY_EMOJI[cat] ?? ""} ${cat}`}
-                    active={category === cat}
-                    onPress={() => setCategory(category === cat ? null : cat)}
+                    label="None"
+                    active={category === null}
+                    onPress={() => setCategory(null)}
                   />
+                </View>
+                {CATEGORIES.map((cat) => (
+                  <View key={cat} style={{ marginRight: 8 }}>
+                    <PillButton
+                      label={`${CATEGORY_EMOJI[cat] ?? ""} ${cat}`}
+                      active={category === cat}
+                      onPress={() => setCategory(category === cat ? null : cat)}
+                    />
+                  </View>
                 ))}
               </View>
             </ScrollView>
@@ -294,7 +297,7 @@ function LinkFormModal({ visible, editingLink, onClose, onSave }: LinkFormProps)
             ) : null}
 
             {/* Action buttons */}
-            <View style={{ flexDirection: "row", gap: 12, marginTop: 24, marginBottom: 12 }}>
+            <View style={{ flexDirection: "row", marginTop: 24, marginBottom: 12 }}>
               <TouchableOpacity
                 onPress={onClose}
                 style={{
@@ -304,6 +307,7 @@ function LinkFormModal({ visible, editingLink, onClose, onSave }: LinkFormProps)
                   borderRadius: 12,
                   paddingVertical: 14,
                   alignItems: "center",
+                  marginRight: 12,
                 }}
               >
                 <Text style={{ color: "white", fontWeight: "600" }}>Cancel</Text>
@@ -385,8 +389,11 @@ export function LinkTree({ userId, isOwnProfile }: LinkTreeProps) {
     if (!userId) return;
     setLoading(true);
     getUserLinks(userId)
-      .then(setLinks)
-      .catch(console.error)
+      .then((fetchedLinks) => setLinks(Array.isArray(fetchedLinks) ? fetchedLinks : []))
+      .catch((error) => {
+        console.error(error);
+        setLinks([]);
+      })
       .finally(() => setLoading(false));
   }, [userId]);
 
@@ -430,13 +437,18 @@ export function LinkTree({ userId, isOwnProfile }: LinkTreeProps) {
   };
 
   // ── Derived data ───────────────────────────────────────────────────────────
+  // Keep rendering logic resilient if backend data is empty/malformed.
+  const normalizedLinks = (Array.isArray(links) ? links : []).filter(
+    (link): link is UserLink => !!link && typeof link === "object"
+  );
+
   // Social-only links (shown as top icon row)
-  const socialLinks = links.filter(
+  const socialLinks = normalizedLinks.filter(
     (l) => isSocialUrl(l.url || "") && (l as any).category === "Social"
   );
 
   // Card links (everything else)
-  const cardLinks = links.filter(
+  const cardLinks = normalizedLinks.filter(
     (l) => !socialLinks.some((s) => s.id === l.id)
   );
 
@@ -490,7 +502,6 @@ export function LinkTree({ userId, isOwnProfile }: LinkTreeProps) {
             style={{
               flexDirection: "row",
               alignItems: "center",
-              gap: 6,
               borderWidth: 1,
               borderColor: "rgba(255,255,255,0.5)",
               borderRadius: 10,
@@ -498,7 +509,7 @@ export function LinkTree({ userId, isOwnProfile }: LinkTreeProps) {
               paddingVertical: 7,
             }}
           >
-            <Ionicons name="add" size={16} color="white" />
+            <Ionicons name="add" size={16} color="white" style={{ marginRight: 6 }} />
             <Text style={{ color: "white", fontSize: 13, fontWeight: "600" }}>Add link</Text>
           </TouchableOpacity>
         )}
@@ -511,15 +522,16 @@ export function LinkTree({ userId, isOwnProfile }: LinkTreeProps) {
           showsHorizontalScrollIndicator={false}
           style={{ marginBottom: 16 }}
         >
-          <View style={{ flexDirection: "row", gap: 20, alignItems: "center", paddingVertical: 4 }}>
-            {socialLinks.map((link) => {
+          <View style={{ flexDirection: "row", alignItems: "center", paddingVertical: 4 }}>
+            {socialLinks.map((link, index) => {
               const meta = getSocialMeta(link.url || "");
               return (
                 <TouchableOpacity
-                  key={link.id}
+                  key={link.id ?? `social-${link.url || "no-url"}-${index}`}
                   onPress={() => openUrl(link.url || "")}
                   onLongPress={() => isOwnProfile && handleDelete(link)}
                   delayLongPress={500}
+                  style={{ marginRight: 20 }}
                 >
                   <Ionicons name={meta.icon} size={36} color={meta.color} />
                 </TouchableOpacity>
@@ -537,28 +549,31 @@ export function LinkTree({ userId, isOwnProfile }: LinkTreeProps) {
           style={{ marginBottom: 16 }}
           keyboardShouldPersistTaps="handled"
         >
-          <View style={{ flexDirection: "row", gap: 8 }}>
-            <PillButton
-              label="All"
-              active={selectedCategory === null}
-              onPress={() => setSelectedCategory(null)}
-            />
-            {presentCategories.map((cat) => (
+          <View style={{ flexDirection: "row" }}>
+            <View style={{ marginRight: 8 }}>
               <PillButton
-                key={cat}
-                label={`${CATEGORY_EMOJI[cat] ?? ""} ${cat}`}
-                active={selectedCategory === cat}
-                onPress={() =>
-                  setSelectedCategory(selectedCategory === cat ? null : cat)
-                }
+                label="All"
+                active={selectedCategory === null}
+                onPress={() => setSelectedCategory(null)}
               />
+            </View>
+            {presentCategories.map((cat) => (
+              <View key={cat} style={{ marginRight: 8 }}>
+                <PillButton
+                  label={`${CATEGORY_EMOJI[cat] ?? ""} ${cat}`}
+                  active={selectedCategory === cat}
+                  onPress={() =>
+                    setSelectedCategory(selectedCategory === cat ? null : cat)
+                  }
+                />
+              </View>
             ))}
           </View>
         </ScrollView>
       )}
 
       {/* Empty state */}
-      {links.length === 0 && (
+      {normalizedLinks.length === 0 && (
         <Text
           style={{
             color: "rgba(255,255,255,0.5)",
@@ -584,21 +599,20 @@ export function LinkTree({ userId, isOwnProfile }: LinkTreeProps) {
               style={{
                 flexDirection: "row",
                 alignItems: "center",
-                gap: 10,
                 marginVertical: 14,
               }}
             >
               <View style={{ flex: 1, height: 1, backgroundColor: "rgba(255,255,255,0.15)" }} />
-              <Text style={{ color: "rgba(255,255,255,0.6)", fontSize: 12, fontWeight: "700" }}>
+              <Text style={{ color: "rgba(255,255,255,0.6)", fontSize: 12, fontWeight: "700", marginHorizontal: 10 }}>
                 {CATEGORY_EMOJI[cat] ? `${CATEGORY_EMOJI[cat]} ` : ""}{cat}
               </Text>
               <View style={{ flex: 1, height: 1, backgroundColor: "rgba(255,255,255,0.15)" }} />
             </View>
 
             {/* Cards */}
-            {items.map((link) => (
+            {items.map((link, index) => (
               <View
-                key={link.id}
+                key={link.id ?? `card-${cat}-${link.url || link.title || "untitled"}-${index}`}
                 style={{
                   backgroundColor: "#020617",
                   borderRadius: 12,
@@ -653,7 +667,6 @@ export function LinkTree({ userId, isOwnProfile }: LinkTreeProps) {
                     style={{
                       flexDirection: "row",
                       alignItems: "center",
-                      gap: 5,
                       marginTop: 10,
                       alignSelf: "flex-start",
                       backgroundColor: "rgba(255,255,255,0.1)",
@@ -662,7 +675,7 @@ export function LinkTree({ userId, isOwnProfile }: LinkTreeProps) {
                       paddingVertical: 6,
                     }}
                   >
-                    <Ionicons name="open-outline" size={13} color="white" />
+                    <Ionicons name="open-outline" size={13} color="white" style={{ marginRight: 5 }} />
                     <Text style={{ color: "white", fontSize: 12 }}>
                       {(link as any).extraLinkText || (link as any).extraLink}
                     </Text>
@@ -674,16 +687,15 @@ export function LinkTree({ userId, isOwnProfile }: LinkTreeProps) {
                   <View
                     style={{
                       flexDirection: "row",
-                      gap: 8,
                       marginTop: 12,
                       justifyContent: "flex-end",
                     }}
                   >
                     <TouchableOpacity
                       onPress={() => openEdit(link)}
-                      style={actionBtn("#1f2937")}
+                      style={[actionBtn("#1f2937"), { marginRight: 8 }]}
                     >
-                      <Ionicons name="pencil-outline" size={13} color="#d1d5db" />
+                      <Ionicons name="pencil-outline" size={13} color="#d1d5db" style={{ marginRight: 5 }} />
                       <Text style={{ color: "#d1d5db", fontSize: 12 }}>Edit</Text>
                     </TouchableOpacity>
 
@@ -691,7 +703,7 @@ export function LinkTree({ userId, isOwnProfile }: LinkTreeProps) {
                       onPress={() => handleDelete(link)}
                       style={actionBtn("rgba(239,68,68,0.18)")}
                     >
-                      <Ionicons name="trash-outline" size={13} color="#f87171" />
+                      <Ionicons name="trash-outline" size={13} color="#f87171" style={{ marginRight: 5 }} />
                       <Text style={{ color: "#f87171", fontSize: 12 }}>Delete</Text>
                     </TouchableOpacity>
                   </View>
@@ -717,7 +729,6 @@ function actionBtn(bg: string): any {
   return {
     flexDirection: "row",
     alignItems: "center",
-    gap: 5,
     backgroundColor: bg,
     borderRadius: 7,
     paddingHorizontal: 10,

@@ -14,6 +14,7 @@ import { ActivityIndicator, FlatList, ScrollView, TouchableOpacity, View } from 
 import { useFocusEffect } from "expo-router";
 import { HStack } from "@/components/ui/hstack";
 import { Colors } from "@/lib/constants/Colors";
+import { Ionicons } from "@expo/vector-icons";
 
 type Tab = "communities" | "users";
 
@@ -41,6 +42,7 @@ export default function CommunitiesScreen() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<unknown>(null);
   const [searchText, setSearchText] = useState("");
+  const [showSearchBox, setShowSearchBox] = useState(false);
   const [timeoutToClear, setTimeoutToClear] = useState<ReturnType<typeof setTimeout>>();
 
   const myMemberships = useUserStore((state) => state.userCommunities) as any[];
@@ -169,6 +171,7 @@ export default function CommunitiesScreen() {
 
   const switchTab = (tab: Tab) => {
     setActiveTab(tab);
+    setShowSearchBox(false);
     setSearchText("");
     setFilteredCommunities(communityData);
     setFilteredUsers(userData);
@@ -178,72 +181,100 @@ export default function CommunitiesScreen() {
 
   return (
     <Box className="flex-1" style={{ backgroundColor: Colors.dark.tint }}>
-      {/* Floating tabs + search */}
-      <Box className="absolute top-0 left-0 right-0 z-50 pt-2 pb-2">
-        <Box className="mx-4 bg-white rounded-lg shadow-lg p-2">
-          {/* Tab switcher */}
-          <HStack className="bg-white rounded-lg overflow-hidden">
+      {/* Floating tabs + optional search */}
+      <Box className="absolute top-0 left-0 right-0 z-50 pt-4 pb-2">
+        <Box className="mx-4">
+          <HStack className="items-center" style={{ gap: 10 }}>
             <TouchableOpacity
-              className="flex-1 py-2 items-center"
+              className="flex-1 items-center justify-center"
               style={{
+                height: 48,
+                borderRadius: 28,
                 backgroundColor:
-                  activeTab === "communities" ? Colors.dark.tint : "white",
+                  activeTab === "communities" ? Colors.light.tint : "rgba(255,255,255,0.14)",
               }}
               onPress={() => switchTab("communities")}
             >
               <Text
-                className="font-semibold text-sm"
                 style={{
-                  color: activeTab === "communities" ? "white" : Colors.dark.tint,
+                  fontSize: 18,
+                  fontWeight: "800",
+                  color: activeTab === "communities" ? "#111827" : "rgba(255,255,255,0.5)",
                 }}
               >
                 Communities
               </Text>
             </TouchableOpacity>
+
             <TouchableOpacity
-              className="flex-1 py-2 items-center"
+              className="flex-1 items-center justify-center"
               style={{
+                height: 48,
+                borderRadius: 28,
                 backgroundColor:
-                  activeTab === "users" ? Colors.dark.tint : "white",
+                  activeTab === "users" ? Colors.light.tint : "rgba(255,255,255,0.14)",
               }}
               onPress={() => switchTab("users")}
             >
               <Text
-                className="font-semibold text-sm"
                 style={{
-                  color: activeTab === "users" ? "white" : Colors.dark.tint,
+                  fontSize: 18,
+                  fontWeight: "800",
+                  color: activeTab === "users" ? "#111827" : "rgba(255,255,255,0.5)",
                 }}
               >
-                Users
+                People
               </Text>
             </TouchableOpacity>
+              <TouchableOpacity
+                  onPress={() => {
+                      if (showSearchBox) {
+                          setShowSearchBox(false);
+                          handleSearch("");
+                      } else {
+                          setShowSearchBox(true);
+                      }
+                  }}
+                  style={{
+                      width: 48,
+                      height: 48,
+                      borderRadius: 28,
+                      backgroundColor: Colors.light.tint,
+                      alignItems: "center",
+                      justifyContent: "center",
+                  }}
+              >
+                  <Ionicons name="search" size={24} color="#111827" />
+              </TouchableOpacity>
           </HStack>
 
-          {/* Search input below tabs */}
-          <HStack className="items-center gap-2 mt-2">
-            <Input size="md" className="flex-1">
-              <InputSlot className="pl-3">
-                <InputIcon as={SearchIcon} />
-              </InputSlot>
-              <InputField
-                placeholder={
-                  activeTab === "communities"
-                    ? "Search communities..."
-                    : "Search users..."
-                }
-                onChangeText={debouncedSearch}
-                value={searchText}
-                autoCapitalize="none"
-                autoCorrect={false}
-              />
-            </Input>
-          </HStack>
+          {showSearchBox && (
+            <HStack className="items-center gap-2 mt-3">
+              <Input size="md" className="flex-1 rounded-full bg-white">
+                <InputSlot className="pl-3">
+                  <InputIcon as={SearchIcon} />
+                </InputSlot>
+                <InputField
+                  placeholder={
+                    activeTab === "communities"
+                      ? "Search communities..."
+                      : "Search users..."
+                  }
+                  onChangeText={debouncedSearch}
+                  value={searchText}
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                  autoFocus
+                />
+              </Input>
+            </HStack>
+          )}
         </Box>
       </Box>
 
       <Box
-        className="flex-1 mt-28 mb-2"
-        style={{ backgroundColor: Colors.dark.tint }}
+        className="flex-1 mb-2"
+        style={{ backgroundColor: Colors.dark.tint, marginTop: showSearchBox ? 128 : 92 }}
       >
         {activeTab === "communities" ? (
           <FlatList
