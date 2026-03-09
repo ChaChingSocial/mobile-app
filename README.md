@@ -2,7 +2,7 @@
 Branch: `main-sol`
 
 ## Quick Links
-- [Android APK (recommended for judges)]()
+- [Android APK (recommended for judges)](https://github.com/ChaChingSocial/mobile-app/releases/download/solana-hackathon/chaching-hackathon-signed.apk)
 - [Presentation Canva slides](https://www.canva.com/design/DAHDd5WWO0U/WCSuJgJ-4dG2L5Wcd86Ceg/view?utm_content=DAHDd5WWO0U&utm_campaign=designshare&utm_medium=link2&utm_source=uniquelinks&utlId=h4aea3f9c27)
 - [Demo video]()
 - [GitHub repository](https://github.com/ChaChingSocial/mobile-app/tree/main-sol)
