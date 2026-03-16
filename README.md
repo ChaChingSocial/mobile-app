@@ -1,137 +1,50 @@
-# ChaChing Social | Solana Mobile Hackathon Submission
-Branch: `main-sol`
+# Welcome to your Expo app 👋
 
-## Quick Links
-- [Android APK (recommended for judges)](https://github.com/ChaChingSocial/mobile-app/releases/download/solana-hackathon/chaching-hackathon-signed.apk)
-- [Presentation Canva slides](https://www.canva.com/design/DAHDd5WWO0U/WCSuJgJ-4dG2L5Wcd86Ceg/view?utm_content=DAHDd5WWO0U&utm_campaign=designshare&utm_medium=link2&utm_source=uniquelinks&utlId=h4aea3f9c27)
-- [Demo video](https://www.youtube.com/shorts/NTedQ19OHjU)
-- [GitHub repository](https://github.com/ChaChingSocial/mobile-app/tree/main-sol)
+This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
 
-> Tip: Cmd-click (Mac) or Ctrl-click (Windows/Linux) to open links in a new tab.
+## Get started
 
-## Best Way to Evaluate This Project
-For the easiest and best testing experience, please use the signed APK link above and install it directly on an Android device.  
-This is the preferred path because it reflects app behavior closest to production usage and does not require local setup.
+1. Install dependencies
 
-## Project Overview
-ChaChing Social is a mobile-first social app built on Solana.  
-It combines social communication, wallet identity, NFT visibility, and onchain value exchange in one product.
+   ```bash
+   npm install
+   ```
 
-## The Value Dilemma
-Social platforms generate wealth, but users receive none of it.  
-Most apps treat users as the product. ChaChing Social is built so users can own their interactions and the value created through engagement.
+2. Start the app
 
-## Solution
-Integrate Solana wallets into social communication so users can:
-- connect wallet identity inside the app
-- display NFTs directly on profile
-- use paid messaging to reduce spam and reward attention
-- support communities with SOL and USDC contributions
+   ```bash
+    npx expo start
+   ```
 
-## What Is Implemented in This Repository
-### 1) Wallet Connection
-- Mobile wallet support for Phantom, Backpack, and Solflare
-- Deep link wallet auth and transaction signing
-- Reconnect and session handling for wallet flows
+In the output, you'll find options to open the app in a
 
-### 2) NFT Profile Display
-- NFT collection preview on profile
-- Metadata loading with support for common URI formats (IPFS, Arweave, HTTP)
-- Display works for connected user and for users with saved wallet address
+- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
+- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
+- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
+- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
 
-### 3) Pay-to-Message
-- Message pricing can be configured on profile (priced in USDC)
-- Sender prepays a message budget before sending priced messages
-- Remaining budget decrements as messages are sent
-- Replies are free for the sender on the other side
+You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
 
-### 4) In-Chat Payment Request Flow
-- Payment request card can be sent in chat
-- Counterparty can pay directly from connected wallet
-- Payment record is attached to the conversation message state
+## Get a fresh project
 
-### 5) Community Funding
-- Fund community with SOL or USDC
-- Devnet and mainnet-beta selection
-- Contribution is recorded and surfaced in contributor UI
+When you're ready, run:
 
-### 6) Core Social Product Features
-- Auth and profile management
-- Feed and posts
-- Communities and participation
-- Follow graph
-- In-app chat
-
-## Why Solana
-Solana is well suited for mobile Web3 social experiences because it supports:
-- fast user interactions
-- low transaction costs
-- practical micro-payments for social actions
-- strong wallet ecosystem for mobile users
-
-## Slide-Aligned Product Narrative
-This submission follows the attached deck storyline:
-- The Value Dilemma
-- Solution: wallet-native social communication
-- Secure wallet authentication
-- NFT profile display
-- Pay-to-Message
-- Support the Communities You Love
-- Why Solana
-- Future Vision: token-gated tribes, creator micro-payments, social governance
-
-## Architecture and Stack
-- Mobile app: React Native + Expo + TypeScript
-- Navigation: Expo Router
-- UI system: NativeWind + Gluestack UI
-- Auth and data: Firebase Auth, Firestore, Firebase Storage
-- Blockchain: Solana Web3.js
-- Wallet connectors: Privy connectors + Phantom cluster connector
-- API client: OpenAPI generated TypeScript SDK
-- Build pipeline: EAS Build + GitHub Actions workflow for signed APK
-
-## Local Development
-### Prerequisites
-- Node.js 20+
-- npm
-- Expo CLI / EAS CLI
-- Android Studio if running local emulator
-
-### Install and start
 ```bash
-npm install
-npx expo start
+npm run reset-project
 ```
 
-### Useful scripts
-```bash
-npm run android
-npm run ios
-npm run web
-npm run lint
-npm run test
-```
+This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
 
-## Judge Testing Paths
-### Path A (Preferred): APK Install
-1. Download APK from the link in Quick Links.
-2. Install on Android device.
-3. Launch app and test directly.
+## Learn more
 
-### Path B: Run from Source
-1. Clone repo.
-2. Add env file values.
-3. Install dependencies.
-4. Run with Expo.
+To learn more about developing your project with Expo, look at the following resources:
 
-## Demo Checklist for Judges
-1. Connect wallet from profile.
-2. Open NFTs section and view NFT cards.
-3. Enable message pricing and save.
-4. Open chat and test payment request flow.
-5. Open a community and fund with SOL or USDC.
+- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
+- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
 
-## Team
-- Team name: `ChaChing Social`
-- Members: [Mabel Oza](https://align.nexus/profile/25354159-470f-4682-b28f-a5221df2a4e6), [Rushikesh Joshi](https://align.nexus/profile/0b3513e8-9e87-4786-8e2a-21bf5f494e9c), [Arushi Malhotra](https://align.nexus/profile/86cd89c3-d068-4893-b8dc-0d6ef1821af5)
-- Contact: `mabel.oza@chachingsocial.io, rushikesh.joshi@chachingsocial.io, arushi.malhotra@chachingsocial.io`
+## Join the community
+
+Join our community of developers creating universal apps.
+
+- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
+- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
