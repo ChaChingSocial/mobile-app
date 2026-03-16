@@ -171,10 +171,14 @@ export default function NewPodcastPost() {
               (createdPostCommunityId as string) ||
               (createdPostCommunityData as any)?.id ||
               createdPost.newsfeedId;
+            const themeDarkColor = createdPostCommunityData?.themeDarkColor;
+            const themeLightColor = createdPostCommunityData?.themeLightColor;
+            const title = createdPostCommunityData?.title;
+
             if (slug && communityId) {
               router.replace({
                 pathname: "/(protected)/communities/[slug]",
-                params: { slug, communityId },
+                params: { title, slug, communityId, themeDarkColor, themeLightColor },
               });
             } else {
               navigation.goBack();

@@ -10,7 +10,12 @@ import {
   ModalContent,
 } from "@/components/ui/modal";
 import { VStack } from "@/components/ui/vstack";
-import { getSingleCommunityBySlug } from "@/lib/api/communities";
+import {
+  getSingleCommunityBySlug,
+  addCommunityPaidContribution,
+  getCommunityContributors,
+  CommunityContributor,
+} from "@/lib/api/communities";
 import { getPostsByNewsfeedIdPaged } from "@/lib/api/newsfeed";
 import { useSession } from "@/lib/providers/AuthContext";
 import { usePostStore } from "@/lib/store/post";
@@ -31,6 +36,8 @@ import {
   Modal as RNModal,
   Switch,
   TextInput,
+  KeyboardAvoidingView,
+  Linking,
 } from "react-native";
 import { Center } from "@/components/ui/center";
 import { Spinner } from "@/components/ui/spinner";
@@ -42,238 +49,239 @@ import {
 } from "@expo/vector-icons";
 import * as ImagePicker from "expo-image-picker";
 import * as MediaLibrary from "expo-media-library";
+import {Colors} from "@/lib/constants/Colors";
 import {
-  useBackpackDeeplinkWalletConnector,
-  useDeeplinkWalletConnector,
+    useBackpackDeeplinkWalletConnector,
+    useDeeplinkWalletConnector,
 } from "@privy-io/expo/connectors";
 import { usePhantomClusterConnector } from "@/lib/wallet/usePhantomClusterConnector";
 import {
-  Connection,
-  PublicKey,
-  SystemProgram,
-  Transaction,
-  TransactionInstruction,
-  clusterApiUrl,
-  SYSVAR_RENT_PUBKEY,
+    Connection,
+    PublicKey,
+    SystemProgram,
+    Transaction,
+    TransactionInstruction,
+    clusterApiUrl,
+    SYSVAR_RENT_PUBKEY,
 } from "@solana/web3.js";
 import { Buffer } from "buffer";
 
 const FALLBACK_COMMUNITY_FUND_WALLET =
-  "Dn5eBy45nbnV6LndYbn3ZXXE34UGAu2ZJAP4yF61XD7x";
+    "Dn5eBy45nbnV6LndYbn3ZXXE34UGAu2ZJAP4yF61XD7x";
 const USDC_MAINNET_MINT = "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v";
 const USDC_DEVNET_MINT = "4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU";
 const TOKEN_PROGRAM_ID = new PublicKey(
-  "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
+    "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
 );
 const ASSOCIATED_TOKEN_PROGRAM_ID = new PublicKey(
-  "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL"
+    "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL"
 );
 const BASE58_ALPHABET =
-  "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
+    "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
 const BASE58_MAP = new Map(
-  BASE58_ALPHABET.split("").map((char, index) => [char, index])
+    BASE58_ALPHABET.split("").map((char, index) => [char, index])
 );
 
 const parseAmountToUnits = (
-  rawAmount: string,
-  decimals: number
+    rawAmount: string,
+    decimals: number
 ): bigint | null => {
-  const normalized = rawAmount.trim();
-  if (!/^(\d+(\.\d*)?|\.\d+)$/.test(normalized)) return null;
-  const [wholePartRaw, fractionalPart = ""] = normalized.split(".");
-  const wholePart = wholePartRaw === "" ? "0" : wholePartRaw;
-  if (fractionalPart.length > decimals) return null;
+    const normalized = rawAmount.trim();
+    if (!/^(\d+(\.\d*)?|\.\d+)$/.test(normalized)) return null;
+    const [wholePartRaw, fractionalPart = ""] = normalized.split(".");
+    const wholePart = wholePartRaw === "" ? "0" : wholePartRaw;
+    if (fractionalPart.length > decimals) return null;
 
-  const wholeUnits = BigInt(wholePart) * 10n ** BigInt(decimals);
-  const paddedFraction = (fractionalPart + "0".repeat(decimals)).slice(
-    0,
-    decimals
-  );
-  const fractionalUnits = BigInt(paddedFraction || "0");
-  return wholeUnits + fractionalUnits;
+    const wholeUnits = BigInt(wholePart) * 10n ** BigInt(decimals);
+    const paddedFraction = (fractionalPart + "0".repeat(decimals)).slice(
+        0,
+        decimals
+    );
+    const fractionalUnits = BigInt(paddedFraction || "0");
+    return wholeUnits + fractionalUnits;
 };
 
 const isWalletAuthorizationOrTimeoutError = (error: unknown) => {
-  const message = (error instanceof Error ? error.message : String(error)).toLowerCase();
-  return (
-    message.includes("timed out") ||
-    message.includes("timeout") ||
-    message.includes("not been authorized") ||
-    message.includes("not authorized") ||
-    message.includes("method is not supported")
-  );
+    const message = (error instanceof Error ? error.message : String(error)).toLowerCase();
+    return (
+        message.includes("timed out") ||
+        message.includes("timeout") ||
+        message.includes("not been authorized") ||
+        message.includes("not authorized") ||
+        message.includes("method is not supported")
+    );
 };
 
 const decodeBase58 = (input: string): Uint8Array => {
-  if (input.length === 0) return new Uint8Array();
-  const bytes = [0];
-  for (let i = 0; i < input.length; i++) {
-    const value = BASE58_MAP.get(input[i]);
-    if (value === undefined) throw new Error("Invalid base58 string");
-    let carry = value;
-    for (let j = 0; j < bytes.length; j++) {
-      carry += bytes[j] * 58;
-      bytes[j] = carry & 0xff;
-      carry >>= 8;
+    if (input.length === 0) return new Uint8Array();
+    const bytes = [0];
+    for (let i = 0; i < input.length; i++) {
+        const value = BASE58_MAP.get(input[i]);
+        if (value === undefined) throw new Error("Invalid base58 string");
+        let carry = value;
+        for (let j = 0; j < bytes.length; j++) {
+            carry += bytes[j] * 58;
+            bytes[j] = carry & 0xff;
+            carry >>= 8;
+        }
+        while (carry > 0) {
+            bytes.push(carry & 0xff);
+            carry >>= 8;
+        }
     }
-    while (carry > 0) {
-      bytes.push(carry & 0xff);
-      carry >>= 8;
+
+    let leadingZeroCount = 0;
+    while (
+        leadingZeroCount < input.length &&
+        input[leadingZeroCount] === BASE58_ALPHABET[0]
+        ) {
+        leadingZeroCount++;
     }
-  }
 
-  let leadingZeroCount = 0;
-  while (
-    leadingZeroCount < input.length &&
-    input[leadingZeroCount] === BASE58_ALPHABET[0]
-  ) {
-    leadingZeroCount++;
-  }
-
-  const decoded = new Uint8Array(leadingZeroCount + bytes.length);
-  for (let i = 0; i < bytes.length; i++) {
-    decoded[decoded.length - 1 - i] = bytes[i];
-  }
-  return decoded;
+    const decoded = new Uint8Array(leadingZeroCount + bytes.length);
+    for (let i = 0; i < bytes.length; i++) {
+        decoded[decoded.length - 1 - i] = bytes[i];
+    }
+    return decoded;
 };
 
 const tryDecodeSignedTransaction = (encodedTransaction: string) => {
-  const decodeAttempts: Array<() => Uint8Array> = [
-    () => decodeBase58(encodedTransaction),
-    () => Uint8Array.from(Buffer.from(encodedTransaction, "base64")),
-  ];
+    const decodeAttempts: Array<() => Uint8Array> = [
+        () => decodeBase58(encodedTransaction),
+        () => Uint8Array.from(Buffer.from(encodedTransaction, "base64")),
+    ];
 
-  for (const decode of decodeAttempts) {
-    try {
-      const decoded = decode();
-      Transaction.from(Buffer.from(decoded));
-      return decoded;
-    } catch {}
-  }
+    for (const decode of decodeAttempts) {
+        try {
+            const decoded = decode();
+            Transaction.from(Buffer.from(decoded));
+            return decoded;
+        } catch {}
+    }
 
-  return null;
+    return null;
 };
 
 const extractSignedTransactionBytes = (response: unknown) => {
-  const candidateKeys = [
-    "transaction",
-    "signedTransaction",
-    "signed_transaction",
-    "serializedTransaction",
-    "serialized_transaction",
-    "signature",
-  ];
-  const responseObject =
-    response && typeof response === "object"
-      ? (response as Record<string, unknown>)
-      : null;
+    const candidateKeys = [
+        "transaction",
+        "signedTransaction",
+        "signed_transaction",
+        "serializedTransaction",
+        "serialized_transaction",
+        "signature",
+    ];
+    const responseObject =
+        response && typeof response === "object"
+            ? (response as Record<string, unknown>)
+            : null;
 
-  if (!responseObject) return null;
+    if (!responseObject) return null;
 
-  for (const key of candidateKeys) {
-    const value = responseObject[key];
-    if (typeof value === "string" && value.length > 0) {
-      const decoded = tryDecodeSignedTransaction(value);
-      if (decoded) return decoded;
+    for (const key of candidateKeys) {
+        const value = responseObject[key];
+        if (typeof value === "string" && value.length > 0) {
+            const decoded = tryDecodeSignedTransaction(value);
+            if (decoded) return decoded;
+        }
+        if (Array.isArray(value) && value.every((item) => typeof item === "number")) {
+            try {
+                const bytes = Uint8Array.from(value as number[]);
+                Transaction.from(Buffer.from(bytes));
+                return bytes;
+            } catch {}
+        }
     }
-    if (Array.isArray(value) && value.every((item) => typeof item === "number")) {
-      try {
-        const bytes = Uint8Array.from(value as number[]);
-        Transaction.from(Buffer.from(bytes));
-        return bytes;
-      } catch {}
-    }
-  }
 
-  return null;
+    return null;
 };
 
 const waitForSignatureConfirmation = async (
-  connection: Connection,
-  signature: string,
-  timeoutMs = 90000
+    connection: Connection,
+    signature: string,
+    timeoutMs = 90000
 ) => {
-  const startedAt = Date.now();
-  while (Date.now() - startedAt < timeoutMs) {
-    const statusResponse = await connection.getSignatureStatuses([signature], {
-      searchTransactionHistory: true,
-    });
-    const status = statusResponse.value[0];
+    const startedAt = Date.now();
+    while (Date.now() - startedAt < timeoutMs) {
+        const statusResponse = await connection.getSignatureStatuses([signature], {
+            searchTransactionHistory: true,
+        });
+        const status = statusResponse.value[0];
 
-    if (status?.err) {
-      throw new Error(`Transaction failed: ${JSON.stringify(status.err)}`);
+        if (status?.err) {
+            throw new Error(`Transaction failed: ${JSON.stringify(status.err)}`);
+        }
+
+        if (
+            status?.confirmationStatus === "confirmed" ||
+            status?.confirmationStatus === "finalized"
+        ) {
+            return;
+        }
+
+        await new Promise((resolve) => setTimeout(resolve, 1500));
     }
 
-    if (
-      status?.confirmationStatus === "confirmed" ||
-      status?.confirmationStatus === "finalized"
-    ) {
-      return;
-    }
-
-    await new Promise((resolve) => setTimeout(resolve, 1500));
-  }
-
-  throw new Error("Signature confirmation timed out");
+    throw new Error("Signature confirmation timed out");
 };
 
 const writeBigUInt64LE = (buffer: Buffer, value: bigint, offset: number) => {
-  let remaining = value;
-  for (let i = 0; i < 8; i++) {
-    buffer[offset + i] = Number(remaining & 0xffn);
-    remaining >>= 8n;
-  }
+    let remaining = value;
+    for (let i = 0; i < 8; i++) {
+        buffer[offset + i] = Number(remaining & 0xffn);
+        remaining >>= 8n;
+    }
 };
 
 const findAssociatedTokenAddress = (owner: PublicKey, mint: PublicKey) =>
-  PublicKey.findProgramAddressSync(
-    [owner.toBuffer(), TOKEN_PROGRAM_ID.toBuffer(), mint.toBuffer()],
-    ASSOCIATED_TOKEN_PROGRAM_ID
-  )[0];
+    PublicKey.findProgramAddressSync(
+        [owner.toBuffer(), TOKEN_PROGRAM_ID.toBuffer(), mint.toBuffer()],
+        ASSOCIATED_TOKEN_PROGRAM_ID
+    )[0];
 
 const createAssociatedTokenAccountInstruction = (
-  payer: PublicKey,
-  associatedTokenAddress: PublicKey,
-  owner: PublicKey,
-  mint: PublicKey
+    payer: PublicKey,
+    associatedTokenAddress: PublicKey,
+    owner: PublicKey,
+    mint: PublicKey
 ) =>
-  new TransactionInstruction({
-    programId: ASSOCIATED_TOKEN_PROGRAM_ID,
-    keys: [
-      { pubkey: payer, isSigner: true, isWritable: true },
-      { pubkey: associatedTokenAddress, isSigner: false, isWritable: true },
-      { pubkey: owner, isSigner: false, isWritable: false },
-      { pubkey: mint, isSigner: false, isWritable: false },
-      { pubkey: SystemProgram.programId, isSigner: false, isWritable: false },
-      { pubkey: TOKEN_PROGRAM_ID, isSigner: false, isWritable: false },
-      { pubkey: SYSVAR_RENT_PUBKEY, isSigner: false, isWritable: false },
-    ],
-    data: Buffer.alloc(0),
-  });
+    new TransactionInstruction({
+        programId: ASSOCIATED_TOKEN_PROGRAM_ID,
+        keys: [
+            { pubkey: payer, isSigner: true, isWritable: true },
+            { pubkey: associatedTokenAddress, isSigner: false, isWritable: true },
+            { pubkey: owner, isSigner: false, isWritable: false },
+            { pubkey: mint, isSigner: false, isWritable: false },
+            { pubkey: SystemProgram.programId, isSigner: false, isWritable: false },
+            { pubkey: TOKEN_PROGRAM_ID, isSigner: false, isWritable: false },
+            { pubkey: SYSVAR_RENT_PUBKEY, isSigner: false, isWritable: false },
+        ],
+        data: Buffer.alloc(0),
+    });
 
 const createTransferCheckedInstruction = (
-  source: PublicKey,
-  mint: PublicKey,
-  destination: PublicKey,
-  owner: PublicKey,
-  amount: bigint,
-  decimals: number
+    source: PublicKey,
+    mint: PublicKey,
+    destination: PublicKey,
+    owner: PublicKey,
+    amount: bigint,
+    decimals: number
 ) => {
-  const data = Buffer.alloc(10);
-  data[0] = 12;
-  writeBigUInt64LE(data, amount, 1);
-  data[9] = decimals;
+    const data = Buffer.alloc(10);
+    data[0] = 12;
+    writeBigUInt64LE(data, amount, 1);
+    data[9] = decimals;
 
-  return new TransactionInstruction({
-    programId: TOKEN_PROGRAM_ID,
-    keys: [
-      { pubkey: source, isSigner: false, isWritable: true },
-      { pubkey: mint, isSigner: false, isWritable: false },
-      { pubkey: destination, isSigner: false, isWritable: true },
-      { pubkey: owner, isSigner: true, isWritable: false },
-    ],
-    data,
-  });
+    return new TransactionInstruction({
+        programId: TOKEN_PROGRAM_ID,
+        keys: [
+            { pubkey: source, isSigner: false, isWritable: true },
+            { pubkey: mint, isSigner: false, isWritable: false },
+            { pubkey: destination, isSigner: false, isWritable: true },
+            { pubkey: owner, isSigner: true, isWritable: false },
+        ],
+        data,
+    });
 };
 
 export default function SingleCommunity() {
@@ -356,8 +364,9 @@ export default function SingleCommunity() {
   const [showFundModal, setShowFundModal] = useState(false);
   const [fundingAsset, setFundingAsset] = useState<"SOL" | "USDC">("SOL");
   const [fundAmount, setFundAmount] = useState("");
-  const [useDevnet, setUseDevnet] = useState(false);
+  const [useDevnet, setUseDevnet] = useState(true);
   const [isFunding, setIsFunding] = useState(false);
+  const [contributors, setContributors] = useState<CommunityContributor[]>([]);
 
   // Post store setters for preselecting/locking community and passing media
   const setCreatedPostImage = usePostStore((state) => state.setCreatedPostImage);
@@ -425,16 +434,20 @@ export default function SingleCommunity() {
     }
 
     fetchCommunityData();
-    // Initial page with fetched 3 posts
+
+    const cid = Array.isArray(communityId) ? communityId[0] : (communityId as string);
+
+    // Initial page of posts
     setInitialLoading(true);
-    getPostsByNewsfeedIdPaged(
-      Array.isArray(communityId) ? communityId[0] : (communityId as string),
-      null,
-      PAGE_SIZE
-    ).then(({ posts: first, lastDoc: ld }) => {
-      setPosts(first);
-      setLastDoc(ld);
-    }).finally(() => setInitialLoading(false));
+    getPostsByNewsfeedIdPaged(cid, null, PAGE_SIZE)
+      .then(({ posts: first, lastDoc: ld }) => {
+        setPosts(first);
+        setLastDoc(ld);
+      })
+      .finally(() => setInitialLoading(false));
+
+    // Load contributor avatars
+    getCommunityContributors(cid).then(setContributors).catch(() => {});
   }, [communityId]);
 
   if (!communityData) {
@@ -759,11 +772,48 @@ export default function SingleCommunity() {
 
       await waitForSignatureConfirmation(connection, signature);
 
+      // Capture values before clearing state
+      const donatedAmount = Number(fundAmount.trim()) || 0;
+      const donatedAsset = fundingAsset;
+      const donatedNetwork = useDevnet ? "devnet" : "mainnet-beta";
+
       setShowFundModal(false);
       setFundAmount("");
+
+      // Persist the contribution (best-effort — don't block the success alert)
+      const cid = Array.isArray(communityId)
+        ? communityId[0]
+        : (communityId as string);
+      addCommunityPaidContribution(cid, {
+        userId: session?.uid ?? "",
+        displayName: session?.displayName ?? "Anonymous",
+        profilePic: session?.profilePic ?? null,
+        amount: donatedAmount,
+        asset: donatedAsset,
+        transactionId: signature,
+        network: donatedNetwork,
+        status: "COMPLETED",
+        date: new Date().toISOString(),
+      })
+        .then(() => getCommunityContributors(cid))
+        .then(setContributors)
+        .catch((err) =>
+          console.warn("Failed to persist contribution:", err)
+        );
+
+      const solscanUrl = `https://solscan.io/tx/${signature}${
+        donatedNetwork === "devnet" ? "?cluster=devnet" : ""
+      }`;
       Alert.alert(
-        "Funding submitted",
-        `${fundingAsset} was sent to this community wallet.`
+        "Funding submitted ✅",
+        `${donatedAsset} was sent to this community wallet.`,
+        [
+          {
+            text: "View on Solscan",
+            onPress: () => Linking.openURL(solscanUrl).catch(() => {}),
+          },
+          { text: "Close", style: "cancel" },
+        ]
       );
     } catch (error) {
       console.error("Error funding community:", error);
@@ -787,7 +837,8 @@ export default function SingleCommunity() {
     <Box className="flex-1 relative">
       {/* Content */}
       <ScrollView
-        className="bg-[#077f5f] flex-1"
+        className="flex-1"
+        style={{backgroundColor: communityData.themeDarkColor || Colors.dark.tint}}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
         onScroll={onScrollNearBottom}
         scrollEventThrottle={32}
@@ -833,22 +884,91 @@ export default function SingleCommunity() {
                 {communityData.interests.map((interest, index) => (
                   <View
                     key={index}
-                    className="bg-[#a3e4d2] px-3 py-1 rounded-full mr-2 mb-2"
+                    className="px-3 py-1 rounded-full mr-2 mb-2"
+                    style={{ backgroundColor: communityData.themeLightColor || Colors.light.tint }}
                   >
-                    <Text className="text-[#077f5f]">{interest}</Text>
+                    <Text
+                        style={{ color: communityData.themeDarkColor || Colors.dark.tint }}
+                    >
+                        {interest}
+                    </Text>
                   </View>
                 ))}
               </View>
             </View>
           )}
 
+          {/* ── Contributor avatars ── */}
+          {contributors.length > 0 && (
+            <View className="mb-4">
+              <Text className="text-white text-xs font-semibold mb-2 uppercase tracking-wide">
+                {contributors.length === 1
+                  ? "1 Supporter"
+                  : `${contributors.length} Supporters`}
+              </Text>
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={{ gap: 10 }}
+              >
+                {contributors.map((c) => (
+                  <View key={c.userId} className="items-center" style={{ width: 52 }}>
+                    {c.profilePic ? (
+                      <Image
+                        source={{ uri: c.profilePic }}
+                        style={{
+                          width: 40,
+                          height: 40,
+                          borderRadius: 20,
+                          borderWidth: 2,
+                          borderColor: "rgba(255,255,255,0.6)",
+                        }}
+                        resizeMode="cover"
+                      />
+                    ) : (
+                      <View
+                        style={{
+                          width: 40,
+                          height: 40,
+                          borderRadius: 20,
+                          borderWidth: 2,
+                          borderColor: "rgba(255,255,255,0.6)",
+                          backgroundColor: "rgba(255,255,255,0.2)",
+                          alignItems: "center",
+                          justifyContent: "center",
+                        }}
+                      >
+                        <Text
+                          style={{ color: "white", fontWeight: "700", fontSize: 14 }}
+                        >
+                          {(c.displayName ?? "?").charAt(0).toUpperCase()}
+                        </Text>
+                      </View>
+                    )}
+                    <Text
+                      className="text-white text-xs mt-1 text-center"
+                      numberOfLines={1}
+                      style={{ width: 52 }}
+                    >
+                      {c.displayName.length > 7
+                        ? `${c.displayName.slice(0, 7)}…`
+                        : c.displayName}
+                    </Text>
+                  </View>
+                ))}
+              </ScrollView>
+            </View>
+          )}
+
           <View className="mb-2">
             <TouchableOpacity
-              className="w-full bg-white rounded-xl py-3 px-4"
+              className="w-full rounded-xl py-3 px-4"
+              style={{backgroundColor: communityData.themeLightColor || Colors.light.tint}}
               activeOpacity={0.85}
               onPress={handleFundCommunityPress}
             >
-              <Text className="text-[#077f5f] text-base font-semibold text-center">
+              <Text className="text-base font-semibold text-center"
+              style={{ color: communityData.themeDarkColor || Colors.dark.tint }}>
                 Fund Community
               </Text>
             </TouchableOpacity>
@@ -901,13 +1021,17 @@ export default function SingleCommunity() {
         visible={showFundModal}
         onRequestClose={() => !isFunding && setShowFundModal(false)}
       >
-        <View className="flex-1 justify-end bg-black/40">
-          <TouchableOpacity
-            className="flex-1"
-            activeOpacity={1}
-            onPress={() => !isFunding && setShowFundModal(false)}
-          />
-          <View className="bg-white rounded-t-3xl px-4 pt-4 pb-6">
+        <KeyboardAvoidingView
+          behavior={Platform.OS === "ios" ? "padding" : "height"}
+          style={{ flex: 1 }}
+        >
+          <View className="flex-1 justify-end bg-black/40">
+            <TouchableOpacity
+              className="flex-1"
+              activeOpacity={1}
+              onPress={() => !isFunding && setShowFundModal(false)}
+            />
+            <View className="bg-white rounded-t-3xl px-4 pt-4 pb-6">
             <Text className="text-[#1e3a6e] text-xl font-bold">
               Fund Community
             </Text>
@@ -966,6 +1090,11 @@ export default function SingleCommunity() {
               editable={!isFunding}
               className="border border-[#d1d5db] rounded-xl px-3 py-3 text-gray-900 mb-4"
             />
+            <Text className="text-gray-500 text-xs mb-4">
+              {fundingAsset === "USDC"
+                ? "Up to 6 decimal places (e.g. 0.01, 0.001)."
+                : "Up to 9 decimal places (e.g. 0.01, 0.001)."}
+            </Text>
 
             <View className="flex-row items-center justify-between mb-2">
               <Text className="text-gray-800 font-semibold">Use devnet</Text>
@@ -1010,6 +1139,7 @@ export default function SingleCommunity() {
             </View>
           </View>
         </View>
+        </KeyboardAvoidingView>
       </RNModal>
 
       {/* Floating Action Button (same as HomePage) */}
@@ -1030,6 +1160,7 @@ export default function SingleCommunity() {
           <AddIcon color="white" className="p-5 w-2 h-2" />
         </TouchableOpacity>
       </Animated.View>
+
 
       {/* Post Options Modal */}
       <Modal isOpen={showOptions} onClose={() => setShowOptions(false)}>

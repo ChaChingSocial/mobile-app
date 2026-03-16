@@ -28,8 +28,7 @@ export default function RegisterFormScreen() {
 
   const handleRegister = async () => {
     try {
-      console.log("email", email);
-      console.log("password", password);
+
       let user;
 
       await userApi.checkIfEmailExists({ email }).then(async (res) => {
@@ -44,8 +43,7 @@ export default function RegisterFormScreen() {
               displayName: res.username ?? "",
               profilePic: res.profilePic ?? "",
             });
-            console.log("session in register with email", session);
-            console.log("user get user but ni ID", res);
+
           });
         } else {
           user = await registerWithEmail(email, password);

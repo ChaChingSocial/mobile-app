@@ -7,17 +7,19 @@ import { Box } from "@/components/ui/box";
 import { Text } from "@/components/ui/text";
 import { notificationApi } from "@/config/backend";
 import { Colors } from "@/lib/constants/Colors";
+import { subscribeToTotalUnreadCount } from "@/lib/api/messages";
 import { useSession } from "@/lib/providers/AuthContext";
 import { DrawerContext } from "@/lib/providers/DrawerContext";
 import { FontAwesome, FontAwesome5, Ionicons } from "@expo/vector-icons";
 import { Tabs } from "expo-router";
 import { useContext, useEffect, useState } from "react";
-import { Image, Platform, TouchableOpacity } from "react-native";
+import { Image, Platform, TouchableOpacity, View } from "react-native";
 
 export default function TabLayout() {
   const { open, setOpen } = useContext(DrawerContext);
   const { session } = useSession();
   const [totalUnreadNotifications, setTotalUnreadNotifications] = useState(0);
+  const [totalUnreadMessages, setTotalUnreadMessages] = useState(0);
 
   useEffect(() => {
     const fetchNotifications = async () => {
@@ -29,6 +31,14 @@ export default function TabLayout() {
     };
     fetchNotifications();
   }, [session]);
+
+  useEffect(() => {
+    if (!session?.uid) return;
+    const unsubscribe = subscribeToTotalUnreadCount(session.uid, (count) => {
+      setTotalUnreadMessages(count);
+    });
+    return unsubscribe;
+  }, [session?.uid]);
 
   return (
     <Tabs
@@ -44,7 +54,7 @@ export default function TabLayout() {
               <Image
                 source={require("@/assets/images/logo.png")}
                 style={{
-                  height: 40,
+                  height: 50,
                   resizeMode: "contain",
                   width: 140,
                   marginBottom: 10,
@@ -113,30 +123,69 @@ export default function TabLayout() {
       <Tabs.Screen
         name="index"
         options={{
-          title: "Home",
-          tabBarIcon: ({ color }) => (
-            <FontAwesome size={28} name="home" color={color} />
+          title: "Discover",
+          tabBarIcon: ({ color, focused }) => (
+            <FontAwesome
+              size={focused ? 30 : 28}
+              name="hand-scissors-o"
+              color={color}
+            />
           ),
         }}
       />
       <Tabs.Screen
         name="communities"
         options={{
-          title: "Communities",
-          tabBarIcon: ({ color }) => (
-            <FontAwesome size={22} name="users" color={color} />
+          title: "Connect",
+          tabBarIcon: ({ color, focused }) => (
+            <FontAwesome
+              size={focused ? 24 : 22}
+              name="handshake-o"
+              color={color}
+            />
           ),
         }}
       />
       <Tabs.Screen
-        name="profile/index"
+        name="inbox"
         options={{
-          title: "Profile",
-          tabBarIcon: ({ color }) => (
-            <FontAwesome5 name="user-alt" size={22} color={color} />
+          title: "Messages",
+          tabBarIcon: ({ color, focused }) => (
+            <View>
+              <Ionicons
+                name={
+                  focused
+                    ? "chatbubble-ellipses"
+                    : "chatbubble-ellipses-outline"
+                }
+                size={focused ? 26 : 24}
+                color={color}
+              />
+              {totalUnreadMessages > 0 && (
+                <View
+                  style={{
+                    position: "absolute",
+                    top: -4,
+                    right: -6,
+                    backgroundColor: "#ef4444",
+                    borderRadius: 8,
+                    minWidth: 16,
+                    height: 16,
+                    alignItems: "center",
+                    justifyContent: "center",
+                    paddingHorizontal: 3,
+                  }}
+                >
+                  <Text style={{ color: "white", fontSize: 10, fontWeight: "700" }}>
+                    {totalUnreadMessages > 9 ? "9+" : totalUnreadMessages}
+                  </Text>
+                </View>
+              )}
+            </View>
           ),
         }}
       />
+
       <Tabs.Screen
         name="profile/edit-profile"
         options={{
@@ -149,8 +198,8 @@ export default function TabLayout() {
         name="blog/index"
         options={{
           title: "Blog",
-          tabBarIcon: ({ color }) => (
-            <FontAwesome size={22} name="book" color={color} />
+          tabBarIcon: ({ color, focused }) => (
+            <FontAwesome size={focused ? 24 : 22} name="newspaper-o" color={color} />
           ),
         }}
       />
@@ -159,6 +208,19 @@ export default function TabLayout() {
         options={{
           href: null,
         }}
+      />
+      <Tabs.Screen
+          name="profile/index"
+          options={{
+              title: "Profile",
+              tabBarIcon: ({ color, focused }) => (
+                  <FontAwesome5
+                    name="user"
+                    size={focused ? 24 : 22}
+                    color={color}
+                  />
+              ),
+          }}
       />
     </Tabs>
   );

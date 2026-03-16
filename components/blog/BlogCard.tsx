@@ -10,14 +10,24 @@ import { useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import { Image, Pressable } from "react-native";
 import { Divider } from "../ui/divider";
-import {Badge, BadgeIcon, BadgeText} from "@/components/ui/badge";
+import {Badge, BadgeText} from "@/components/ui/badge";
+import {Colors} from "@/lib/constants/Colors";
 
-export function BlogArticleCard({ blog, onPress }: { blog: Blog; onPress?: () => void }) {
+export function BlogArticleCard({
+  blog,
+  onPress,
+  onTagPress,
+}: {
+  blog: Blog;
+  onPress?: () => void;
+  onTagPress?: (tag: string) => void;
+}) {
   const router = useRouter();
 
   const [authorName, setAuthorName] = useState<string | null>(null);
   const [communityName, setCommunityName] = useState<string | null>(null);
   const [communityPhoto, setCommunityPhoto] = useState<string | null>(null);
+  const [communityLight, setCommunityLight] = useState<string>();
 
   // Calculate reading time
   const calculateReadingTime = (content: string): number => {
@@ -34,6 +44,9 @@ export function BlogArticleCard({ blog, onPress }: { blog: Blog; onPress?: () =>
   };
 
   const readingTime = calculateReadingTime(blog.content);
+  const blogTags = Array.isArray(blog.tags)
+    ? blog.tags.filter((tag) => tag.trim().length > 0)
+    : [];
 
   useEffect(() => {
     if (blog) {
@@ -52,6 +65,7 @@ export function BlogArticleCard({ blog, onPress }: { blog: Blog; onPress?: () =>
             if (community) {
               setCommunityName((community as Community).title);
               setCommunityPhoto((community as Community).image);
+              setCommunityLight((community as Community).themeLightColor || Colors.light.tint);
             }
           });
       }
@@ -71,10 +85,20 @@ export function BlogArticleCard({ blog, onPress }: { blog: Blog; onPress?: () =>
   };
 
   return (
-    <Card className="mb-4 bg-white border-2 border-[#01af85]">
+    <Card className="mb-4 bg-white border-2" >
       <Pressable onPress={handleCardClick}>
         <VStack space="sm">
-          <Text className="text-green-800 font-bold mx-4">{communityName}</Text>
+          <HStack space="sm" className="items-center mx-4 mb-2">
+            {communityPhoto && (
+              <Image
+                source={{ uri: communityPhoto }}
+                alt={communityName || "Community Photo"}
+                className="w-10 h-10 rounded-full"
+                resizeMode="cover"
+              />
+            )}
+            <Text className="font-bold">{communityName}</Text>
+          </HStack>
 
           <Image
             source={{ uri: blog.coverPhoto }}
@@ -86,9 +110,28 @@ export function BlogArticleCard({ blog, onPress }: { blog: Blog; onPress?: () =>
           <VStack space="xs" className="px-4">
             <Text className="font-bold text-lg">{blog.title}</Text>
             <Text className="text-gray-500 text-sm">{blog.subtitle}</Text>
-            <Badge className="self-start mt-2 bg-green-200 border-0">
-                <BadgeText className="text-green-900">
-                    {readingTime} min read
+
+            {blogTags.length > 0 && (
+              <HStack space="xs" className="mt-2 flex-wrap">
+                {blogTags.map((tag, index) => (
+                  <Pressable
+                    key={`${tag}-${index}`}
+                    onPress={(event) => {
+                      event.stopPropagation();
+                      onTagPress?.(tag);
+                    }}
+                  >
+                    <Badge style={{backgroundColor: Colors.dark.tint}} className="border-0 mr-1 mb-1 rounded-full px-3 py-1">
+                      <BadgeText className="text-white">{tag}</BadgeText>
+                    </Badge>
+                  </Pressable>
+                ))}
+              </HStack>
+            )}
+
+            <Badge className="self-start mt-2 bg-yellow-300 border-0">
+                <BadgeText className="text-black">
+                    ⏰ {readingTime} min read
                 </BadgeText>
             </Badge>
           </VStack>

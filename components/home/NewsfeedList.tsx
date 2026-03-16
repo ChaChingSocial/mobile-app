@@ -46,8 +46,8 @@ export const NewsfeedList = React.memo<NewsfeedListProps>(function NewsfeedList(
 
   return (
     <Box className="p-2">
-      {featuredPosts.map((item) => (
-        <PostComponent key={item.id || Math.random()} post={item} />
+      {featuredPosts.map((item, index) => (
+        <PostComponent key={Math.random()} post={item} />
       ))}
     </Box>
   );

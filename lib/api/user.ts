@@ -89,12 +89,14 @@ async function followUser(userId: string, followerId: string) {
   const followerDoc = doc(db, "users", followerId, "following", userId);
 
   try {
-    await setDoc(userDoc, { followerId });
-    await setDoc(followerDoc, { userId });
+    console.log(`[followUser] Following user ${userId} with follower ${followerId}`);
+    await setDoc(userDoc, { followerId, timestamp: new Date() });
+    await setDoc(followerDoc, { userId, timestamp: new Date() });
+    console.log(`[followUser] Successfully created follow relationship`);
 
     return true;
   } catch (error) {
-    console.error("Error writing document:", error);
+    console.error("[followUser] Error writing document:", error);
     return false;
   }
 }
@@ -103,10 +105,16 @@ async function unfollowUser(userId: string, followerId: string) {
   const followerDoc = doc(db, "users", userId, "followers", followerId);
   const followingDoc = doc(db, "users", followerId, "following", userId);
 
-  await deleteDoc(followerDoc);
-  await deleteDoc(followingDoc);
-
-  return true;
+  try {
+    console.log(`[unfollowUser] Unfollowing user ${userId} with follower ${followerId}`);
+    await deleteDoc(followerDoc);
+    await deleteDoc(followingDoc);
+    console.log(`[unfollowUser] Successfully deleted follow relationship`);
+    return true;
+  } catch (error) {
+    console.error("[unfollowUser] Error unfollowing user:", error);
+    return false;
+  }
 }
 
 async function fetchFollowers(userId: string) {
@@ -173,23 +181,21 @@ interface UserProfile {
 }
 
 async function getAllUsers(): Promise<UserProfile[]> {
-  const usersRef = collection(db, "users");
-  const userSnapshots = await getDocs(usersRef);
-
-  const userProfiles: UserProfile[] = [];
-
-  for (const userDoc of userSnapshots.docs) {
-    const userId = userDoc.id;
-    const userProfileRef = doc(db, "users", userId, "profile", userId);
-    const userProfileSnapshot = await getDoc(userProfileRef);
-
-    if (userProfileSnapshot.exists()) {
-      const userProfileData = userProfileSnapshot.data();
-      userProfiles.push(userProfileData as UserProfile);
-    }
+  try {
+    const profiles = await getDocs(collectionGroup(db, "profile"));
+    return profiles.docs
+      .map((doc) => {
+        const data = doc.data();
+        return {
+          ...data,
+          userId: doc.id, // Explicitly set userId from document ID
+        } as UserProfile;
+      })
+      .filter((user) => !!user.displayName);
+  } catch (error) {
+    console.error("Error fetching user profiles:", error);
+    return [];
   }
-
-  return userProfiles;
 }
 
 async function fetchAllUsernames() {
@@ -414,6 +420,53 @@ async function createAbuseReport(
   } catch (error) {
     console.error("Error creating abuse report:", error);
     throw error;
+  }
+}
+
+/**
+ * Persist a wallet address on the user's profile so other users can view
+ * their on-chain assets (NFTs, etc.) without needing a live wallet connection.
+ */
+export async function saveWalletAddress(
+  userId: string,
+  walletAddress: string
+): Promise<void> {
+  const userDocRef = doc(db, "users", userId, "profile", userId);
+  await setDoc(userDocRef, { walletAddress }, { merge: true });
+}
+
+/**
+ * Save this user's per-message price and receiving wallet address to their profile.
+ * Pass priceUsdc = 0 to disable pricing.
+ */
+export async function setMessagePricing(
+  userId: string,
+  priceUsdc: number,
+  walletAddress: string
+): Promise<void> {
+  const userDocRef = doc(db, "users", userId, "profile", userId);
+  await setDoc(userDocRef, { messagePrice: priceUsdc, walletAddress }, { merge: true });
+}
+
+/**
+ * Fetch a user's message pricing settings.
+ * Returns null if profile doesn't exist; messagePrice = 0 means free.
+ */
+export async function getUserMessagePricing(
+  userId: string
+): Promise<{ messagePrice: number; walletAddress: string | null } | null> {
+  try {
+    const userDocRef = doc(db, "users", userId, "profile", userId);
+    const snap = await getDoc(userDocRef);
+    if (!snap.exists()) return null;
+    const data = snap.data();
+    return {
+      messagePrice: data.messagePrice ?? 0,
+      walletAddress: data.walletAddress ?? null,
+    };
+  } catch (error) {
+    console.error("Error fetching message pricing:", error);
+    return null;
   }
 }
 

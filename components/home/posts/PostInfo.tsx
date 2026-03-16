@@ -13,6 +13,8 @@ import { useRouter } from "expo-router";
 import { Timestamp } from "firebase/firestore";
 import { useEffect, useState } from "react";
 import { TouchableOpacity } from "react-native";
+import {Badge, BadgeText} from "@/components/ui/badge";
+import {Colors} from "@/lib/constants/Colors";
 
 export const PostInfo = ({
   post,
@@ -59,7 +61,15 @@ export const PostInfo = ({
   if (hideAvatar) {
     return (
       <Box className="flex flex-row items-center justify-between w-full pl-2 pr-4 mt-4">
-        <TouchableOpacity onPress={() => router.push(`/(protected)/user-profile?id=${displayUserId}`)}>
+        <TouchableOpacity
+          onPress={() => {
+            if (displayUserId) {
+              router.push(`/(protected)/user-profile?id=${displayUserId}`);
+            } else {
+              console.warn("[PostInfo] Cannot navigate to profile: displayUserId is undefined");
+            }
+          }}
+        >
           <Text size="sm" className="font-semibold">@{displayName}</Text>
         </TouchableOpacity>
         <Text size="xs">{formatPostDate(createdAt)}</Text>
@@ -70,25 +80,35 @@ export const PostInfo = ({
   return (
     <Box className="flex flex-row items-center justify-between w-full px-4">
       <TouchableOpacity
-        onPress={() => router.push(`/(protected)/user-profile?id=${displayUserId}`)}
-        className="flex items-left justify-start mt-4"
+        onPress={() => {
+          if (displayUserId) {
+            router.push(`/(protected)/user-profile?id=${displayUserId}`);
+          } else {
+            console.warn("[PostInfo] Cannot navigate to profile: displayUserId is undefined");
+          }
+        }}
+        className="items-center justify-center mt-4"
       >
-        <Avatar
-          size="md"
-          className={`object-contain border-2 transform transition-transform duration-200 hover:scale-110 ${
-            isFinfluencer ? "border-amber-500" : "border-purple-800"
-          }`}
-        >
-          <AvatarFallbackText>{displayName}</AvatarFallbackText>
-          <AvatarImage
-            source={{
-              uri: displayPic || "",
-            }}
-          />
-        </Avatar>
-        <Text size="sm" className="text-center mt-2 font-semibold">
-          @{displayName}
-        </Text>
+        <Box className="items-center justify-center">
+          <Avatar
+            size="md"
+            className={`object-contain border-2 transform transition-transform duration-200 hover:scale-110 ${
+              isFinfluencer ? "border-amber-500" : "border-purple-800"
+            }`}
+          >
+            <AvatarFallbackText>{displayName}</AvatarFallbackText>
+            <AvatarImage
+              source={{
+                uri: displayPic || "",
+              }}
+            />
+          </Avatar>
+          <Badge style={{ backgroundColor: Colors.dark.tint }} className="-mt-3 rounded-full px-2 py-1">
+            <BadgeText className="text-xs font-semibold text-white">
+              {displayName}
+            </BadgeText>
+          </Badge>
+        </Box>
       </TouchableOpacity>
       <Text size="xs">{formatPostDate(createdAt)}</Text>
     </Box>

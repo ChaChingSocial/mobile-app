@@ -19,7 +19,7 @@ export function Header() {
       <TouchableOpacity
         onPress={() => console.log("Navigate to notifications")}
       >
-        <Ionicons name="notifications-outline" size={24} color="black" />
+        <Ionicons name="notifications-outline" size={24} color="white" />
       </TouchableOpacity>
     </View>
   );

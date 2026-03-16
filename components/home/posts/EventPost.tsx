@@ -674,10 +674,17 @@ export const EventPost = ({
             const uri =
               typeof img0 === "string" ? img0 : img0?.uri ?? img0?.url ?? "";
             return uri ? (
-              <TouchableOpacity activeOpacity={0.9} onPress={() => { setImgUri(uri); setImgOpen(true); }}>
+              <TouchableOpacity
+                activeOpacity={0.9}
+                className="-mx-2"
+                onPress={() => {
+                  setImgUri(uri);
+                  setImgOpen(true);
+                }}
+              >
                 <Image
                   source={{ uri }}
-                  className="w-full h-48 rounded-lg"
+                  className="w-full h-48"
                   resizeMode="contain"
                 />
               </TouchableOpacity>
